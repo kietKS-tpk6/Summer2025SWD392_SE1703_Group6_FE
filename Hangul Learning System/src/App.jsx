@@ -1,34 +1,83 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import ViewerPage from './pages/viewer-portal/ViewerPage'
+import StudentPage from './pages/student-portal/StudentPage'
+import LecturerPage from './pages/lecturer-portal/LecturerPage'
+import ManagerPage from './pages/manager-portal/ManagerPage'
+import NotFoundPage from './components/error/NotFoundPage'
+import Header from './components/header/Header'
+import Footer from './components/footer/Footer'
 import './App.css'
+import 'antd/dist/reset.css'
+
+// Route configurations
+const routes = {
+  viewer: [
+    {
+    path: '/viewer',
+    element: <ViewerPage />,
+    label: 'Viewer Portal'
+  }
+],
+  student: {
+    path: '/student',
+    element: <StudentPage />,
+    label: 'Student Portal'
+  },
+  lecturer: [
+    {
+      path: '/lecturer',
+      element: <LecturerPage />,
+      label: 'Lecturer Portal'
+    }
+  ],
+  manager: [
+    {
+    path: '/manager',
+    element: <ManagerPage />,
+    label: 'Manager Portal'
+  }
+]
+}
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <Router>
+      <div className="app">
+        <Header />
+        {/* Navigation */}
+        <nav className="main-nav">
+          {Object.values(routes).flat().map((route) => (
+            <a
+              key={route.path}
+              href={route.path}
+              className="nav-link"
+            >
+              {route.label}
+            </a>
+          ))}
+        </nav>
+
+        {/* Main Content */}
+        <main className="main-content">
+          <Routes>
+            {/* Default route */}
+            <Route path="/" element={
+              Array.isArray(routes.viewer) ? routes.viewer[0].element : routes.viewer.element
+            } />
+            
+            {/* Render all routes */}
+            {Object.values(routes).flat().map((route) => (
+              <Route key={route.path} path={route.path} element={route.element} />
+            ))}
+
+            {/* 404 - Catch all */}
+            <Route path="*" element={<NotFoundPage />} /> 
+          </Routes>
+        </main>
+        <Footer />
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    </Router>
   )
 }
 
