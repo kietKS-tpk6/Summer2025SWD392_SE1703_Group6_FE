@@ -1,113 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100..900&display=swap');
+
+* {
+  font-family: "Noto Sans KR", sans-serif !important;
+}
+
 html, body, #root {
+  /* font-family: "Open Sans", sans-serif; */
+  font-family: "Noto Sans KR", sans-serif;
+  /* font-family: "Montserrat", sans-serif; */
   height: 100%;
   width: 100%;
   margin: 0;
   padding: 0;
 }
 
-.app {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.main-nav {
-  background-color: #1a1a1a;
-  padding: 1rem;
-  margin-bottom: 16px;
-  border-radius: 8px;
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-}
-
-.nav-link {
-  color: #fff;
-  text-decoration: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  transition: background-color 0.3s;
-}
-
-.nav-link:hover {
-  background-color: #333;
-}
-
-.main-content {
-  flex: 1 0 auto;
-  padding: 24px 0;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-/* Page specific styles */
-.viewer-page,
-.learner-page,
-.lecturer-page,
-.manager-page {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 2rem;
-}
-
-.content {
-  background-color: #f9f9f9;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-h2 {
-  color: #213547;
-  margin-bottom: 1.5rem;
-}
-
-h3 {
-  color: #213547;
-  margin-bottom: 1rem;
-}
-
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-li {
-  margin: 0.5rem 0;
-  padding-left: 1.5rem;
-  position: relative;
-}
-
-li:before {
-  content: "•";
-  position: absolute;
-  left: 0;
-  color: #646cff;
-}
-
-@media (prefers-color-scheme: dark) {
-  .main-nav {
-    background-color: #242424;
-  }
-  
-  .nav-link {
-    color: rgba(255, 255, 255, 0.87);
-  }
-  
-  .nav-link:hover {
-    background-color: #333;
-  }
-  
-  h2, h3 {
-    color: rgba(255, 255, 255, 0.87);
-  }
-  
-  .content {
-    background-color: #1a1a1a;
-    color: rgba(255, 255, 255, 0.87);
-  }
-  
-  li:before {
-    color: #747bff;
-  }
+/* Override Ant Design components */
+.ant-layout,
+.ant-layout-content,
+.ant-layout-header,
+.ant-layout-footer,
+.ant-layout-sider,
+.ant-menu,
+.ant-menu-item,
+.ant-menu-submenu,
+.ant-btn,
+.ant-input,
+.ant-select,
+.ant-table,
+.ant-card,
+.ant-modal,
+.ant-drawer {
+  font-family: "Montserrat", sans-serif !important;
 }

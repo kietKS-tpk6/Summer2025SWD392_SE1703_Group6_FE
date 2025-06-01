@@ -1,84 +1,89 @@
-import { useState } from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import ViewerPage from './pages/viewer-portal/ViewerPage'
-import StudentPage from './pages/student-portal/StudentPage'
-import LecturerPage from './pages/lecturer-portal/LecturerPage'
-import ManagerPage from './pages/manager-portal/ManagerPage'
-import NotFoundPage from './components/error/NotFoundPage'
-import Header from './components/header/Header'
-import Footer from './components/footer/Footer'
-import './App.css'
-import 'antd/dist/reset.css'
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Layout } from 'antd';
+import Sidebar from './components/dashboard/Sidebar';
+import Dashboard from './components/dashboard/pages/Dashboard';
+import Users from './components/dashboard/pages/Users';
+import ClassManagement from './components/dashboard/pages/Classes';
+import Subjects from './components/dashboard/pages/Subjects';
+import Syllabus from './components/dashboard/pages/Syllabus';
+import Blog from './components/dashboard/pages/Blog';
+import Analytics from './components/dashboard/pages/Analytics';
+import Chat from './components/dashboard/pages/Chat';
+import Schedule from './components/dashboard/pages/Schedule';
+import Profile from './components/dashboard/pages/Profile';
+import Settings from './components/dashboard/pages/Settings';
+import ViewerPage from './pages/viewer-portal/ViewerPage';
+import StudentPage from './pages/student-portal/StudentPage';
+import NotFoundPage from './components/error/NotFoundPage';
+import './App.css';
+import 'antd/dist/reset.css';
 
-// Route configurations
-const routes = {
-  viewer: [
-    {
-    path: '/viewer',
-    element: <ViewerPage />,
-    label: 'Viewer Portal'
-  }
-],
-  student: {
-    path: '/student',
-    element: <StudentPage />,
-    label: 'Student Portal'
-  },
-  lecturer: [
-    {
-      path: '/lecturer',
-      element: <LecturerPage />,
-      label: 'Lecturer Portal'
-    }
-  ],
-  manager: [
-    {
-    path: '/manager',
-    element: <ManagerPage />,
-    label: 'Manager Portal'
-  }
-]
-}
+const { Content } = Layout;
 
-function App() {
+// Dashboard routes configuration
+const dashboardRoutes = [
+  { path: '/', element: <Dashboard /> },
+  { path: '/users', element: <Users /> },
+  { path: '/class', element: <ClassManagement /> },
+  { path: '/subject', element: <Subjects /> },
+  { path: '/syllabus', element: <Syllabus /> },
+  { path: '/blog', element: <Blog /> },
+  { path: '/analytics', element: <Analytics /> },
+  { path: '/chat', element: <Chat /> },
+  { path: '/schedule', element: <Schedule /> },
+  { path: '/profile', element: <Profile /> },
+  { path: '/settings', element: <Settings /> },
+];
+
+// Public routes configuration
+const publicRoutes = [
+  { path: '/', element: <ViewerPage /> },
+];
+
+// Student routes configuration
+const studentRoutes = [
+  { path: '/student', element: <StudentPage /> },
+];
+
+const App = () => {
   return (
     <Router>
-      <div className="app">
-        <Header />
-        {/* Navigation */}
-        <nav className="main-nav">
-          {Object.values(routes).flat().map((route) => (
-            <a
-              key={route.path}
-              href={route.path}
-              className="nav-link"
-            >
-              {route.label}
-            </a>
-          ))}
-        </nav>
+      <Routes>
+        {/* Dashboard Layout */}
+        <Route
+          path="/dashboard/*"
+          element={
+            <Layout style={{ minHeight: '100vh' }}>
+              <Sidebar />
+              <Layout>
+                <Content style={{ margin: '16px', padding: '24px', background: '#fff', borderRadius: '30px' }}>
+                  <Routes>
+                    {dashboardRoutes.map((route) => (
+                      <Route key={route.path} path={route.path} element={route.element} />
+                    ))}
+                  </Routes>
+                </Content>
+              </Layout>
+            </Layout>
+          }
+        />
 
-        {/* Main Content */}
-        <main className="main-content">
-          <Routes>
-            {/* Default route */}
-            <Route path="/" element={
-              Array.isArray(routes.viewer) ? routes.viewer[0].element : routes.viewer.element
-            } />
-            
-            {/* Render all routes */}
-            {Object.values(routes).flat().map((route) => (
-              <Route key={route.path} path={route.path} element={route.element} />
-            ))}
+        {/* Public Routes */}
+        {publicRoutes.map((route) => (
+          <Route key={route.path} path={route.path} element={route.element} />
+        ))}
 
-            {/* 404 - Catch all */}
-            <Route path="*" element={<NotFoundPage />} /> 
-          </Routes>
-        </main>
-        <Footer />
-      </div>
+        {/* Student Routes */}
+        {studentRoutes.map((route) => (
+          <Route key={route.path} path={route.path} element={route.element} />
+        ))}
+
+        {/* 404 - Catch all */}
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
     </Router>
-  )
-}
+  );
+};
 
-export default App
+export default App;
