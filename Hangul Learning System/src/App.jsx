@@ -16,6 +16,8 @@ import Settings from './components/dashboard/pages/Settings';
 import ViewerPage from './pages/viewer-portal/ViewerPage';
 import StudentPage from './pages/student-portal/StudentPage';
 import NotFoundPage from './components/error/NotFoundPage';
+import LoginPage from './pages/authentication/LoginPage';
+import RegisterPage from './pages/authentication/RegisterPage';
 import './App.css';
 import 'antd/dist/reset.css';
 
@@ -39,6 +41,8 @@ const dashboardRoutes = [
 // Public routes configuration
 const publicRoutes = [
   { path: '/', element: <ViewerPage /> },
+  { path: '/login', element: <LoginPage /> },
+  { path: '/register', element: <RegisterPage /> },
 ];
 
 // Student routes configuration
