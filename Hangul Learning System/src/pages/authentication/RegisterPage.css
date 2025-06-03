@@ -1,0 +1,169 @@
+.register-hero-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(120deg, #fad934 0%, #fff9f3 100%);
+  gap: 0;
+}
+
+.register-illustration {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  min-width: 340px;
+  max-width: 420px;
+  padding: 0 32px 0 0;
+}
+
+.register-hero-title {
+  margin-top: 12px;
+  text-align: center;
+}
+.register-hero-title h1 {
+  color: #f7b500;
+  font-size: 2.2rem;
+  font-family: 'Montserrat', 'Noto Sans KR', sans-serif;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  letter-spacing: 1px;
+}
+.register-hero-title p {
+  color: #213547;
+  font-size: 1.1rem;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+.register-form {
+  background: #fff;
+  padding: 40px 32px 32px 32px;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(26, 35, 126, 0.10);
+  width: 370px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  border: 1.5px solid #ffe9b0;
+  z-index: 2;
+}
+
+.register-form h2 {
+  text-align: center;
+  margin-bottom: 8px;
+  color: #f7b500;
+  font-family: 'Montserrat', 'Noto Sans KR', sans-serif;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.register-btn {
+  background: linear-gradient(90deg, #fad934 0%, #ffe9b0 100%) !important;
+  color: #1a237e !important;
+  border: none;
+  border-radius: 10px;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  box-shadow: 0 2px 8px rgba(250, 217, 52, 0.08);
+  margin-top: 10px;
+  transition: background 0.2s, color 0.2s;
+}
+.register-btn:hover, .register-btn:focus {
+  background: linear-gradient(90deg, #f7b500 0%, #fad934 100%) !important;
+  color: #fff !important;
+}
+
+.register-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 14px;
+  color: #213547;
+}
+
+.register-footer a {
+  color: #f7b500;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.register-footer a:hover {
+  color: #fad934;
+  text-decoration: underline;
+}
+
+@media (max-width: 900px) {
+  .register-hero-container {
+    flex-direction: column;
+    padding: 32px 0;
+    gap: 0;
+  }
+  .register-illustration {
+    padding: 0;
+    margin-bottom: 16px;
+  }
+}
+.register-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px 28px;
+  }
+  
+  @media (max-width: 600px) {
+    .register-form {
+      width: 98vw;
+      min-width: unset;
+      padding: 24px 8px 16px 8px;
+    }
+    .register-grid {
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+  }
+  
+  .register-form {
+    width: 480px; /* hoặc 500px nếu muốn rộng hơn nữa */
+    max-width: 98vw;
+  
+  }
+  
+  /* Tăng kích thước input và label */
+  .register-form .ant-form-item-label > label {
+    font-size: 1.00rem;
+    font-weight: 500;
+  }
+  
+  .register-form .ant-input,
+  .register-form .ant-input-password,
+  .register-form .ant-input-affix-wrapper {
+    font-size: 1.00rem;
+    padding: 5px 8px;
+  }
+
+  .register-form .ant-select-selector,
+.register-form .ant-picker {
+  height: 48px !important;
+  font-size: 1.08rem;
+  padding: 5px 8px;
+  display: flex;
+  align-items: center;
+}
+
+.register-form .ant-select-single .ant-select-selector {
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+}
+
+.register-form .ant-select-selection-item {
+  display: flex;
+  align-items: center;
+  font-size: 1.08rem;
+}

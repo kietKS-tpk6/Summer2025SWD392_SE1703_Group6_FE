@@ -2,7 +2,8 @@ export const API_URL = 'https://localhost:7201/';
 
 export const endpoints = {
     account: {
-        
+        login: 'api/Authentication/login',
+        register: 'api/Authentication/register',
     },
     manageAccount: {
         
