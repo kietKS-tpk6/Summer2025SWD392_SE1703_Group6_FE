@@ -12,6 +12,7 @@ import {
   IdcardOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
+import logo from '../../../public/images/logoB.png'
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const { Sider } = Layout;
@@ -89,7 +90,7 @@ const Sidebar = () => {
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        padding: '24px 0',
+        padding: '0px 0',
       }}
     >
       <div>
@@ -98,15 +99,18 @@ const Sidebar = () => {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          marginBottom: 32,
+          marginBottom: 10,
         }}>
-          <div style={{
+          {/* <div style={{
             width: 56, height: 56, borderRadius: '50%',
             background: '#4fd18b', display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 32, color: '#fff', fontWeight: 700, marginBottom: 8
           }}>
             E
-          </div>
+          </div> */}
+          <img src='../../../public/images/logoB.png' alt="" style={{
+            width: 200, height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center'
+          }}/>
           <div style={{ fontWeight: 700, fontSize: 20, color: '#000' }}>Hangul Learning</div>
           <div style={{ fontSize: 12, color: '#b0b7c3' }}>Learn From Home</div>
         </div>
