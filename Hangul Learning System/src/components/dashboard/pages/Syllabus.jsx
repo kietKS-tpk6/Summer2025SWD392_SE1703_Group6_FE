@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, Button, Typography, Divider, Table, Tag, Space, Modal, Form, Input, InputNumber, message, Descriptions, Select } from 'antd';
 import { ArrowLeftOutlined, ClockCircleOutlined, PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined, CalendarOutlined } from '@ant-design/icons';
+import axios from 'axios';
+import { API_URL, endpoints } from '../../../config/api';
 
 const { Title, Paragraph } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
+const { confirm } = Modal;
 
 const Syllabus = () => {
   const location = useLocation();
@@ -15,6 +18,9 @@ const Syllabus = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState(null);
   const [form] = Form.useForm();
+  const [isSubjectModalVisible, setIsSubjectModalVisible] = useState(false);
+  const [subjectForm] = Form.useForm();
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
   // Mock data - Replace with actual API call
   useEffect(() => {
@@ -105,6 +111,73 @@ const Syllabus = () => {
       }
       setIsModalVisible(false);
     });
+  };
+
+  const handleSubjectEdit = () => {
+    subjectForm.setFieldsValue({
+      name: subject.name,
+      description: subject.description,
+      minAverageScoreToPass: subject.minAverageScoreToPass
+    });
+    setIsSubjectModalVisible(true);
+  };
+
+  const handleSubjectDelete = () => {
+    console.log('Delete button clicked');
+    console.log('Current subject:', subject);
+    setDeleteModalVisible(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      const subjectId = subject.id || subject.code;
+      console.log('Using subject ID:', subjectId);
+      const deleteUrl = `${API_URL}${endpoints.manageSubject.delete}${subjectId}`;
+      console.log('Delete URL:', deleteUrl);
+      
+      const response = await axios.delete(deleteUrl);
+      console.log('Delete response:', response);
+      
+      message.success('Xóa môn học thành công');
+      navigate('/dashboard/subject');
+    } catch (error) {
+      console.error('Error deleting subject:', error);
+      console.error('Error response:', error.response);
+      message.error('Không thể xóa môn học. Vui lòng thử lại.');
+    } finally {
+      setDeleteModalVisible(false);
+    }
+  };
+
+  const handleSubjectModalOk = async () => {
+    try {
+      const values = await subjectForm.validateFields();
+      const response = await axios.put(`${API_URL}${endpoints.manageSubject.update}`, {
+        subjectID: subject.id,
+        subjectName: values.name,
+        description: values.description,
+        isActive: true,
+        minAverageScoreToPass: values.minAverageScoreToPass || 0
+      });
+
+      if (response.data) {
+        // Update the subject state with new values
+        const updatedSubject = {
+          ...subject,
+          name: values.name,
+          description: values.description,
+          minAverageScoreToPass: values.minAverageScoreToPass || 0
+        };
+        // Update the location state with new subject data
+        navigate(location.pathname, { state: { subject: updatedSubject }, replace: true });
+        
+        message.success('Cập nhật môn học thành công');
+        setIsSubjectModalVisible(false);
+      }
+    } catch (error) {
+      console.error('Error updating subject:', error);
+      message.error('Không thể cập nhật môn học. Vui lòng thử lại.');
+    }
   };
 
   if (!subject) {
@@ -199,7 +272,25 @@ const Syllabus = () => {
       </Button>
 
       <Card>
-        <Title level={2}>{subject.name}</Title>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <Title level={2}>{subject.name}</Title>
+          <Space>
+            <Button
+              type="primary"
+              icon={<EditOutlined />}
+              onClick={handleSubjectEdit}
+            >
+              Sửa môn học
+            </Button>
+            <Button
+              danger
+              icon={<DeleteOutlined />}
+              onClick={handleSubjectDelete}
+            >
+              Xóa môn học
+            </Button>
+          </Space>
+        </div>
         
         <Descriptions bordered column={2} style={{ marginBottom: '24px' }}>
           <Descriptions.Item label="Mã môn học">{subject.code}</Descriptions.Item>
@@ -304,6 +395,53 @@ const Syllabus = () => {
             <TextArea rows={2} placeholder="Nhập các tài nguyên, phân cách bằng dấu phẩy" />
           </Form.Item>
         </Form>
+      </Modal>
+
+      <Modal
+        title="Sửa môn học"
+        open={isSubjectModalVisible}
+        onOk={handleSubjectModalOk}
+        onCancel={() => setIsSubjectModalVisible(false)}
+        width={600}
+      >
+        <Form
+          form={subjectForm}
+          layout="vertical"
+        >
+          <Form.Item
+            name="name"
+            label="Tên môn học"
+            rules={[{ required: true, message: 'Vui lòng nhập tên môn học' }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="description"
+            label="Mô tả"
+            rules={[{ required: true, message: 'Vui lòng nhập mô tả' }]}
+          >
+            <Input.TextArea rows={4} />
+          </Form.Item>
+          <Form.Item
+            name="minAverageScoreToPass"
+            label="Điểm đạt"
+            rules={[{ required: true, message: 'Vui lòng nhập điểm đạt' }]}
+          >
+            <Input type="number" min={0} max={10} step={0.1} />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        title="Xác nhận xóa"
+        open={deleteModalVisible}
+        onOk={handleDeleteConfirm}
+        onCancel={() => setDeleteModalVisible(false)}
+        okText="Xóa"
+        cancelText="Hủy"
+        okButtonProps={{ danger: true }}
+      >
+        <p>Bạn có chắc chắn muốn xóa môn học này?</p>
       </Modal>
     </div>
   );

@@ -76,7 +76,7 @@ const Classes = () => {
       title: 'Học phí',
       dataIndex: 'priceOfClass',
       key: 'priceOfClass',
-      render: (price) => `${price.toLocaleString('vi-VN')}.000 VNĐ`,
+      render: (price) => `${price.toLocaleString('vi-VN')}.000 VNĐ`, // sửa lại .000 tùy 
     },
     {
       title: 'Trạng thái',

@@ -6,6 +6,7 @@ import axios from 'axios';
 import { API_URL, endpoints } from '../../../config/api';
 
 const { Option } = Select;
+const { confirm } = Modal;
 
 const Subjects = () => {
   const navigate = useNavigate();
@@ -13,6 +14,8 @@ const Subjects = () => {
   const [loading, setLoading] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [showActive, setShowActive] = useState(true);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [subjectToDelete, setSubjectToDelete] = useState(null);
 
   useEffect(() => {
     fetchSubjects();
@@ -167,24 +170,34 @@ const Subjects = () => {
   };
 
   const handleDelete = (id) => {
-    Modal.confirm({
-      title: 'Xác nhận xóa',
-      content: 'Bạn có chắc chắn muốn xóa môn học này?',
-      onOk: async () => {
-        try {
-          setLoading(true);
-          await axios.delete(`${API_URL}${endpoints.manageSubject.delete}${id}`);
-          message.success('Xóa môn học thành công');
-          // Refresh the list after successful deletion
-          await fetchSubjects();
-        } catch (error) {
-          console.error('Error deleting subject:', error);
-          message.error('Không thể xóa môn học. Vui lòng thử lại.');
-        } finally {
-          setLoading(false);
-        }
-      },
-    });
+    console.log('Delete button clicked for ID:', id);
+    setSubjectToDelete(id);
+    setDeleteModalVisible(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!subjectToDelete) return;
+    
+    try {
+      setLoading(true);
+      console.log('Deleting subject with ID:', subjectToDelete);
+      const deleteUrl = `${API_URL}${endpoints.manageSubject.delete}${subjectToDelete}`;
+      console.log('Delete URL:', deleteUrl);
+      
+      const response = await axios.delete(deleteUrl);
+      console.log('Delete response:', response);
+      
+      message.success('Xóa môn học thành công');
+      await fetchSubjects();
+    } catch (error) {
+      console.error('Error deleting subject:', error);
+      console.error('Error response:', error.response);
+      message.error('Không thể xóa môn học. Vui lòng thử lại.');
+    } finally {
+      setLoading(false);
+      setDeleteModalVisible(false);
+      setSubjectToDelete(null);
+    }
   };
 
   const handleModalOk = async () => {
@@ -334,6 +347,21 @@ const Subjects = () => {
             </div>
           </div>
         )}
+      </Modal>
+
+      <Modal
+        title="Xác nhận xóa"
+        open={deleteModalVisible}
+        onOk={handleDeleteConfirm}
+        onCancel={() => {
+          setDeleteModalVisible(false);
+          setSubjectToDelete(null);
+        }}
+        okText="Xóa"
+        cancelText="Hủy"
+        okButtonProps={{ danger: true }}
+      >
+        <p>Bạn có chắc chắn muốn xóa môn học này?</p>
       </Modal>
     </div>
   );
