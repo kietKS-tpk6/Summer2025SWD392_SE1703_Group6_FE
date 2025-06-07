@@ -1,25 +1,58 @@
+// Footer.jsx
 import React from 'react';
-import { Layout } from 'antd';
-import { FacebookFilled, TwitterSquareFilled, YoutubeFilled, MailOutlined } from '@ant-design/icons';
-import './Footer.css';
+import { Layout, Row, Col } from 'antd';
+import {
+  FacebookFilled,
+  LinkedinOutlined,
+  TwitterOutlined,
+  MailOutlined,
+} from '@ant-design/icons';
+import Logo from '../../assets/Logo.svg';
+import '../../styles/Footer.css';
 
 const { Footer: AntFooter } = Layout;
 
 const Footer = () => (
   <AntFooter className="footer">
-    <div className="footer__copyright">
-      © {new Date().getFullYear()} Hệ Thống Học Tập Trực Tuyến. Đã đăng ký bản quyền.
-    </div>
-    <div className="footer__contact">
-      <MailOutlined style={{ marginRight: 6 }} />
-      Liên hệ: <a href="mailto:support@elearning.com">support@elearning.com</a>
-    </div>
-    <div className="footer__social">
-      <a href="https://facebook.com" target="_blank" rel="noopener noreferrer"><FacebookFilled /></a>
-      <a href="https://twitter.com" target="_blank" rel="noopener noreferrer"><TwitterSquareFilled /></a>
-      <a href="https://youtube.com" target="_blank" rel="noopener noreferrer"><YoutubeFilled /></a>
+    <div className="footer__container">
+      <Row gutter={[32, 24]}>
+        <Col xs={24} md={8} className="footer__logo-col">
+          <img src={Logo} alt="logo" className="footer__logo" />
+          <p className="footer__desc">
+            Hangul Learning System - Nền tảng học tiếng Hàn hiện đại, thân thiện và hiệu quả.
+          </p>
+        </Col>
+        <Col xs={24} md={8}>
+          <h4 className="footer__title">Liên kết nhanh</h4>
+          <ul className="footer__list">
+            <li><a href="/">Trang chủ</a></li>
+            <li><a href="/courses">Khóa học</a></li>
+            <li><a href="/about">Về chúng tôi</a></li>
+            <li><a href="/news">Tin tức</a></li>
+          </ul>
+        </Col>
+        <Col xs={24} md={8}>
+          <h4 className="footer__title">Liên hệ</h4>
+          <div className="footer__contact">
+            <a href="mailto:support@hangul.com"><MailOutlined /> support@hangul.com</a>
+          </div>
+          <div className="footer__social-icons">
+            <a href="#"><FacebookFilled /></a>
+            <a href="#"><LinkedinOutlined /></a>
+            <a href="#"><TwitterOutlined /></a>
+          </div>
+        </Col>
+      </Row>
+      <div className="footer__bottom">
+        <span>© {new Date().getFullYear()} Hangul Learning System</span>
+        <ul className="footer__policy-list">
+          <li><a href="#">Site Map</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Cookie Policy</a></li>
+        </ul>
+      </div>
     </div>
   </AntFooter>
 );
 
-export default Footer; 
+export default Footer;
