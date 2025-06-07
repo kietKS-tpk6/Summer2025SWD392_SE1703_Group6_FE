@@ -14,6 +14,7 @@ const Syllabus = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const subject = location.state?.subject;
+  const [syllabus, setSyllabus] = useState(null);
   const [syllabusSchedules, setSyllabusSchedules] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState(null);
@@ -21,44 +22,29 @@ const Syllabus = () => {
   const [isSubjectModalVisible, setIsSubjectModalVisible] = useState(false);
   const [subjectForm] = Form.useForm();
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // Mock data - Replace with actual API call
   useEffect(() => {
-    // Simulating API call to get syllabus data
-    const mockSyllabus = {
-      SyllabusID: 'SYL001',
-      SubjectID: subject?.code,
-      CreateBy: 'ACC001',
-      CreateAt: '2024-03-20 10:00:00',
-      UpdateBy: 'ACC002',
-      UpdateAt: '2024-03-21 15:30:00',
-      Description: 'Giáo trình tiếng Hàn cơ bản cho người mới bắt đầu',
-      Note: 'Tài liệu tham khảo: Giáo trình tiếng Hàn tổng hợp',
-      Status: 'published'
-    };
-
-    const mockSchedules = [
-      {
-        SyllabusScheduleID: 'SS001',
-        SyllabusID: 'SYL001',
-        Content: 'Giới thiệu về bảng chữ cái Hangeul',
-        Week: 1,
-        Resources: 'Tài liệu học tập, Video bài giảng',
-        LessonTitle: 'Bài 1: Bảng chữ cái Hangeul',
-        DurationMinutes: 90
-      },
-      {
-        SyllabusScheduleID: 'SS002',
-        SyllabusID: 'SYL001',
-        Content: 'Học nguyên âm cơ bản',
-        Week: 1,
-        Resources: 'Bài tập, Audio phát âm',
-        LessonTitle: 'Bài 2: Nguyên âm cơ bản',
-        DurationMinutes: 60
-      },
-    ].sort((a, b) => a.Week - b.Week);
-    setSyllabusSchedules(mockSchedules);
+    if (subject) {
+      fetchSyllabus();
+    }
   }, [subject]);
+
+  const fetchSyllabus = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API_URL}${endpoints.syllabus.getBySubject}/${subject.code}`);
+      if (response.data) {
+        setSyllabus(response.data);
+        setSyllabusSchedules(response.data.syllabusSchedules || []);
+      }
+    } catch (error) {
+      console.error('Error fetching syllabus:', error);
+      message.error('Không thể tải thông tin giáo trình');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAdd = () => {
     setEditingSchedule(null);
@@ -76,41 +62,38 @@ const Syllabus = () => {
     Modal.confirm({
       title: 'Xác nhận xóa',
       content: 'Bạn có chắc chắn muốn xóa lịch trình này?',
-      onOk: () => {
-        const updatedSchedules = syllabusSchedules
-          .filter(item => item.SyllabusScheduleID !== id)
-          .sort((a, b) => a.Week - b.Week);
-        setSyllabusSchedules(updatedSchedules);
-        message.success('Xóa lịch trình thành công');
+      onOk: async () => {
+        try {
+          await axios.delete(`${API_URL}${endpoints.syllabus.deleteSchedule}/${id}`);
+          message.success('Xóa lịch trình thành công');
+          fetchSyllabus();
+        } catch (error) {
+          console.error('Error deleting schedule:', error);
+          message.error('Không thể xóa lịch trình');
+        }
       },
     });
   };
-
-  const handleModalOk = () => {
-    form.validateFields().then((values) => {
+  
+  const handleModalOk = async () => {
+    try {
+      const values = await form.validateFields();
       if (editingSchedule) {
-        const updatedSchedules = syllabusSchedules
-          .map((item) =>
-            item.SyllabusScheduleID === editingSchedule.SyllabusScheduleID
-              ? { ...item, ...values }
-              : item
-          )
-          .sort((a, b) => a.Week - b.Week);
-        setSyllabusSchedules(updatedSchedules);
+        await axios.put(`${API_URL}${endpoints.syllabus.updateSchedule}/${editingSchedule.SyllabusScheduleID}`, values);
         message.success('Cập nhật lịch trình thành công');
       } else {
-        const newSchedule = {
-          SyllabusScheduleID: `SS${syllabusSchedules.length + 1}`.padStart(5, '0'),
-          SyllabusID: subject.code,
+        await axios.post(`${API_URL}${endpoints.syllabus.addSchedule}`, {
           ...values,
-        };
-        const updatedSchedules = [...syllabusSchedules, newSchedule]
-          .sort((a, b) => a.Week - b.Week);
-        setSyllabusSchedules(updatedSchedules);
+          SyllabusID: syllabus.SyllabusID
+        });
         message.success('Thêm lịch trình thành công');
       }
       setIsModalVisible(false);
-    });
+      fetchSyllabus();
+    } catch (error) {
+      console.error('Error saving schedule:', error);
+      message.error('Không thể lưu lịch trình');
+    }
   };
 
   const handleSubjectEdit = () => {
@@ -123,26 +106,17 @@ const Syllabus = () => {
   };
 
   const handleSubjectDelete = () => {
-    console.log('Delete button clicked');
-    console.log('Current subject:', subject);
     setDeleteModalVisible(true);
   };
 
   const handleDeleteConfirm = async () => {
     try {
       const subjectId = subject.id || subject.code;
-      console.log('Using subject ID:', subjectId);
-      const deleteUrl = `${API_URL}${endpoints.manageSubject.delete}${subjectId}`;
-      console.log('Delete URL:', deleteUrl);
-      
-      const response = await axios.delete(deleteUrl);
-      console.log('Delete response:', response);
-      
+      await axios.delete(`${API_URL}${endpoints.manageSubject.delete}${subjectId}`);
       message.success('Xóa môn học thành công');
       navigate('/dashboard/subject');
     } catch (error) {
       console.error('Error deleting subject:', error);
-      console.error('Error response:', error.response);
       message.error('Không thể xóa môn học. Vui lòng thử lại.');
     } finally {
       setDeleteModalVisible(false);
@@ -161,16 +135,13 @@ const Syllabus = () => {
       });
 
       if (response.data) {
-        // Update the subject state with new values
         const updatedSubject = {
           ...subject,
           name: values.name,
           description: values.description,
           minAverageScoreToPass: values.minAverageScoreToPass || 0
         };
-        // Update the location state with new subject data
         navigate(location.pathname, { state: { subject: updatedSubject }, replace: true });
-        
         message.success('Cập nhật môn học thành công');
         setIsSubjectModalVisible(false);
       }
@@ -201,6 +172,7 @@ const Syllabus = () => {
       dataIndex: 'Week',
       key: 'Week',
       width: 80,
+      sorter: (a, b) => a.Week - b.Week,
     },
     {
       title: 'Tiêu đề bài học',
@@ -271,7 +243,7 @@ const Syllabus = () => {
         Quay lại
       </Button>
 
-      <Card>
+      <Card loading={loading}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <Title level={2}>{subject.name}</Title>
           <Space>
@@ -315,13 +287,13 @@ const Syllabus = () => {
           <Descriptions.Item label="Ngày tạo">
             <Space>
               <CalendarOutlined />
-              <span>{subject.createAt}</span>
+              <span>{new Date(subject.createAt).toLocaleString()}</span>
             </Space>
           </Descriptions.Item>
           <Descriptions.Item label="Cập nhật lần cuối">
             <Space>
               <CalendarOutlined />
-              <span>{subject.updateAt}</span>
+              <span>{subject.updateAt ? new Date(subject.updateAt).toLocaleString() : 'Chưa cập nhật'}</span>
             </Space>
           </Descriptions.Item>
         </Descriptions>
@@ -345,6 +317,7 @@ const Syllabus = () => {
           rowKey="SyllabusScheduleID"
           pagination={false}
           scroll={{ x: 'max-content' }}
+          loading={loading}
         />
       </Card>
 
@@ -371,14 +344,14 @@ const Syllabus = () => {
             label="Tiêu đề bài học"
             rules={[{ required: true, message: 'Vui lòng nhập tiêu đề bài học' }]}
           >
-            <Input />
+            <Input maxLength={100} />
           </Form.Item>
           <Form.Item
             name="Content"
             label="Nội dung"
             rules={[{ required: true, message: 'Vui lòng nhập nội dung' }]}
           >
-            <TextArea rows={4} />
+            <TextArea rows={4} maxLength={255} />
           </Form.Item>
           <Form.Item
             name="DurationMinutes"
@@ -420,7 +393,7 @@ const Syllabus = () => {
             label="Mô tả"
             rules={[{ required: true, message: 'Vui lòng nhập mô tả' }]}
           >
-            <Input.TextArea rows={4} />
+            <Input.TextArea rows={4} maxLength={255} />
           </Form.Item>
           <Form.Item
             name="minAverageScoreToPass"
