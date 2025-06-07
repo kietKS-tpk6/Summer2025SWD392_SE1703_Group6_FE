@@ -1,20 +1,19 @@
 import React from 'react';
+import { motion } from 'framer-motion';
+import HeaderBar from '../../components/header/Header';
+import FooterBar from '../../components/footer/Footer';
+import Content from '../../components/Homepage/Content';
+import '../../styles/Content.css';
+
 
 function ViewerPage() {
   return (
     <div className="viewer-page">
-      <h2>Viewer Portal</h2>
-      <div className="content">
-        <h3>Welcome to the Viewer Portal</h3>
-        <p>This is a public portal where anyone can:</p>
-        <ul>
-          <li>Browse available courses</li>
-          <li>View course previews</li>
-          <li>Read about the learning system</li>
-        </ul>
-      </div>
+      <HeaderBar />
+        <Content />
+      <FooterBar />
     </div>
   );
 }
 
-export default ViewerPage; 
+export default ViewerPage;
