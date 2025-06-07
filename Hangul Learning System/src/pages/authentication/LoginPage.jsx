@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import "./LoginPage.css";
+import "../../styles/LoginPage.css";
 import axios from "axios";
 import { API_URL, endpoints } from "../../config/api";
 import { useNavigate } from "react-router-dom";
 import { Form, Input, Button, Alert } from "antd";
 import { MailOutlined, LockOutlined } from "@ant-design/icons";
+import { jwtDecode } from 'jwt-decode';
 
 const LoginPage = () => {
   const [error, setError] = useState("");
@@ -28,6 +29,7 @@ const LoginPage = () => {
           lastName: decodedToken.LastName,
           role: decodedToken.Role,
         };
+        
         localStorage.setItem("user", JSON.stringify(user));
         switch (decodedToken.Role) {
           case "Manager":
@@ -91,7 +93,7 @@ const LoginPage = () => {
         >
           <Input
             prefix={<MailOutlined style={{ color: '#fad934' }} />}
-            placeholder="Nhập email..."
+            placeholder="Nhập email..." 
             size="large"
           />
         </Form.Item>
