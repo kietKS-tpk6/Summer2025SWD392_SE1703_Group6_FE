@@ -14,10 +14,17 @@ import Schedule from './components/dashboard/pages/Schedule';
 import Profile from './components/dashboard/pages/Profile';
 import Settings from './components/dashboard/pages/Settings';
 import ViewerPage from './pages/viewer-portal/ViewerPage';
+import HomeContent from './components/Homepage/Content';
+// import About from './pages/viewer-portal/About';
+// import Courses from './pages/viewer-portal/Courses';
+// import Contact from './pages/viewer-portal/Contact';
 import StudentPage from './pages/student-portal/StudentPage';
 import NotFoundPage from './components/error/NotFoundPage';
 import LoginPage from './pages/authentication/LoginPage';
 import RegisterPage from './pages/authentication/RegisterPage';
+import PaymentSuccess from './components/payment/PaymentSuccess';
+import PaymentFailed from './components/payment/PaymentFailed';
+import PaymentForm from './components/payment/PaymentForm';
 import './App.css';
 import 'antd/dist/reset.css';
 
@@ -40,7 +47,17 @@ const dashboardRoutes = [
 
 // Public routes configuration
 const publicRoutes = [
-  { path: '/', element: <ViewerPage /> },
+  { 
+    // TRANG CHÍNH
+    path: '/', element: <ViewerPage />,
+    // TRANG NAVIGATE
+    children: [
+      { path: '', element: <HomeContent /> },
+      // { path: 'about', element: <About /> },
+      // { path: 'courses', element: <Courses /> },
+      // { path: 'contact', element: <Contact /> },
+    ]
+  },
   { path: '/login', element: <LoginPage /> },
   { path: '/register', element: <RegisterPage /> },
 ];
@@ -48,6 +65,9 @@ const publicRoutes = [
 // Student routes configuration
 const studentRoutes = [
   { path: '/student', element: <StudentPage /> },
+  { path: '/payment-success', element: <PaymentSuccess/>},
+  { path: '/payment-failed', element: <PaymentFailed/>},
+  { path: '/payment', element: <PaymentForm/>},
 ];
 
 const App = () => {
@@ -75,7 +95,11 @@ const App = () => {
 
         {/* Public Routes */}
         {publicRoutes.map((route) => (
-          <Route key={route.path} path={route.path} element={route.element} />
+          <Route key={route.path} path={route.path} element={route.element}>
+            {route.children?.map((child) => (
+              <Route key={child.path} path={child.path} element={child.element} />
+            ))}
+          </Route>
         ))}
 
         {/* Student Routes */}

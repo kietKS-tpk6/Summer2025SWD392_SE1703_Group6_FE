@@ -1,17 +1,17 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import HeaderBar from '../../components/header/Header';
-import FooterBar from '../../components/footer/Footer';
-import Content from '../../components/Homepage/Content';
+import { Outlet } from 'react-router-dom';
+import Header from '../../components/header/Header';
+import Footer from '../../components/footer/Footer';
 import '../../styles/Content.css';
-
 
 function ViewerPage() {
   return (
     <div className="viewer-page">
-      <HeaderBar />
-        <Content />
-      <FooterBar />
+      <Header />
+      <main className="viewer-content">
+        <Outlet />
+      </main>
+      <Footer />
     </div>
   );
 }
