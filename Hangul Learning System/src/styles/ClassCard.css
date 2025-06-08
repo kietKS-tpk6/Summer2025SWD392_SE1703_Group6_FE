@@ -1,0 +1,126 @@
+.class-card {
+  border-radius: 22px !important;
+  box-shadow: 0 8px 32px 0 rgba(251,176,64,0.10), 0 1.5rem 3rem #fbb04011;
+  transition: box-shadow 0.22s, transform 0.18s;
+  background: #fff;
+  border: none;
+}
+.class-card:hover {
+  box-shadow: 0 16px 48px #fbb04033, 0 2.5rem 4rem #fbb04011;
+  transform: translateY(-8px) scale(1.025);
+}
+
+.class-card-img-wrap {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  background: linear-gradient(120deg, #faf3eb 60%, #fffbe6 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top-left-radius: 22px;
+  border-top-right-radius: 22px;
+  overflow: hidden;
+}
+.class-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-top-left-radius: 22px;
+  border-top-right-radius: 22px;
+  transition: transform 0.2s;
+}
+.class-card:hover .class-card-img {
+  transform: scale(1.04);
+}
+.class-card-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 2px 12px;
+  box-shadow: 0 2px 8px #43cb8322;
+  z-index: 2;
+}
+
+.class-card-title {
+  font-size: 1.18rem;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 0.5rem;
+  line-height: 1.3;
+  min-height: 48px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.class-card-lecturer-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.7rem;
+}
+.class-card-lecturer {
+  font-size: 1.01rem;
+  color: #888;
+  font-weight: 500;
+}
+
+.class-card-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.1rem;
+}
+.class-card-price {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fbb040;
+}
+.class-card-status {
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  border-radius: 6px !important;
+  padding: 2px 14px !important;
+}
+
+.class-card-view-btn {
+  background: linear-gradient(90deg, #fbb040 0%, #ffe9b0 100%) !important;
+  color: #222 !important;
+  border: none !important;
+  border-radius: 10px !important;
+  padding: 12px 0 !important;
+  font-size: 1.08rem !important;
+  font-weight: 700 !important;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.2s, color 0.2s;
+  box-shadow: 0 2px 8px #fbb04011;
+  letter-spacing: 1px;
+}
+.class-card-view-btn:hover {
+  background: linear-gradient(90deg, #ffe9b0 0%, #fbb040 100%) !important;
+  color: #fff !important;
+}
+
+@media (max-width: 900px) {
+  .class-card {
+    width: 95vw !important;
+    max-width: 350px;
+  }
+}
+
+.class-card .ant-card-cover img {
+  height: 170px;
+  object-fit: cover;
+  border-top-left-radius: 18px;
+  border-top-right-radius: 18px;
+}
+
+.class-card-motion {
+  /* Để giữ layout flex, không cần style gì thêm */
+} 
