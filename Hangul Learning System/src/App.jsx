@@ -14,6 +14,10 @@ import Schedule from './components/dashboard/pages/Schedule';
 import Profile from './components/dashboard/pages/Profile';
 import Settings from './components/dashboard/pages/Settings';
 import ViewerPage from './pages/viewer-portal/ViewerPage';
+import HomeContent from './components/Homepage/Content';
+// import About from './pages/viewer-portal/About';
+// import Courses from './pages/viewer-portal/Courses';
+// import Contact from './pages/viewer-portal/Contact';
 import StudentPage from './pages/student-portal/StudentPage';
 import NotFoundPage from './components/error/NotFoundPage';
 import LoginPage from './pages/authentication/LoginPage';
@@ -43,7 +47,17 @@ const dashboardRoutes = [
 
 // Public routes configuration
 const publicRoutes = [
-  { path: '/', element: <ViewerPage /> },
+  { 
+    // TRANG CHÍNH
+    path: '/', element: <ViewerPage />,
+    // TRANG NAVIGATE
+    children: [
+      { path: '', element: <HomeContent /> },
+      // { path: 'about', element: <About /> },
+      // { path: 'courses', element: <Courses /> },
+      // { path: 'contact', element: <Contact /> },
+    ]
+  },
   { path: '/login', element: <LoginPage /> },
   { path: '/register', element: <RegisterPage /> },
 ];
@@ -81,7 +95,11 @@ const App = () => {
 
         {/* Public Routes */}
         {publicRoutes.map((route) => (
-          <Route key={route.path} path={route.path} element={route.element} />
+          <Route key={route.path} path={route.path} element={route.element}>
+            {route.children?.map((child) => (
+              <Route key={child.path} path={child.path} element={child.element} />
+            ))}
+          </Route>
         ))}
 
         {/* Student Routes */}
