@@ -12,9 +12,9 @@ export const endpoints = {
     },
     manageClass: {
         create: 'api/Class/create',
-        getAll: '/api/Class/get-by-subject',
+        getAll: 'api/Class/get-all-paginated',
+        getbyId: '/api/Class/get-by-subject',
         update: 'api/Class/update',
-        getById: 'api/Subject/get-subject-by-',
         getByTeacher: 'api/Class/get-by-teacher',
         getByStudent: 'api/Class/get-by-subject-teacher',
         getByStatus: 'api/Class/get-by-status',
