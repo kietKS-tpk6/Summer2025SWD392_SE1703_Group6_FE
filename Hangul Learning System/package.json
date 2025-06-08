@@ -12,9 +12,9 @@
   "dependencies": {
     "antd": "^5.25.4",
     "axios": "^1.9.0",
-    "framer-motion": "^12.15.0",
-    "jwt-decode": "^4.0.0",
+    "framer-motion": "^12.16.0",
     "i": "^0.3.7",
+    "jwt-decode": "^4.0.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-icons": "^5.5.0",

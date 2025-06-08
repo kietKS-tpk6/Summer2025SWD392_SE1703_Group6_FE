@@ -33,10 +33,10 @@ const LoginPage = () => {
         localStorage.setItem("user", JSON.stringify(user));
         switch (decodedToken.Role) {
           case "Manager":
-            navigate("/manager");
+            navigate("/dashboard");
             break;
           case "Teacher":
-            navigate("/teacher");
+            navigate("/lecturer");
             break;
           case "Student":
             navigate("/student");
