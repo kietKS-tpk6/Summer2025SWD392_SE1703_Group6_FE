@@ -4,6 +4,23 @@ import { Modal, Form, Input, InputNumber, Select } from 'antd';
 const { TextArea } = Input;
 const { Option } = Select;
 
+const CategoryEnum = {
+  0: 'Midterm',
+  1: 'FifteenMinutes',
+  2: 'Final',
+  3: 'Other'
+};
+
+const TestTypeEnum = {
+  0: 'MCQ',
+  1: 'Writing',
+  2: 'Speaking',
+  3: 'Listening',
+  4: 'Reading',
+  5: 'Mix',
+  6: 'Other'
+};
+
 export const SubjectModal = ({ visible, onOk, onCancel, form, initialValues }) => (
   <Modal
     title="Sửa môn học"
@@ -84,19 +101,18 @@ export const SyllabusModal = ({ visible, onOk, onCancel, form, initialValues }) 
 );
 
 export const AssessmentModal = ({ visible, onOk, onCancel, form, initialValues }) => {
-  const isEditing = !!initialValues;
-
   return (
     <Modal
-      title={isEditing ? 'Sửa tiêu chí đánh giá' : 'Thêm tiêu chí đánh giá mới'}
+      title={initialValues ? "Chỉnh sửa tiêu chí đánh giá" : "Thêm tiêu chí đánh giá"}
       open={visible}
       onOk={onOk}
       onCancel={onCancel}
-      width={600}
+      width={800}
     >
       <Form
         form={form}
         layout="vertical"
+        initialValues={initialValues}
       >
         <Form.Item
           name="category"
@@ -104,12 +120,12 @@ export const AssessmentModal = ({ visible, onOk, onCancel, form, initialValues }
           rules={[{ required: true, message: 'Vui lòng chọn loại đánh giá' }]}
         >
           <Select>
-            <Option value={0}>Quiz</Option>
-            <Option value={1}>Assignment</Option>
-            <Option value={2}>Midterm</Option>
-            <Option value={3}>Final</Option>
+            {Object.entries(CategoryEnum).map(([value, label]) => (
+              <Option key={value} value={parseInt(value)}>{label}</Option>
+            ))}
           </Select>
         </Form.Item>
+
         <Form.Item
           name="weightPercent"
           label="Trọng số (%)"
@@ -117,6 +133,7 @@ export const AssessmentModal = ({ visible, onOk, onCancel, form, initialValues }
         >
           <InputNumber min={0} max={100} style={{ width: '100%' }} />
         </Form.Item>
+
         <Form.Item
           name="requiredCount"
           label="Số lượng yêu cầu"
@@ -124,37 +141,40 @@ export const AssessmentModal = ({ visible, onOk, onCancel, form, initialValues }
         >
           <InputNumber min={0} style={{ width: '100%' }} />
         </Form.Item>
+
         <Form.Item
           name="duration"
           label="Thời gian (phút)"
           rules={[{ required: true, message: 'Vui lòng nhập thời gian' }]}
         >
-          <InputNumber min={1} style={{ width: '100%' }} />
+          <InputNumber min={0} style={{ width: '100%' }} />
         </Form.Item>
+
         <Form.Item
           name="testType"
           label="Loại bài kiểm tra"
           rules={[{ required: true, message: 'Vui lòng chọn loại bài kiểm tra' }]}
         >
           <Select>
-            <Option value={0}>Multiple Choice</Option>
-            <Option value={1}>Essay</Option>
-            <Option value={2}>Mixed</Option>
-            <Option value={3}>Listening</Option>
+            {Object.entries(TestTypeEnum).map(([value, label]) => (
+              <Option key={value} value={parseInt(value)}>{label}</Option>
+            ))}
           </Select>
         </Form.Item>
+
         <Form.Item
           name="minPassingScore"
           label="Điểm đạt tối thiểu"
           rules={[{ required: true, message: 'Vui lòng nhập điểm đạt tối thiểu' }]}
         >
-          <InputNumber min={0} max={10} step={0.1} style={{ width: '100%' }} />
+          <InputNumber min={0} max={10} style={{ width: '100%' }} />
         </Form.Item>
+
         <Form.Item
           name="note"
           label="Ghi chú"
         >
-          <TextArea rows={2} maxLength={255} />
+          <TextArea rows={4} />
         </Form.Item>
       </Form>
     </Modal>

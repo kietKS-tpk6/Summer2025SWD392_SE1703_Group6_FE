@@ -35,7 +35,7 @@ export const endpoints = {
     },
     syllabus: {
         getAssessmentCriteria: 'api/AssessmentCriteria/get-by-syllabus',
-        addAssessmentCriteria: 'api/AssessmentCriteria/add',
+        createAssessmentCriteria: 'api/AssessmentCriteria/create',
         updateAssessmentCriteria: 'api/AssessmentCriteria/update',
         deleteAssessmentCriteria: 'api/AssessmentCriteria/delete',
     },

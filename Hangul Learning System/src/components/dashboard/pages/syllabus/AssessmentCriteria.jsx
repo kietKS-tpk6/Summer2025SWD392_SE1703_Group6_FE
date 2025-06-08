@@ -6,18 +6,21 @@ const { Title } = Typography;
 
 // Enums for Category and TestType
 const CategoryEnum = {
-  0: 'Quiz',
-  1: 'Assignment',
-  2: 'Midterm',
-  3: 'Final'
+  0: 'Midterm',
+  1: 'FifteenMinutes',
+  2: 'Final',
+  3: 'Other'
 };
 
 const TestTypeEnum = {
-  0: 'Multiple Choice',
-  1: 'Essay',
-  2: 'Mixed',
-  3: 'Listening'
-};
+  0: 'MCQ',
+  1: 'Writing',
+  2: 'Speaking',
+  3: 'Listening',
+  4: 'Reading',
+  5: 'Mix',
+  6: 'Other'
+}
 
 const AssessmentCriteria = ({ 
   assessmentCriteria, 
@@ -85,7 +88,10 @@ const AssessmentCriteria = ({
           <Button
             danger
             icon={<DeleteOutlined />}
-            onClick={() => onDelete(record.assessmentCriteriaID)}
+            onClick={() => {
+              console.log('Record to delete:', record);
+              onDelete(record.id || record.assessmentCriteriaID);
+            }}
           />
         </Space>
       ),

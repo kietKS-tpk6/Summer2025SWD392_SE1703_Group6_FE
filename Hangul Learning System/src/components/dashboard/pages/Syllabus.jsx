@@ -36,7 +36,9 @@ const Syllabus = () => {
   const [isSyllabusModalVisible, setIsSyllabusModalVisible] = useState(false);
   const [isAssessmentModalVisible, setIsAssessmentModalVisible] = useState(false);
   const [isScheduleModalVisible, setIsScheduleModalVisible] = useState(false);
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [subjectDeleteModalVisible, setSubjectDeleteModalVisible] = useState(false);
+  const [assessmentDeleteModalVisible, setAssessmentDeleteModalVisible] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
   
   // Form instances
   const [subjectForm] = Form.useForm();
@@ -74,7 +76,7 @@ const Syllabus = () => {
 
   const fetchAssessmentCriteria = async () => {
     try {
-      const response = await axios.get(`${API_URL}${endpoints.syllabus.getAssessmentCriteria}/SY0001`);
+      const response = await axios.get(`${API_URL}${endpoints.syllabus.getAssessmentCriteria}/SY0001`); // ${syllabus.SyllabusID}
       if (response.data) {
         setAssessmentCriteria(response.data);
       }
@@ -95,7 +97,7 @@ const Syllabus = () => {
   };
 
   const handleSubjectDelete = () => {
-    setDeleteModalVisible(true);
+    setSubjectDeleteModalVisible(true);
   };
 
   const handleSubjectModalOk = async () => {
@@ -126,7 +128,7 @@ const Syllabus = () => {
     }
   };
 
-  const handleDeleteConfirm = async () => {
+  const handleSubjectDeleteConfirm = async () => {
     try {
       const subjectId = subject.id || subject.code;
       await axios.delete(`${API_URL}${endpoints.manageSubject.delete}${subjectId}`);
@@ -136,7 +138,7 @@ const Syllabus = () => {
       console.error('Error deleting subject:', error);
       message.error('Không thể xóa môn học. Vui lòng thử lại.');
     } finally {
-      setDeleteModalVisible(false);
+      setSubjectDeleteModalVisible(false);
     }
   };
 
@@ -177,33 +179,39 @@ const Syllabus = () => {
   };
 
   const handleAssessmentDelete = (id) => {
-    Modal.confirm({
-      title: 'Xác nhận xóa',
-      content: 'Bạn có chắc chắn muốn xóa tiêu chí đánh giá này?',
-      onOk: async () => {
-        try {
-          await axios.delete(`${API_URL}${endpoints.syllabus.deleteAssessmentCriteria}/${id}`);
-          message.success('Xóa tiêu chí đánh giá thành công');
-          fetchAssessmentCriteria();
-        } catch (error) {
-          console.error('Error deleting assessment criteria:', error);
-          message.error('Không thể xóa tiêu chí đánh giá');
-        }
-      },
-    });
+    setDeleteId(id);
+    setAssessmentDeleteModalVisible(true);
   };
 
   const handleAssessmentModalOk = async () => {
     try {
       const values = await assessmentForm.validateFields();
       if (editingCriteria) {
-        await axios.put(`${API_URL}${endpoints.syllabus.updateAssessmentCriteria}/${editingCriteria.AssessmentCriteriaID}`, values);
+        const payload = {
+          assessmentCriteriaID: editingCriteria.assessmentCriteriaID,
+          syllabusID: "SY0001", //syllabus.SyllabusID
+          weightPercent: values.weightPercent,
+          category: values.category,
+          requiredCount: values.requiredCount,
+          duration: values.duration,
+          testType: values.testType,
+          note: values.note || '',
+          minPassingScore: values.minPassingScore
+        };
+        await axios.put(`${API_URL}${endpoints.syllabus.updateAssessmentCriteria}/${editingCriteria.assessmentCriteriaID}`, payload);
         message.success('Cập nhật tiêu chí đánh giá thành công');
       } else {
-        await axios.post(`${API_URL}${endpoints.syllabus.addAssessmentCriteria}`, {
-          ...values,
-          SyllabusID: syllabus.SyllabusID
-        });
+        const payload = {
+          syllabusID: "SY0001", // syllabus.SyllabusID
+          weightPercent: values.weightPercent,
+          category: values.category,
+          requiredCount: values.requiredCount,
+          duration: values.duration,
+          testType: values.testType,
+          note: values.note || '',
+          minPassingScore: values.minPassingScore
+        };
+        await axios.post(`${API_URL}${endpoints.syllabus.createAssessmentCriteria}`, payload);
         message.success('Thêm tiêu chí đánh giá thành công');
       }
       setIsAssessmentModalVisible(false);
@@ -211,6 +219,18 @@ const Syllabus = () => {
     } catch (error) {
       console.error('Error saving assessment criteria:', error);
       message.error('Không thể lưu tiêu chí đánh giá');
+    }
+  };
+
+  const handleAssessmentDeleteConfirm = async () => {
+    try {
+      await axios.delete(`${API_URL}${endpoints.syllabus.deleteAssessmentCriteria}/${deleteId}`);
+      message.success('Xóa tiêu chí đánh giá thành công');
+      fetchAssessmentCriteria();
+      setAssessmentDeleteModalVisible(false);
+    } catch (error) {
+      console.error('Error deleting assessment criteria:', error);
+      message.error('Không thể xóa tiêu chí đánh giá');
     }
   };
 
@@ -363,10 +383,25 @@ const Syllabus = () => {
       />
 
       <DeleteConfirmModal
-        visible={deleteModalVisible}
-        onOk={handleDeleteConfirm}
-        onCancel={() => setDeleteModalVisible(false)}
+        visible={subjectDeleteModalVisible}
+        onOk={handleSubjectDeleteConfirm}
+        onCancel={() => setSubjectDeleteModalVisible(false)}
       />
+
+      <Modal
+        title="Xác nhận xóa tiêu chí đánh giá"
+        open={assessmentDeleteModalVisible}
+        onOk={handleAssessmentDeleteConfirm}
+        onCancel={() => setAssessmentDeleteModalVisible(false)}
+        okText="Xóa"
+        okType="danger"
+        cancelText="Hủy"
+      >
+        <div>
+          <p>Bạn có chắc chắn muốn xóa tiêu chí đánh giá này?</p>
+          <p style={{ color: 'red' }}>Lưu ý: Hành động này không thể hoàn tác.</p>
+        </div>
+      </Modal>
     </div>
   );
 };
