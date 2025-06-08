@@ -18,6 +18,9 @@ import StudentPage from './pages/student-portal/StudentPage';
 import NotFoundPage from './components/error/NotFoundPage';
 import LoginPage from './pages/authentication/LoginPage';
 import RegisterPage from './pages/authentication/RegisterPage';
+import PaymentSuccess from './components/payment/PaymentSuccess';
+import PaymentFailed from './components/payment/PaymentFailed';
+import PaymentForm from './components/payment/PaymentForm';
 import './App.css';
 import 'antd/dist/reset.css';
 
@@ -48,6 +51,9 @@ const publicRoutes = [
 // Student routes configuration
 const studentRoutes = [
   { path: '/student', element: <StudentPage /> },
+  { path: '/payment-success', element: <PaymentSuccess/>},
+  { path: '/payment-failed', element: <PaymentFailed/>},
+  { path: '/payment', element: <PaymentForm/>},
 ];
 
 const App = () => {
