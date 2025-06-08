@@ -33,5 +33,10 @@ export const endpoints = {
         delete: 'api/Subject/delete/',
         count: 'api/Subject/count'
     },
-    
+    syllabus: {
+        getAssessmentCriteria: 'api/AssessmentCriteria/get-by-syllabus',
+        addAssessmentCriteria: 'api/AssessmentCriteria/add',
+        updateAssessmentCriteria: 'api/AssessmentCriteria/update',
+        deleteAssessmentCriteria: 'api/AssessmentCriteria/delete',
+    },
 };

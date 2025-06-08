@@ -5,6 +5,19 @@ import { ArrowLeftOutlined, ClockCircleOutlined, PlusOutlined, EditOutlined, Del
 import axios from 'axios';
 import { API_URL, endpoints } from '../../../config/api';
 
+// Import components
+import SubjectInfo from './syllabus/SubjectInfo';
+import SyllabusInfo from './syllabus/SyllabusInfo';
+import AssessmentCriteria from './syllabus/AssessmentCriteria';
+import SyllabusSchedule from './syllabus/SyllabusSchedule';
+import {
+  SubjectModal,
+  SyllabusModal,
+  AssessmentModal,
+  ScheduleModal,
+  DeleteConfirmModal
+} from './syllabus/Modals';
+
 const { Title, Paragraph } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
@@ -16,17 +29,30 @@ const Syllabus = () => {
   const subject = location.state?.subject;
   const [syllabus, setSyllabus] = useState(null);
   const [syllabusSchedules, setSyllabusSchedules] = useState([]);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingSchedule, setEditingSchedule] = useState(null);
-  const [form] = Form.useForm();
+  const [assessmentCriteria, setAssessmentCriteria] = useState([]);
+  
+  // Modal states
   const [isSubjectModalVisible, setIsSubjectModalVisible] = useState(false);
-  const [subjectForm] = Form.useForm();
+  const [isSyllabusModalVisible, setIsSyllabusModalVisible] = useState(false);
+  const [isAssessmentModalVisible, setIsAssessmentModalVisible] = useState(false);
+  const [isScheduleModalVisible, setIsScheduleModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  
+  // Form instances
+  const [subjectForm] = Form.useForm();
+  const [syllabusForm] = Form.useForm();
+  const [assessmentForm] = Form.useForm();
+  const [scheduleForm] = Form.useForm();
+  
+  // Editing states
+  const [editingCriteria, setEditingCriteria] = useState(null);
+  const [editingSchedule, setEditingSchedule] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (subject) {
       fetchSyllabus();
+      fetchAssessmentCriteria();
     }
   }, [subject]);
 
@@ -46,56 +72,19 @@ const Syllabus = () => {
     }
   };
 
-  const handleAdd = () => {
-    setEditingSchedule(null);
-    form.resetFields();
-    setIsModalVisible(true);
-  };
-
-  const handleEdit = (record) => {
-    setEditingSchedule(record);
-    form.setFieldsValue(record);
-    setIsModalVisible(true);
-  };
-
-  const handleDelete = (id) => {
-    Modal.confirm({
-      title: 'Xác nhận xóa',
-      content: 'Bạn có chắc chắn muốn xóa lịch trình này?',
-      onOk: async () => {
-        try {
-          await axios.delete(`${API_URL}${endpoints.syllabus.deleteSchedule}/${id}`);
-          message.success('Xóa lịch trình thành công');
-          fetchSyllabus();
-        } catch (error) {
-          console.error('Error deleting schedule:', error);
-          message.error('Không thể xóa lịch trình');
-        }
-      },
-    });
-  };
-  
-  const handleModalOk = async () => {
+  const fetchAssessmentCriteria = async () => {
     try {
-      const values = await form.validateFields();
-      if (editingSchedule) {
-        await axios.put(`${API_URL}${endpoints.syllabus.updateSchedule}/${editingSchedule.SyllabusScheduleID}`, values);
-        message.success('Cập nhật lịch trình thành công');
-      } else {
-        await axios.post(`${API_URL}${endpoints.syllabus.addSchedule}`, {
-          ...values,
-          SyllabusID: syllabus.SyllabusID
-        });
-        message.success('Thêm lịch trình thành công');
+      const response = await axios.get(`${API_URL}${endpoints.syllabus.getAssessmentCriteria}/SY0001`);
+      if (response.data) {
+        setAssessmentCriteria(response.data);
       }
-      setIsModalVisible(false);
-      fetchSyllabus();
     } catch (error) {
-      console.error('Error saving schedule:', error);
-      message.error('Không thể lưu lịch trình');
+      console.error('Error fetching assessment criteria:', error);
+      message.error('Không thể tải tiêu chí đánh giá');
     }
   };
 
+  // Subject handlers
   const handleSubjectEdit = () => {
     subjectForm.setFieldsValue({
       name: subject.name,
@@ -107,20 +96,6 @@ const Syllabus = () => {
 
   const handleSubjectDelete = () => {
     setDeleteModalVisible(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    try {
-      const subjectId = subject.id || subject.code;
-      await axios.delete(`${API_URL}${endpoints.manageSubject.delete}${subjectId}`);
-      message.success('Xóa môn học thành công');
-      navigate('/dashboard/subject');
-    } catch (error) {
-      console.error('Error deleting subject:', error);
-      message.error('Không thể xóa môn học. Vui lòng thử lại.');
-    } finally {
-      setDeleteModalVisible(false);
-    }
   };
 
   const handleSubjectModalOk = async () => {
@@ -151,6 +126,145 @@ const Syllabus = () => {
     }
   };
 
+  const handleDeleteConfirm = async () => {
+    try {
+      const subjectId = subject.id || subject.code;
+      await axios.delete(`${API_URL}${endpoints.manageSubject.delete}${subjectId}`);
+      message.success('Xóa môn học thành công');
+      navigate('/dashboard/subject');
+    } catch (error) {
+      console.error('Error deleting subject:', error);
+      message.error('Không thể xóa môn học. Vui lòng thử lại.');
+    } finally {
+      setDeleteModalVisible(false);
+    }
+  };
+
+  // Syllabus handlers
+  const handleSyllabusEdit = () => {
+    syllabusForm.setFieldsValue({
+      description: syllabus.description,
+      note: syllabus.note,
+      status: syllabus.status
+    });
+    setIsSyllabusModalVisible(true);
+  };
+
+  const handleSyllabusModalOk = async () => {
+    try {
+      const values = await syllabusForm.validateFields();
+      await axios.put(`${API_URL}${endpoints.syllabus.update}/${syllabus.SyllabusID}`, values);
+      message.success('Cập nhật thông tin giáo trình thành công');
+      setIsSyllabusModalVisible(false);
+      fetchSyllabus();
+    } catch (error) {
+      console.error('Error updating syllabus:', error);
+      message.error('Không thể cập nhật thông tin giáo trình');
+    }
+  };
+
+  // Assessment handlers
+  const handleAssessmentAdd = () => {
+    setEditingCriteria(null);
+    assessmentForm.resetFields();
+    setIsAssessmentModalVisible(true);
+  };
+
+  const handleAssessmentEdit = (record) => {
+    setEditingCriteria(record);
+    assessmentForm.setFieldsValue(record);
+    setIsAssessmentModalVisible(true);
+  };
+
+  const handleAssessmentDelete = (id) => {
+    Modal.confirm({
+      title: 'Xác nhận xóa',
+      content: 'Bạn có chắc chắn muốn xóa tiêu chí đánh giá này?',
+      onOk: async () => {
+        try {
+          await axios.delete(`${API_URL}${endpoints.syllabus.deleteAssessmentCriteria}/${id}`);
+          message.success('Xóa tiêu chí đánh giá thành công');
+          fetchAssessmentCriteria();
+        } catch (error) {
+          console.error('Error deleting assessment criteria:', error);
+          message.error('Không thể xóa tiêu chí đánh giá');
+        }
+      },
+    });
+  };
+
+  const handleAssessmentModalOk = async () => {
+    try {
+      const values = await assessmentForm.validateFields();
+      if (editingCriteria) {
+        await axios.put(`${API_URL}${endpoints.syllabus.updateAssessmentCriteria}/${editingCriteria.AssessmentCriteriaID}`, values);
+        message.success('Cập nhật tiêu chí đánh giá thành công');
+      } else {
+        await axios.post(`${API_URL}${endpoints.syllabus.addAssessmentCriteria}`, {
+          ...values,
+          SyllabusID: syllabus.SyllabusID
+        });
+        message.success('Thêm tiêu chí đánh giá thành công');
+      }
+      setIsAssessmentModalVisible(false);
+      fetchAssessmentCriteria();
+    } catch (error) {
+      console.error('Error saving assessment criteria:', error);
+      message.error('Không thể lưu tiêu chí đánh giá');
+    }
+  };
+
+  // Schedule handlers
+  const handleScheduleAdd = () => {
+    setEditingSchedule(null);
+    scheduleForm.resetFields();
+    setIsScheduleModalVisible(true);
+  };
+
+  const handleScheduleEdit = (record) => {
+    setEditingSchedule(record);
+    scheduleForm.setFieldsValue(record);
+    setIsScheduleModalVisible(true);
+  };
+
+  const handleScheduleDelete = (id) => {
+    Modal.confirm({
+      title: 'Xác nhận xóa',
+      content: 'Bạn có chắc chắn muốn xóa lịch trình này?',
+      onOk: async () => {
+        try {
+          await axios.delete(`${API_URL}${endpoints.syllabus.deleteSchedule}/${id}`);
+          message.success('Xóa lịch trình thành công');
+          fetchSyllabus();
+        } catch (error) {
+          console.error('Error deleting schedule:', error);
+          message.error('Không thể xóa lịch trình');
+        }
+      },
+    });
+  };
+
+  const handleScheduleModalOk = async () => {
+    try {
+      const values = await scheduleForm.validateFields();
+      if (editingSchedule) {
+        await axios.put(`${API_URL}${endpoints.syllabus.updateSchedule}/${editingSchedule.SyllabusScheduleID}`, values);
+        message.success('Cập nhật lịch trình thành công');
+      } else {
+        await axios.post(`${API_URL}${endpoints.syllabus.addSchedule}`, {
+          ...values,
+          SyllabusID: syllabus.SyllabusID
+        });
+        message.success('Thêm lịch trình thành công');
+      }
+      setIsScheduleModalVisible(false);
+      fetchSyllabus();
+    } catch (error) {
+      console.error('Error saving schedule:', error);
+      message.error('Không thể lưu lịch trình');
+    }
+  };
+
   if (!subject) {
     return (
       <div style={{ padding: '24px', textAlign: 'center' }}>
@@ -166,72 +280,6 @@ const Syllabus = () => {
     );
   }
 
-  const columns = [
-    {
-      title: 'Tuần',
-      dataIndex: 'Week',
-      key: 'Week',
-      width: 80,
-      sorter: (a, b) => a.Week - b.Week,
-    },
-    {
-      title: 'Tiêu đề bài học',
-      dataIndex: 'LessonTitle',
-      key: 'LessonTitle',
-      width: 200,
-    },
-    {
-      title: 'Nội dung',
-      dataIndex: 'Content',
-      key: 'Content',
-      width: 300,
-    },
-    {
-      title: 'Thời lượng',
-      dataIndex: 'DurationMinutes',
-      key: 'DurationMinutes',
-      width: 120,
-      render: (duration) => (
-        <Space>
-          <ClockCircleOutlined />
-          <span>{duration} phút</span>
-        </Space>
-      ),
-    },
-    {
-      title: 'Tài nguyên',
-      dataIndex: 'Resources',
-      key: 'Resources',
-      width: 200,
-      render: (resources) => (
-        <Space wrap>
-          {resources.split(',').map((resource, index) => (
-            <Tag key={index} color="blue">{resource.trim()}</Tag>
-          ))}
-        </Space>
-      ),
-    },
-    {
-      title: 'Thao tác',
-      key: 'action',
-      width: 120,
-      render: (_, record) => (
-        <Space>
-          <Button
-            type="primary"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-          />
-          <Button
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => handleDelete(record.SyllabusScheduleID)}
-          />
-        </Space>
-      ),
-    },
-  ];
-
   return (
     <div style={{ padding: '24px' }}>
       <Button 
@@ -244,178 +292,81 @@ const Syllabus = () => {
       </Button>
 
       <Card loading={loading}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <Title level={2}>{subject.name}</Title>
-          <Space>
-            <Button
-              type="primary"
-              icon={<EditOutlined />}
-              onClick={handleSubjectEdit}
-            >
-              Sửa môn học
-            </Button>
-            <Button
-              danger
-              icon={<DeleteOutlined />}
-              onClick={handleSubjectDelete}
-            >
-              Xóa môn học
-            </Button>
-          </Space>
-        </div>
-        
-        <Descriptions bordered column={2} style={{ marginBottom: '24px' }}>
-          <Descriptions.Item label="Mã môn học">{subject.code}</Descriptions.Item>
-          <Descriptions.Item label="Cấp độ">{subject.level}</Descriptions.Item>
-          <Descriptions.Item label="Mô tả" span={2}>
-            {subject.description}
-          </Descriptions.Item>
-          <Descriptions.Item label="Ghi chú" span={2}>
-            {subject.note}
-          </Descriptions.Item>
-          <Descriptions.Item label="Trạng thái">
-            <Tag color={subject.status === 'published' ? 'green' : 'orange'}>
-              {subject.status === 'published' ? 'Đã xuất bản' : 'Bản nháp'}
-            </Tag>
-          </Descriptions.Item>
-          <Descriptions.Item label="Người tạo">
-            <Space>
-              <UserOutlined />
-              <span>{subject.createBy}</span>
-            </Space>
-          </Descriptions.Item>
-          <Descriptions.Item label="Ngày tạo">
-            <Space>
-              <CalendarOutlined />
-              <span>{new Date(subject.createAt).toLocaleString()}</span>
-            </Space>
-          </Descriptions.Item>
-          <Descriptions.Item label="Cập nhật lần cuối">
-            <Space>
-              <CalendarOutlined />
-              <span>{subject.updateAt ? new Date(subject.updateAt).toLocaleString() : 'Chưa cập nhật'}</span>
-            </Space>
-          </Descriptions.Item>
-        </Descriptions>
+        <SubjectInfo
+          subject={subject}
+          onEdit={handleSubjectEdit}
+          onDelete={handleSubjectDelete}
+        />
 
         <Divider />
-        
-        <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Title level={3} style={{ margin: 0 }}>Lịch trình học tập</Title>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={handleAdd}
-          >
-            Thêm lịch trình
-          </Button>
-        </div>
 
-        <Table 
-          columns={columns}
-          dataSource={syllabusSchedules}
-          rowKey="SyllabusScheduleID"
-          pagination={false}
-          scroll={{ x: 'max-content' }}
-          loading={loading}
+        <SyllabusInfo
+          syllabus={syllabus}
+          onEdit={handleSyllabusEdit}
+          subject={subject}
+          onSyllabusCreated={(newSyllabus) => {
+            setSyllabus(newSyllabus);
+            fetchSyllabus();
+          }}
+        />
+
+        <Divider />
+
+        <AssessmentCriteria
+          assessmentCriteria={assessmentCriteria}
+          onAdd={handleAssessmentAdd}
+          onEdit={handleAssessmentEdit}
+          onDelete={handleAssessmentDelete}
+        />
+
+        <Divider />
+
+        <SyllabusSchedule
+          schedules={syllabusSchedules}
+          onAdd={handleScheduleAdd}
+          onEdit={handleScheduleEdit}
+          onDelete={handleScheduleDelete}
         />
       </Card>
 
-      <Modal
-        title={editingSchedule ? 'Sửa lịch trình' : 'Thêm lịch trình mới'}
-        open={isModalVisible}
-        onOk={handleModalOk}
-        onCancel={() => setIsModalVisible(false)}
-        width={600}
-      >
-        <Form
-          form={form}
-          layout="vertical"
-        >
-          <Form.Item
-            name="Week"
-            label="Tuần"
-            rules={[{ required: true, message: 'Vui lòng nhập tuần' }]}
-          >
-            <InputNumber min={1} style={{ width: '100%' }} />
-          </Form.Item>
-          <Form.Item
-            name="LessonTitle"
-            label="Tiêu đề bài học"
-            rules={[{ required: true, message: 'Vui lòng nhập tiêu đề bài học' }]}
-          >
-            <Input maxLength={100} />
-          </Form.Item>
-          <Form.Item
-            name="Content"
-            label="Nội dung"
-            rules={[{ required: true, message: 'Vui lòng nhập nội dung' }]}
-          >
-            <TextArea rows={4} maxLength={255} />
-          </Form.Item>
-          <Form.Item
-            name="DurationMinutes"
-            label="Thời lượng (phút)"
-            rules={[{ required: true, message: 'Vui lòng nhập thời lượng' }]}
-          >
-            <InputNumber min={1} style={{ width: '100%' }} />
-          </Form.Item>
-          <Form.Item
-            name="Resources"
-            label="Tài nguyên"
-            rules={[{ required: true, message: 'Vui lòng nhập tài nguyên' }]}
-          >
-            <TextArea rows={2} placeholder="Nhập các tài nguyên, phân cách bằng dấu phẩy" />
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      <Modal
-        title="Sửa môn học"
-        open={isSubjectModalVisible}
+      {/* Modals */}
+      <SubjectModal
+        visible={isSubjectModalVisible}
         onOk={handleSubjectModalOk}
         onCancel={() => setIsSubjectModalVisible(false)}
-        width={600}
-      >
-        <Form
-          form={subjectForm}
-          layout="vertical"
-        >
-          <Form.Item
-            name="name"
-            label="Tên môn học"
-            rules={[{ required: true, message: 'Vui lòng nhập tên môn học' }]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="description"
-            label="Mô tả"
-            rules={[{ required: true, message: 'Vui lòng nhập mô tả' }]}
-          >
-            <Input.TextArea rows={4} maxLength={255} />
-          </Form.Item>
-          <Form.Item
-            name="minAverageScoreToPass"
-            label="Điểm đạt"
-            rules={[{ required: true, message: 'Vui lòng nhập điểm đạt' }]}
-          >
-            <Input type="number" min={0} max={10} step={0.1} />
-          </Form.Item>
-        </Form>
-      </Modal>
+        form={subjectForm}
+        initialValues={subject}
+      />
 
-      <Modal
-        title="Xác nhận xóa"
-        open={deleteModalVisible}
+      <SyllabusModal
+        visible={isSyllabusModalVisible}
+        onOk={handleSyllabusModalOk}
+        onCancel={() => setIsSyllabusModalVisible(false)}
+        form={syllabusForm}
+        initialValues={syllabus}
+      />
+
+      <AssessmentModal
+        visible={isAssessmentModalVisible}
+        onOk={handleAssessmentModalOk}
+        onCancel={() => setIsAssessmentModalVisible(false)}
+        form={assessmentForm}
+        initialValues={editingCriteria}
+      />
+
+      <ScheduleModal
+        visible={isScheduleModalVisible}
+        onOk={handleScheduleModalOk}
+        onCancel={() => setIsScheduleModalVisible(false)}
+        form={scheduleForm}
+        initialValues={editingSchedule}
+      />
+
+      <DeleteConfirmModal
+        visible={deleteModalVisible}
         onOk={handleDeleteConfirm}
         onCancel={() => setDeleteModalVisible(false)}
-        okText="Xóa"
-        cancelText="Hủy"
-        okButtonProps={{ danger: true }}
-      >
-        <p>Bạn có chắc chắn muốn xóa môn học này?</p>
-      </Modal>
+      />
     </div>
   );
 };
