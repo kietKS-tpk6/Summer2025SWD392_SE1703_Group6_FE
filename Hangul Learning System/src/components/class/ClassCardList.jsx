@@ -31,7 +31,7 @@ const ClassCardList = () => {
     <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
       {classes.map((item) => (
         <ClassCard
-          key={item.classID}
+          id={item.classID}
           imageURL={item.imageURL}
           className={item.className}
           lecturerName={item.lecturerName}
