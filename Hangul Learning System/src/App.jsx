@@ -54,6 +54,9 @@ const publicRoutes = [
     // TRANG NAVIGATE
     children: [
       { path: '', element: <HomeContent /> },
+      { path: '/payment-success', element: <PaymentSuccess/>},
+      { path: '/payment-failed', element: <PaymentFailed/>},
+      { path: '/payment', element: <PaymentForm/>},
       // { path: 'about', element: <About /> },
       // { path: 'courses', element: <Courses /> },
       // { path: 'contact', element: <Contact /> },
