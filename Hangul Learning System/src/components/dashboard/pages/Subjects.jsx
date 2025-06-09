@@ -30,18 +30,27 @@ const Subjects = () => {
         }
       });
       console.log('API Response:', response.data); // Debug log
-      
+
       // Check if response.data is an array
       const subjectsData = Array.isArray(response.data) ? response.data : [];
-      
+
       const formattedSubjects = subjectsData.map(subject => ({
         id: subject.subjectID,
         name: subject.subjectName,
         code: subject.subjectID,
         description: subject.description,
+        isActive: subject.isActive,
         status: subject.isActive ? 'Đang mở' : 'Đã đóng',
         minAverageScoreToPass: subject.minAverageScoreToPass,
-        createAt: new Date(subject.createAt).toLocaleDateString('vi-VN')
+        createAt: new Date(subject.createAt).toLocaleString('vi-VN', {
+          hour12: false,
+          timeZone: 'Asia/Ho_Chi_Minh',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
       }));
       setSubjects(formattedSubjects);
     } catch (error) {
@@ -61,7 +70,7 @@ const Subjects = () => {
     try {
       setLoading(true);
       const response = await axios.get(`${API_URL}${endpoints.manageSubject.getById}${value}`);
-      
+
       if (response.data) {
         const subjectData = response.data;
         setSubjects([{
@@ -142,6 +151,7 @@ const Subjects = () => {
             type="primary"
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
+            disabled={!record.isActive}  // disable nút Sửa nếu không active
           >
             Sửa
           </Button>
@@ -149,12 +159,13 @@ const Subjects = () => {
             danger
             icon={<DeleteOutlined />}
             onClick={() => handleDelete(record.id)}
+            disabled={!record.isActive}  // disable nút Xóa nếu không active
           >
             Xóa
           </Button>
         </Space>
       ),
-    },
+    },    
   ];
 
   const handleAdd = () => {
@@ -177,16 +188,16 @@ const Subjects = () => {
 
   const handleDeleteConfirm = async () => {
     if (!subjectToDelete) return;
-    
+
     try {
       setLoading(true);
       console.log('Deleting subject with ID:', subjectToDelete);
       const deleteUrl = `${API_URL}${endpoints.manageSubject.delete}${subjectToDelete}`;
       console.log('Delete URL:', deleteUrl);
-      
+
       const response = await axios.delete(deleteUrl);
       console.log('Delete response:', response);
-      
+
       message.success('Xóa môn học thành công');
       await fetchSubjects();
     } catch (error) {
@@ -203,7 +214,7 @@ const Subjects = () => {
   const handleModalOk = async () => {
     try {
       const values = await form.validateFields();
-      
+
       if (editingSubject) {
         // Update existing subject
         const response = await axios.put(`${API_URL}${endpoints.manageSubject.update}`, {
@@ -247,7 +258,7 @@ const Subjects = () => {
   return (
     <div style={{ padding: '24px' }}>
       <div style={{ marginBottom: '16px', display: 'flex', gap: '16px', alignItems: 'center', justifyContent: 'space-between' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span>Trạng thái:</span>
           <Switch
             checkedChildren="Đang mở"
@@ -272,7 +283,7 @@ const Subjects = () => {
             Thêm môn học mới
           </Button>
         </div>
-        
+
       </div>
 
       <Table
@@ -311,10 +322,19 @@ const Subjects = () => {
           <Form.Item
             name="minAverageScoreToPass"
             label="Điểm đạt"
-            rules={[{ required: true, message: 'Vui lòng nhập điểm đạt' }]}
+            rules={[
+              { required: true, message: 'Vui lòng nhập điểm đạt' },
+              {
+                validator: (_, value) =>
+                  value >= 5
+                    ? Promise.resolve()
+                    : Promise.reject(new Error('Điểm đạt phải từ 5 trở lên')),
+              },
+            ]}
           >
-            <Input type="number" min={0} max={10} step={0.1} />
+            <Input type="number" min={5} max={10} step={0.1} />
           </Form.Item>
+
         </Form>
       </Modal>
 
@@ -336,9 +356,9 @@ const Subjects = () => {
             </Descriptions>
             <div style={{ marginTop: '20px' }}>
               <h3>Syllabus</h3>
-              <div style={{ 
-                padding: '16px', 
-                backgroundColor: '#f5f5f5', 
+              <div style={{
+                padding: '16px',
+                backgroundColor: '#f5f5f5',
                 borderRadius: '4px',
                 whiteSpace: 'pre-wrap'
               }}>

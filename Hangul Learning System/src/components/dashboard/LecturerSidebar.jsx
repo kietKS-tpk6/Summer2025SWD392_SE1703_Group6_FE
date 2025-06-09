@@ -2,13 +2,11 @@ import React from 'react';
 import { Layout, Menu } from 'antd';
 import {
   DashboardOutlined,
-  TeamOutlined,
   BookOutlined,
-  ApartmentOutlined,
-  ReadOutlined,
-  BarChartOutlined,
-  CommentOutlined,
   CalendarOutlined,
+  FileTextOutlined,
+  TeamOutlined,
+  CommentOutlined,
   IdcardOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
@@ -17,58 +15,48 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 const { Sider } = Layout;
 
-const Sidebar = () => {
+const LecturerSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
   const menuItems = [
     {
-      key: '/dashboard',
+      key: '/lecturer',
       icon: <DashboardOutlined />,
       label: 'Bảng điều khiển',
     },
     {
-      key: '/dashboard/users',
-      icon: <TeamOutlined />, // icon người dùng nhóm
-      label: 'Quản lí tài khoản',
+      key: '/lecturer/courses',
+      icon: <BookOutlined />,
+      label: 'Khóa học của tôi',
     },
     {
-      key: '/dashboard/subject',
-      icon: <BookOutlined />, // icon sách
-      label: 'Quản lí môn học',
-    },
-    {
-      key: '/dashboard/class',
-      icon: <ApartmentOutlined />, // icon sơ đồ lớp/phòng
-      label: 'Quản lí lớp học',
-    },
-    {
-      key: '/dashboard/blog',
-      icon: <ReadOutlined />, // icon đọc bài viết
-      label: 'Quản lí Blog',
-    },
-    {
-      key: '/dashboard/analytics',
-      icon: <BarChartOutlined />,
-      label: 'Phân tích & Đánh giá',
-    },
-    {
-      key: '/dashboard/chat',
-      icon: <CommentOutlined />, // icon tin nhắn
-      label: 'Chat',
-    },
-    {
-      key: '/dashboard/schedule',
+      key: '/lecturer/schedule',
       icon: <CalendarOutlined />,
-      label: 'Lịch học',
+      label: 'Lịch giảng dạy',
     },
     {
-      key: '/dashboard/profile',
-      icon: <IdcardOutlined />, // icon thẻ ID
+      key: '/lecturer/assignments',
+      icon: <FileTextOutlined />,
+      label: 'Bài tập',
+    },
+    {
+      key: '/lecturer/students',
+      icon: <TeamOutlined />,
+      label: 'Học viên',
+    },
+    {
+      key: '/lecturer/messages',
+      icon: <CommentOutlined />,
+      label: 'Tin nhắn',
+    },
+    {
+      key: '/lecturer/profile',
+      icon: <IdcardOutlined />,
       label: 'Hồ sơ',
     },
     {
-      key: '/dashboard/settings',
+      key: '/lecturer/settings',
       icon: <SettingOutlined />,
       label: 'Cài đặt',
     },
@@ -135,9 +123,7 @@ const Sidebar = () => {
         />
       </div>
     </Sider>
-
-
   );
 };
 
-export default Sidebar;
+export default LecturerSidebar; 
