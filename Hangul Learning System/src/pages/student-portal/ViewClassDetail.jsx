@@ -10,6 +10,7 @@ import FooterBar from '../../components/footer/Footer';
 import { UserOutlined } from '@ant-design/icons';
 import Syllabus from '../../components/dashboard/pages/Syllabus';
 import { Collapse } from 'antd';
+import SyllabusSchedule from '../../components/dashboard/pages/syllabus/SyllabusSchedule';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -91,24 +92,7 @@ const ViewClassDetail = () => {
               {/* Lịch trình học */}
               <Collapse style={{ marginTop: 40 }}>
                 <Collapse.Panel header="Lịch trình học" key="1">
-                  <div style={{ background: '#fff', borderRadius: 8, boxShadow: '0 2px 8px #faf3eb', padding: 24 }}>
-                    <Row gutter={[16, 16]} style={{ fontWeight: 600, color: '#555', borderBottom: '1px solid #eee', paddingBottom: 8 }}>
-                      <Col xs={6} md={4}>Slot</Col>
-                      <Col xs={6} md={4}>Tuần</Col>
-                      <Col xs={12} md={16}>Tiêu đề bài học</Col>
-                    </Row>
-                    {syllabusSchedules.length === 0 ? (
-                      <div style={{ padding: 16, color: '#888' }}>Chưa có lịch trình học.</div>
-                    ) : (
-                      syllabusSchedules.map((item, idx) => (
-                        <Row key={item.syllabusScheduleID} gutter={[16, 16]} align="middle" style={{ borderBottom: '1px solid #f5f5f5', padding: '10px 0' }}>
-                          <Col xs={6} md={4} style={{ color: '#fbb040', fontWeight: 500 }}>{item.slot}</Col>
-                          <Col xs={6} md={4} style={{ color: '#1890ff' }}>Tuần {item.week}</Col>
-                          <Col xs={12} md={16} style={{ fontWeight: 500 }}>{item.lessonTitle}</Col>
-                        </Row>
-                      ))
-                    )}
-                  </div>
+                  <SyllabusSchedule schedules={syllabusSchedules} />
                 </Collapse.Panel>
               </Collapse>
             </Col>
