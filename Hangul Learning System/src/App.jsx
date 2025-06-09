@@ -15,6 +15,7 @@ import Profile from './components/dashboard/pages/Profile';
 import Settings from './components/dashboard/pages/Settings';
 import ViewerPage from './pages/viewer-portal/ViewerPage';
 import HomeContent from './components/Homepage/Content';
+import ViewClassDetail from './pages/student-portal/ViewClassDetail';
 // import About from './pages/viewer-portal/About';
 // import Courses from './pages/viewer-portal/Courses';
 // import Contact from './pages/viewer-portal/Contact';
@@ -68,6 +69,7 @@ const studentRoutes = [
   { path: '/payment-success', element: <PaymentSuccess/>},
   { path: '/payment-failed', element: <PaymentFailed/>},
   { path: '/payment', element: <PaymentForm/>},
+  { path: '/class-detail/:id', element: <ViewClassDetail/>},
 ];
 
 const App = () => {
