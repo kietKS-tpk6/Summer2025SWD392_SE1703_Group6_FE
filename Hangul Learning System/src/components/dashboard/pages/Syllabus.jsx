@@ -165,14 +165,19 @@ const Syllabus = () => {
   const handleSyllabusModalOk = async () => {
     try {
       const values = await syllabusForm.validateFields();
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (!user?.accountId) {
+        message.error('Không tìm thấy thông tin người dùng');
+        return;
+      }
       const payload = {
         syllabusID: syllabus.syllabusID,
-        accountID: syllabus.createBy,
+        accountID: user.accountId,
         description: values.description,
         note: values.note,
         status: values.status
       };
-      await axios.put(`${API_URL}/api/Syllabus/update-syllabus`, payload);
+      await axios.put(`${API_URL}${endpoints.syllabus.update}`, payload);
       message.success('Cập nhật thông tin giáo trình thành công');
       setIsSyllabusModalVisible(false);
       fetchSyllabus();
@@ -358,6 +363,7 @@ const Syllabus = () => {
           onAdd={handleAssessmentAdd}
           onEdit={handleAssessmentEdit}
           onDelete={handleAssessmentDelete}
+          subject={subject}
         />
 
         <Divider />
@@ -367,6 +373,7 @@ const Syllabus = () => {
           onAdd={handleScheduleAdd}
           onEdit={handleScheduleEdit}
           onDelete={handleScheduleDelete}
+          subject={subject}
         />
       </Card>
 

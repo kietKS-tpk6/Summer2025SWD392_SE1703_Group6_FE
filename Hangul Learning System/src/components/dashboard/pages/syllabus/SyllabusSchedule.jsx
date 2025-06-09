@@ -8,7 +8,8 @@ const SyllabusSchedule = ({
   schedules, 
   onAdd, 
   onEdit, 
-  onDelete 
+  onDelete,
+  subject
 }) => {
   const columns = [
     {
@@ -65,11 +66,13 @@ const SyllabusSchedule = ({
             type="primary"
             icon={<EditOutlined />}
             onClick={() => onEdit(record)}
+            disabled={!subject.isActive}
           />
           <Button
             danger
             icon={<DeleteOutlined />}
             onClick={() => onDelete(record.SyllabusScheduleID)}
+            disabled={!subject.isActive}
           />
         </Space>
       ),
@@ -77,24 +80,23 @@ const SyllabusSchedule = ({
   ];
 
   return (
-    <div>
-      <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Title level={3} style={{ margin: 0 }}>Lịch trình học tập</Title>
+    <div style={{ marginBottom: '32px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <Title level={3} style={{ margin: 0 }}>Lịch trình</Title>
         <Button
           type="primary"
           icon={<PlusOutlined />}
           onClick={onAdd}
+          disabled={!subject.isActive}
         >
           Thêm lịch trình
         </Button>
       </div>
-
-      <Table 
+      <Table
         columns={columns}
         dataSource={schedules}
         rowKey="SyllabusScheduleID"
         pagination={false}
-        scroll={{ x: 'max-content' }}
       />
     </div>
   );
