@@ -54,14 +54,19 @@ const Syllabus = () => {
   useEffect(() => {
     if (subject) {
       fetchSyllabus();
-      fetchAssessmentCriteria();
     }
   }, [subject]);
+
+  useEffect(() => {
+    if (syllabus?.syllabusID) {
+      fetchAssessmentCriteria();
+    }
+  }, [syllabus]);
 
   const fetchSyllabus = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_URL}${endpoints.syllabus.getBySubject}/${subject.code}`);
+      const response = await axios.get(`${API_URL}${endpoints.syllabus.getSyllabusInfo}/${subject.code}`);
       if (response.data) {
         setSyllabus(response.data);
         setSyllabusSchedules(response.data.syllabusSchedules || []);
@@ -76,7 +81,11 @@ const Syllabus = () => {
 
   const fetchAssessmentCriteria = async () => {
     try {
-      const response = await axios.get(`${API_URL}${endpoints.syllabus.getAssessmentCriteria}/SY0001`); // ${syllabus.SyllabusID}
+      if (!syllabus?.syllabusID) {
+        console.error('No syllabus ID available');
+        return;
+      }
+      const response = await axios.get(`${API_URL}${endpoints.syllabus.getAssessmentCriteria}/${syllabus.syllabusID}`);
       if (response.data) {
         setAssessmentCriteria(response.data);
       }
@@ -156,7 +165,17 @@ const Syllabus = () => {
   const handleSyllabusModalOk = async () => {
     try {
       const values = await syllabusForm.validateFields();
-      await axios.put(`${API_URL}${endpoints.syllabus.update}/${syllabus.SyllabusID}`, values);
+      await axios.put(`${API_URL}${endpoints.syllabus.update}/${syllabus.syllabusID}`, {
+        syllabusID: syllabus.syllabusID,
+        subjectID: syllabus.subjectID,
+        description: values.description,
+        note: values.note,
+        status: values.status,
+        createBy: syllabus.createBy,
+        createAt: syllabus.createAt,
+        updateBy: syllabus.updateBy,
+        updateAt: new Date().toISOString()
+      });
       message.success('Cập nhật thông tin giáo trình thành công');
       setIsSyllabusModalVisible(false);
       fetchSyllabus();
@@ -190,7 +209,7 @@ const Syllabus = () => {
       if (editingCriteria) {
         const payload = {
           assessmentCriteriaID: editingCriteria.assessmentCriteriaID,
-          syllabusID: "SY0001", //syllabus.SyllabusID
+          syllabusID: syllabus.syllabusID,
           weightPercent: values.weightPercent,
           category: values.category,
           requiredCount: values.requiredCount,
@@ -203,7 +222,7 @@ const Syllabus = () => {
         message.success('Cập nhật tiêu chí đánh giá thành công');
       } else {
         const payload = {
-          syllabusID: "SY0001", // syllabus.SyllabusID
+          syllabusID: syllabus.syllabusID,
           weightPercent: values.weightPercent,
           category: values.category,
           requiredCount: values.requiredCount,
@@ -225,6 +244,10 @@ const Syllabus = () => {
 
   const handleAssessmentDeleteConfirm = async () => {
     try {
+      if (!deleteId) {
+        message.error('Không tìm thấy ID tiêu chí đánh giá');
+        return;
+      }
       await axios.delete(`${API_URL}${endpoints.syllabus.deleteAssessmentCriteria}/${deleteId}`);
       message.success('Xóa tiêu chí đánh giá thành công');
       fetchAssessmentCriteria();

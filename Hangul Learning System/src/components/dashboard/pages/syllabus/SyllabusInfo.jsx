@@ -51,51 +51,51 @@ const SyllabusInfo = ({ syllabus, onEdit, subject, onSyllabusCreated }) => {
 
       <Descriptions bordered column={2}>
         <Descriptions.Item label="Mã giáo trình">
-          {syllabus?.SyllabusID || '-'}
+          {syllabus?.syllabusID || '-'}
         </Descriptions.Item>
         <Descriptions.Item label="Mã môn học">
-          {syllabus?.SubjectID || '-'}
+          {syllabus?.subjectID || '-'}
         </Descriptions.Item>
         <Descriptions.Item label="Trạng thái">
           <Tag color={
-            syllabus?.Status === 'Draft' ? 'orange' :
-            syllabus?.Status === 'Published' ? 'green' :
-            syllabus?.Status === 'Archived' ? 'red' : 'default'
+            syllabus?.status === 'Drafted' ? 'orange' :
+            syllabus?.status === 'Published' ? 'green' :
+            syllabus?.status === 'Archived' ? 'red' : 'default'
           }>
-            {syllabus?.Status === 'Draft' ? 'Bản nháp' :
-             syllabus?.Status === 'Published' ? 'Đã xuất bản' :
-             syllabus?.Status === 'Archived' ? 'Đã lưu trữ' : 
-             syllabus?.Status || 'Chưa có thông tin'}
+            {syllabus?.status === 'Drafted' ? 'Bản nháp' :
+             syllabus?.status === 'Published' ? 'Đã xuất bản' :
+             syllabus?.status === 'Archived' ? 'Đã lưu trữ' : 
+             syllabus?.status || 'Chưa có thông tin'}
           </Tag>
         </Descriptions.Item>
         <Descriptions.Item label="Mô tả" span={2}>
-          {syllabus?.Description || '-'}
+          {syllabus?.description || '-'}
         </Descriptions.Item>
         <Descriptions.Item label="Ghi chú" span={2}>
-          {syllabus?.Note || '-'}
+          {syllabus?.note || '-'}
         </Descriptions.Item>
         <Descriptions.Item label="Người tạo">
           <Space>
             <UserOutlined />
-            <span>{syllabus?.Creator?.FullName || syllabus?.CreateBy || '-'}</span>
+            <span>{syllabus?.createBy || '-'}</span>
           </Space>
         </Descriptions.Item>
         <Descriptions.Item label="Ngày tạo">
           <Space>
             <CalendarOutlined />
-            <span>{syllabus?.CreateAt ? new Date(syllabus.CreateAt).toLocaleString() : '-'}</span>
+            <span>{syllabus?.createAt ? new Date(syllabus.createAt).toLocaleString() : '-'}</span>
           </Space>
         </Descriptions.Item>
         <Descriptions.Item label="Người cập nhật">
           <Space>
             <UserOutlined />
-            <span>{syllabus?.Updater?.FullName || syllabus?.UpdateBy || '-'}</span>
+            <span>{syllabus?.updateBy || '-'}</span>
           </Space>
         </Descriptions.Item>
         <Descriptions.Item label="Ngày cập nhật">
           <Space>
             <CalendarOutlined />
-            <span>{syllabus?.UpdateAt ? new Date(syllabus.UpdateAt).toLocaleString() : '-'}</span>
+            <span>{syllabus?.updateAt ? new Date(syllabus.updateAt).toLocaleString() : '-'}</span>
           </Space>
         </Descriptions.Item>
       </Descriptions>

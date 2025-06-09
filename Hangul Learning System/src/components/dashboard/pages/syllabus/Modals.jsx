@@ -8,7 +8,7 @@ const CategoryEnum = {
   0: 'Midterm',
   1: 'FifteenMinutes',
   2: 'Final',
-  3: 'Other'
+  3: 'Other',
 };
 
 const TestTypeEnum = {
@@ -91,7 +91,7 @@ export const SyllabusModal = ({ visible, onOk, onCancel, form, initialValues }) 
         rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
       >
         <Select>
-          <Option value="Draft">Bản nháp</Option>
+          <Option value="Drafted">Bản nháp</Option>
           <Option value="Published">Đã xuất bản</Option>
           <Option value="Archived">Đã lưu trữ</Option>
         </Select>
