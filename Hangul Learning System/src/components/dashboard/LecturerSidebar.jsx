@@ -10,6 +10,7 @@ import {
   IdcardOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
+import logo from '../../../public/images/logoB.png'
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const { Sider } = Layout;
@@ -69,33 +70,45 @@ const LecturerSidebar = () => {
     <Sider
       width={270}
       style={{
-        minHeight: '80vh',
+        height: '100vh',        // full chiều cao màn hình
+        position: 'sticky',     // hoặc 'fixed' nếu muốn Sidebar đứng yên khi scroll
+        top: 0,                 // dính sát trên cùng
+        left: 0,                // nếu fixed thì cần để dính sát trái
         background: 'linear-gradient(180deg, #f8fbff 0%, #f3f7fa 100%)',
-        borderRadius: '30px',
-        margin: '16px 0 16px 16px',
+        borderRadius: '0px 30px 30px 0px',  // bo tròn góc phải
+        margin: 0,
         boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'space-between',
-        padding: '0px 0',
+        padding: 0,
+        zIndex: 1000,           // đảm bảo nổi trên các phần khác
       }}
     >
-      <div>
-        {/* Logo & Slogan */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          marginBottom: 10,
-        }}>
-          <img src='../../../public/images/logoB.png' alt="" style={{
-            width: 100, height: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '20px 0'
-          }}/>
-          <div style={{ fontWeight: 700, fontSize: 20, color: '#000' }}>Lecturer</div>
-          <div style={{ fontSize: 12, color: '#b0b7c3' }}>Learn From Home</div>
+      <div
+        style={{
+          padding: '20px 0',
+          textAlign: 'center',
+          borderBottom: '1px solid #eee',
+        }}
+      >
+        <img
+          src={logo}
+          alt="Logo"
+          style={{ width: 100, height: 100, margin: '0 auto' }}
+        />
+        <div style={{ fontWeight: 700, fontSize: 20, color: '#000', marginTop: 10 }}>
+          Manager
         </div>
+        <div style={{ fontSize: 12, color: '#b0b7c3' }}>Learn From Home</div>
+      </div>
 
-        {/* Menu */}
+      <div
+        style={{
+          flex: 1,                 // phần này chiếm hết chiều cao còn lại
+          overflowY: 'auto',       // cuộn bên trong menu nếu dài
+          padding: '0 16px',
+        }}
+      >
         <Menu
           mode="inline"
           selectedKeys={[location.pathname]}
