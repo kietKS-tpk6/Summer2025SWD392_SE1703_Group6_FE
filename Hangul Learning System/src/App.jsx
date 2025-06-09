@@ -53,6 +53,9 @@ const publicRoutes = [
     // TRANG NAVIGATE
     children: [
       { path: '', element: <HomeContent /> },
+      { path: '/payment-success', element: <PaymentSuccess/>},
+      { path: '/payment-failed', element: <PaymentFailed/>},
+      { path: '/payment', element: <PaymentForm/>},
       // { path: 'about', element: <About /> },
       // { path: 'courses', element: <Courses /> },
       // { path: 'contact', element: <Contact /> },
@@ -65,9 +68,7 @@ const publicRoutes = [
 // Student routes configuration
 const studentRoutes = [
   { path: '/student', element: <StudentPage /> },
-  { path: '/payment-success', element: <PaymentSuccess/>},
-  { path: '/payment-failed', element: <PaymentFailed/>},
-  { path: '/payment', element: <PaymentForm/>},
+  
 ];
 
 const App = () => {
