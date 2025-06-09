@@ -151,6 +151,7 @@ const Subjects = () => {
             type="primary"
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
+            disabled={!record.isActive}  // disable nút Sửa nếu không active
           >
             Sửa
           </Button>
@@ -158,12 +159,13 @@ const Subjects = () => {
             danger
             icon={<DeleteOutlined />}
             onClick={() => handleDelete(record.id)}
+            disabled={!record.isActive}  // disable nút Xóa nếu không active
           >
             Xóa
           </Button>
         </Space>
       ),
-    },
+    },    
   ];
 
   const handleAdd = () => {

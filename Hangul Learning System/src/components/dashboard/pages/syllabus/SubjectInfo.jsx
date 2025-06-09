@@ -13,7 +13,8 @@ const SubjectInfo = ({ subject, onEdit, onDelete }) => {
           <Button
             type="primary"
             icon={<EditOutlined />}
-            onClick={onEdit}
+            onEdit={onEdit}
+            disabled={!subject.isActive}
           >
             Sửa môn học
           </Button>
@@ -21,6 +22,7 @@ const SubjectInfo = ({ subject, onEdit, onDelete }) => {
             danger
             icon={<DeleteOutlined />}
             onClick={onDelete}
+            disabled={!subject.isActive}
           >
             Xóa môn học
           </Button>
