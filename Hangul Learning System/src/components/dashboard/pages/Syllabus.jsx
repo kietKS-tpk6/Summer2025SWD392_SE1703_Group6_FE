@@ -165,17 +165,14 @@ const Syllabus = () => {
   const handleSyllabusModalOk = async () => {
     try {
       const values = await syllabusForm.validateFields();
-      await axios.put(`${API_URL}${endpoints.syllabus.update}/${syllabus.syllabusID}`, {
+      const payload = {
         syllabusID: syllabus.syllabusID,
-        subjectID: syllabus.subjectID,
+        accountID: syllabus.createBy,
         description: values.description,
         note: values.note,
-        status: values.status,
-        createBy: syllabus.createBy,
-        createAt: syllabus.createAt,
-        updateBy: syllabus.updateBy,
-        updateAt: new Date().toISOString()
-      });
+        status: values.status
+      };
+      await axios.put(`${API_URL}/api/Syllabus/update-syllabus`, payload);
       message.success('Cập nhật thông tin giáo trình thành công');
       setIsSyllabusModalVisible(false);
       fetchSyllabus();
