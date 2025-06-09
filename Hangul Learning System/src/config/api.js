@@ -6,7 +6,10 @@ export const endpoints = {
         register: 'api/Authentication/register',
     },
     manageAccount: {
-        
+        getAccount: 'api/Account/list-account-with-role-gender-status',
+
+        // create Account for Lecturer
+        createAccount: 'api/Account/create-account',
     },
     manageClass: {
         create: 'api/Class/create',
