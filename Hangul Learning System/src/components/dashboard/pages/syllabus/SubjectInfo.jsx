@@ -27,9 +27,9 @@ const SubjectInfo = ({ subject, onEdit, onDelete }) => {
         </Space>
       </div>
       
-      <Descriptions bordered column={2}>
+      <Descriptions bordered column={1}>
         <Descriptions.Item label="Mã môn học">{subject.code}</Descriptions.Item>
-        <Descriptions.Item label="Cấp độ">{subject.level}</Descriptions.Item>
+        {/* <Descriptions.Item label="Cấp độ">{subject.level}</Descriptions.Item> */}
         <Descriptions.Item label="Mô tả" span={2}>
           {subject.description}
         </Descriptions.Item>

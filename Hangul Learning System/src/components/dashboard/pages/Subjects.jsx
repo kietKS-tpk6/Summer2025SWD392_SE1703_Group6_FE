@@ -39,9 +39,18 @@ const Subjects = () => {
         name: subject.subjectName,
         code: subject.subjectID,
         description: subject.description,
+        isActive: subject.isActive,
         status: subject.isActive ? 'Đang mở' : 'Đã đóng',
         minAverageScoreToPass: subject.minAverageScoreToPass,
-        createAt: new Date(subject.createAt).toLocaleDateString('vi-VN')
+        createAt: new Date(subject.createAt).toLocaleString('vi-VN', {
+          hour12: false,
+          timeZone: 'Asia/Ho_Chi_Minh',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
       }));
       setSubjects(formattedSubjects);
     } catch (error) {

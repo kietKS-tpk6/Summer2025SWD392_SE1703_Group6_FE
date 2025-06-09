@@ -91,7 +91,8 @@ const Syllabus = () => {
     subjectForm.setFieldsValue({
       name: subject.name,
       description: subject.description,
-      minAverageScoreToPass: subject.minAverageScoreToPass
+      minAverageScoreToPass: subject.minAverageScoreToPass,
+      isActive: subject.isActive
     });
     setIsSubjectModalVisible(true);
   };
