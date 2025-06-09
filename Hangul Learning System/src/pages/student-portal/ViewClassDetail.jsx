@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, Button, Tag, Rate, Spin, Row, Col, Typography, Divider, Tooltip, Avatar } from 'antd';
 import axios from 'axios';
 import { API_URL } from '../../config/api';
-import './ViewClassDetail.css';
+import '../../styles/ViewClassDetail.css';
 import { useParams } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import HeaderBar from '../../components/header/Header';
@@ -16,6 +16,8 @@ const { Title, Text, Paragraph } = Typography;
 const ViewClassDetail = () => {
   const { id } = useParams();
   const [classData, setClassData] = useState(null);
+  const [syllabus, setSyllabus] = useState(null);
+  const [syllabusSchedules, setSyllabusSchedules] = useState([]);
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -35,6 +37,32 @@ const ViewClassDetail = () => {
     fetchClass();
   }, [id]);
 
+  useEffect(() => {
+    const fetchSyllabus = async () => {
+      if (classData && classData.subjectID) {
+        const res = await axios.get(`${API_URL}api/Syllabus/get-syllabus-by-subject-id/${classData.subjectID}`);
+        setSyllabus(res.data);
+        console.log('syllabusID:', res.data.syllabusID); 
+        console.log('description:', res.data.description); 
+      }
+    };
+    fetchSyllabus();
+  }, [classData]);
+
+  useEffect(() => {
+    const fetchSchedules = async () => {
+      if (syllabus && syllabus.syllabusID) {
+        const res = await axios.get(`${API_URL}api/SyllabusSchedule/schedules/${syllabus.syllabusID}`);
+        setSyllabusSchedules(res.data);
+        // Ví dụ log ra slot, lessonTitle, week của từng item:
+        res.data.forEach(item => {
+          console.log('Slot:', item.slot, 'LessonTitle:', item.lessonTitle, 'Week:', item.week);
+        });
+      }
+    };
+    fetchSchedules();
+  }, [syllabus]);
+
   if (loading || !classData) return <Spin size="large" style={{ margin: '80px auto', display: 'block' }} />;
 
   return (
@@ -46,7 +74,6 @@ const ViewClassDetail = () => {
             className="class-detail-title">{classData.className}
         </Title>
           <Row gutter={[40, 24]} align="top">
-            {/* Ảnh lớn bên trái */}
             <Col xs={24} md={16}>
               <div className="class-detail-image-wrap">
                 <img
@@ -58,9 +85,32 @@ const ViewClassDetail = () => {
               <div className="class-detail-description-block" style={{ marginTop: 32 }}>
                 <Title level={4} className="class-detail-description-title">Mô tả khoá học</Title>
                 <Paragraph className="class-detail-description-text">
-                    {description || 'No description.'}
+                    {syllabus?.description || 'No description.'}
                 </Paragraph>
               </div>
+              {/* Lịch trình học */}
+              <Collapse style={{ marginTop: 40 }}>
+                <Collapse.Panel header="Lịch trình học" key="1">
+                  <div style={{ background: '#fff', borderRadius: 8, boxShadow: '0 2px 8px #faf3eb', padding: 24 }}>
+                    <Row gutter={[16, 16]} style={{ fontWeight: 600, color: '#555', borderBottom: '1px solid #eee', paddingBottom: 8 }}>
+                      <Col xs={6} md={4}>Slot</Col>
+                      <Col xs={6} md={4}>Tuần</Col>
+                      <Col xs={12} md={16}>Tiêu đề bài học</Col>
+                    </Row>
+                    {syllabusSchedules.length === 0 ? (
+                      <div style={{ padding: 16, color: '#888' }}>Chưa có lịch trình học.</div>
+                    ) : (
+                      syllabusSchedules.map((item, idx) => (
+                        <Row key={item.syllabusScheduleID} gutter={[16, 16]} align="middle" style={{ borderBottom: '1px solid #f5f5f5', padding: '10px 0' }}>
+                          <Col xs={6} md={4} style={{ color: '#fbb040', fontWeight: 500 }}>{item.slot}</Col>
+                          <Col xs={6} md={4} style={{ color: '#1890ff' }}>Tuần {item.week}</Col>
+                          <Col xs={12} md={16} style={{ fontWeight: 500 }}>{item.lessonTitle}</Col>
+                        </Row>
+                      ))
+                    )}
+                  </div>
+                </Collapse.Panel>
+              </Collapse>
             </Col>
             {/* Thông tin bên phải */}
             <Col xs={24} md={8}>
@@ -137,11 +187,7 @@ const ViewClassDetail = () => {
           </Row>
         </div>
       </div>
-      <Collapse style={{ margin: '32px 0' }}>
-        <Collapse.Panel header="Lịch trình học" key="1">
-          <Syllabus subject={classData.subject} />
-        </Collapse.Panel>
-      </Collapse>
+      
       <FooterBar />
     </>
   );
