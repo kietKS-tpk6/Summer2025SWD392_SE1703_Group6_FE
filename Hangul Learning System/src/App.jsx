@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Layout } from 'antd';
 import Sidebar from './components/dashboard/Sidebar';
+import LecturerSidebar from './components/dashboard/LecturerSidebar';
 import Dashboard from './components/dashboard/pages/Dashboard';
 import Users from './components/dashboard/pages/Users';
 import ClassManagement from './components/dashboard/pages/Classes';
@@ -26,6 +27,7 @@ import RegisterPage from './pages/authentication/RegisterPage';
 import PaymentSuccess from './components/payment/PaymentSuccess';
 import PaymentFailed from './components/payment/PaymentFailed';
 import PaymentForm from './components/payment/PaymentForm';
+import LecturerDashboard from './components/dashboard/pages/LecturerDashboard';
 import './App.css';
 import 'antd/dist/reset.css';
 
@@ -44,6 +46,18 @@ const dashboardRoutes = [
   { path: '/schedule', element: <Schedule /> },
   { path: '/profile', element: <Profile /> },
   { path: '/settings', element: <Settings /> },
+];
+
+// Lecturer routes configuration
+const lecturerRoutes = [
+  { path: '/', element: <LecturerDashboard /> },
+  { path: '/courses', element: <div>Courses Page</div> },
+  { path: '/schedule', element: <div>Schedule Page</div> },
+  { path: '/assignments', element: <div>Assignments Page</div> },
+  { path: '/students', element: <div>Students Page</div> },
+  { path: '/messages', element: <div>Messages Page</div> },
+  { path: '/profile', element: <div>Profile Page</div> },
+  { path: '/settings', element: <div>Settings Page</div> },
 ];
 
 // Public routes configuration
@@ -89,6 +103,25 @@ const App = () => {
                 <Content style={{ margin: '16px', padding: '24px', background: '#fff', borderRadius: '30px' }}>
                   <Routes>
                     {dashboardRoutes.map((route) => (
+                      <Route key={route.path} path={route.path} element={route.element} />
+                    ))}
+                  </Routes>
+                </Content>
+              </Layout>
+            </Layout>
+          }
+        />
+
+        {/* Lecturer Layout */}
+        <Route
+          path="/lecturer/*"
+          element={
+            <Layout style={{ minHeight: '100vh' }}>
+              <LecturerSidebar />
+              <Layout>
+                <Content style={{ margin: '16px', padding: '24px', background: '#fff', borderRadius: '30px' }}>
+                  <Routes>
+                    {lecturerRoutes.map((route) => (
                       <Route key={route.path} path={route.path} element={route.element} />
                     ))}
                   </Routes>

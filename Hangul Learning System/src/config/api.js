@@ -8,7 +8,10 @@ export const endpoints = {
         sendOTP: 'api/Email/send'
     },
     manageAccount: {
-        
+        getAccount: 'api/Account/list-account-with-role-gender-status',
+
+        // create Account for Lecturer
+        createAccount: 'api/Account/create-account',
     },
     manageClass: {
         create: 'api/Class/create',
@@ -34,7 +37,25 @@ export const endpoints = {
         update: 'api/Subject/update',
         getById: 'api/Subject/get-subject-by-',
         delete: 'api/Subject/delete/',
-        count: '/api/Subject/count'
+        count: 'api/Subject/count'
     },
-    
+    syllabus: {
+        // Assessment Criteria
+        getAssessmentCriteria: 'api/AssessmentCriteria/get-by-syllabus',
+        createAssessmentCriteria: 'api/AssessmentCriteria/create',
+        updateAssessmentCriteria: 'api/AssessmentCriteria/update',
+        deleteAssessmentCriteria: 'api/AssessmentCriteria/delete',
+
+        // Syllabus Info
+        getSyllabusInfo: 'api/Syllabus/get-syllabus-by-subject-id',
+        create: 'api/Syllabus/create-syllabus',
+        update: 'api/Syllabus/update-syllabus',
+        delete: 'api/Syllabus/delete-syllabus',
+        
+        // Syllabus Schedule
+        getSchedule: 'api/Syllabus/get-schedule',
+        addSchedule: 'api/Syllabus/add-schedule',
+        updateSchedule: 'api/Syllabus/update-schedule',
+        deleteSchedule: 'api/Syllabus/delete-schedule'
+    },
 };
