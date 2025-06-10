@@ -15,7 +15,7 @@ export const endpoints = {
     },
     manageClass: {
         create: 'api/Class/create',
-        getAll: '/api/Class/get-by-subject',
+        getAll: 'api/Class/get-by-subject',
         update: 'api/Class/update',
         getById: 'api/Subject/get-subject-by-',
         getByTeacher: 'api/Class/get-by-teacher',
@@ -28,6 +28,7 @@ export const endpoints = {
         
     },
     manageSchedule: {
+        
         
     },
     manageSubject:{
@@ -55,6 +56,13 @@ export const endpoints = {
         getSchedule: 'api/Syllabus/get-schedule',
         addSchedule: 'api/Syllabus/add-schedule',
         updateSchedule: 'api/Syllabus/update-schedule',
-        deleteSchedule: 'api/Syllabus/delete-schedule'
+        deleteSchedule: 'api/Syllabus/delete-schedule',
+
+        // Schedule Test
+        getScheduleTest: 'api/SyllabusSchedule/schedules',
+        createScheduleTest: 'api/SyllabusSchedule/schedules',
+
+        // NEW: Create Syllabus Schedule
+        createSyllabusSchedule: 'api/SyllabusSchedule/create-syllabus-schedule',
     },
 };
