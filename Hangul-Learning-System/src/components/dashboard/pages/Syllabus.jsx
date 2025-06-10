@@ -114,7 +114,7 @@ const Syllabus = () => {
     try {
       const values = await subjectForm.validateFields();
       const response = await axios.put(`${API_URL}${endpoints.manageSubject.update}`, {
-        subjectID: subject.id,
+        subjectID: subject.code,
         subjectName: values.name,
         description: values.description,
         isActive: true,
