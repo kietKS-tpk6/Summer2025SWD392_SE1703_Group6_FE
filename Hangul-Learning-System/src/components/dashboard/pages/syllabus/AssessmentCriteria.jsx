@@ -26,7 +26,8 @@ const AssessmentCriteria = ({
   assessmentCriteria, 
   onAdd, 
   onEdit, 
-  onDelete 
+  onDelete,
+  subject
 }) => {
   const columns = [
     {
@@ -84,14 +85,13 @@ const AssessmentCriteria = ({
             type="primary"
             icon={<EditOutlined />}
             onClick={() => onEdit(record)}
+            disabled={!subject.isActive}
           />
           <Button
             danger
             icon={<DeleteOutlined />}
-            onClick={() => {
-              console.log('Record to delete:', record);
-              onDelete(record.id || record.assessmentCriteriaID);
-            }}
+            onClick={() => onDelete(record.assessmentCriteriaID)}
+            disabled={!subject.isActive}
           />
         </Space>
       ),
@@ -100,23 +100,22 @@ const AssessmentCriteria = ({
 
   return (
     <div style={{ marginBottom: '32px' }}>
-      <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Title level={3} style={{ margin: 0 }}>Tiêu chí đánh giá</Title>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <Title level={3} style={{ margin: 0 }}></Title>
         <Button
           type="primary"
           icon={<PlusOutlined />}
           onClick={onAdd}
+          disabled={!subject.isActive}
         >
           Thêm tiêu chí
         </Button>
       </div>
-
-      <Table 
+      <Table
         columns={columns}
         dataSource={assessmentCriteria}
         rowKey="assessmentCriteriaID"
         pagination={false}
-        scroll={{ x: 'max-content' }}
       />
     </div>
   );
