@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, Button, Typography, Divider, Table, Tag, Space, Modal, Form, Input, InputNumber, message, Descriptions, Select } from 'antd';
-import { ArrowLeftOutlined, ClockCircleOutlined, PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined, CalendarOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, ClockCircleOutlined, PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined, CalendarOutlined, EyeOutlined,
+  EyeInvisibleOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { API_URL, endpoints } from '../../../config/api';
+
 
 // Import components
 import SubjectInfo from './syllabus/SubjectInfo';
@@ -50,6 +52,13 @@ const Syllabus = () => {
   const [editingCriteria, setEditingCriteria] = useState(null);
   const [editingSchedule, setEditingSchedule] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  // Show Table
+  const [showSubjectInfo, setShowSubjectInfo] = useState(true);
+  const [showSyllabusInfo, setShowSyllabusInfo] = useState(true);
+  const [showSchedule, setShowSchedule] = useState(true);
+  const [showAssessment, setShowAssessment] = useState(true);
+
 
   useEffect(() => {
     if (subject) {
@@ -338,42 +347,84 @@ const Syllabus = () => {
       </Button>
 
       <Card loading={loading}>
-        <SubjectInfo
-          subject={subject}
-          onEdit={handleSubjectEdit}
-          onDelete={handleSubjectDelete}
-        />
+      <div style={{ padding: '0px' }}>
+    {/* <Title level={2}>Chi tiết môn học</Title> */}
 
-        <Divider />
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Title level={3}>Thông tin môn học</Title>
+      <Button
+        type="text"
+        icon={showSubjectInfo ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+        onClick={() => setShowSubjectInfo(!showSubjectInfo)}
+      />
+    </div>
+    {showSubjectInfo && (
+      <SubjectInfo
+        subject={subject}
+        onEdit={handleSubjectEdit}
+        onDelete={handleSubjectDelete}
+      />
+    )}
+    <Divider />
 
-        <SyllabusInfo
-          syllabus={syllabus}
-          onEdit={handleSyllabusEdit}
-          subject={subject}
-          onSyllabusCreated={(newSyllabus) => {
-            setSyllabus(newSyllabus);
-            fetchSyllabus();
-          }}
-        />
-        <Divider />
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Title level={3}>Thông tin giáo trình</Title>
+      <Button
+        type="text"
+        icon={showSyllabusInfo ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+        onClick={() => setShowSyllabusInfo(!showSyllabusInfo)}
+      />
+    </div>
+    {showSyllabusInfo && (
+      <SyllabusInfo
+        syllabus={syllabus}
+        onEdit={handleSyllabusEdit}
+        subject={subject}
+        onSyllabusCreated={(newSyllabus) => {
+          setSyllabus(newSyllabus);
+          fetchSyllabus();
+        }}
+      />
+    )}
+    <Divider />
 
-        <SyllabusSchedule
-          schedules={syllabusSchedules}
-          onAdd={handleScheduleAdd}
-          onEdit={handleScheduleEdit}
-          onDelete={handleScheduleDelete}
-          subject={subject}
-        />
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Title level={3}>Lịch trình giảng dạy</Title>
+      <Button
+        type="text"
+        icon={showSchedule ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+        onClick={() => setShowSchedule(!showSchedule)}
+      />
+    </div>
+    {showSchedule && (
+      <SyllabusSchedule
+        schedules={syllabusSchedules}
+        onAdd={handleScheduleAdd}
+        onEdit={handleScheduleEdit}
+        onDelete={handleScheduleDelete}
+        subject={subject}
+      />
+    )}
+    <Divider />
 
-        <Divider />
-
-        <AssessmentCriteria
-          assessmentCriteria={assessmentCriteria}
-          onAdd={handleAssessmentAdd}
-          onEdit={handleAssessmentEdit}
-          onDelete={handleAssessmentDelete}
-          subject={subject}
-        />
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Title level={3}>Tiêu chí đánh giá</Title>
+      <Button
+        type="text"
+        icon={showAssessment ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+        onClick={() => setShowAssessment(!showAssessment)}
+      />
+    </div>
+    {showAssessment && (
+      <AssessmentCriteria
+        assessmentCriteria={assessmentCriteria}
+        onAdd={handleAssessmentAdd}
+        onEdit={handleAssessmentEdit}
+        onDelete={handleAssessmentDelete}
+        subject={subject}
+      />
+    )}
+  </div>
 
 
       </Card>

@@ -101,7 +101,7 @@ const AssessmentCriteria = ({
   return (
     <div style={{ marginBottom: '32px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <Title level={3} style={{ margin: 0 }}>Tiêu chí đánh giá</Title>
+        <Title level={3} style={{ margin: 0 }}></Title>
         <Button
           type="primary"
           icon={<PlusOutlined />}

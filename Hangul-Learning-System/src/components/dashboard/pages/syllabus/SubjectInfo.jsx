@@ -8,7 +8,7 @@ const SubjectInfo = ({ subject, onEdit, onDelete }) => {
   return (
     <div style={{ marginBottom: '32px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <Title level={2}>{subject.name}</Title>
+        <Title level={2} style={{ textTransform: 'uppercase' }}>{subject.name}</Title>
         <Space>
           <Button
             type="primary"
@@ -30,7 +30,7 @@ const SubjectInfo = ({ subject, onEdit, onDelete }) => {
       </div>
       
       <Descriptions bordered column={1}>
-        <Descriptions.Item label="Mã môn học">{subject.code}</Descriptions.Item>
+        <Descriptions.Item label="Mã môn học" >{subject.code}</Descriptions.Item>
         {/* <Descriptions.Item label="Cấp độ">{subject.level}</Descriptions.Item> */}
         <Descriptions.Item label="Mô tả" span={2}>
           {subject.description}
