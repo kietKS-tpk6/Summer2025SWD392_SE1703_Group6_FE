@@ -22,7 +22,7 @@ export const endpoints = {
         getByStudent: 'api/Class/get-by-subject-teacher',
         getByStatus: 'api/Class/get-by-status',
         delete: 'api/Class/delete/',
-        count: 'api/Subject/count'
+        count: 'api/Subject/count',
     },
     manageBlog: {
         
@@ -37,7 +37,7 @@ export const endpoints = {
         update: 'api/Subject/update',
         getById: 'api/Subject/get-subject-by-',
         delete: 'api/Subject/delete/',
-        count: 'api/Subject/count'
+        count: 'api/Subject/count',
     },
     syllabus: {
         // Assessment Criteria
