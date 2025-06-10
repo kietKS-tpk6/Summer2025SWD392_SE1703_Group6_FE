@@ -12,6 +12,7 @@ import SubjectInfo from './syllabus/SubjectInfo';
 import SyllabusInfo from './syllabus/SyllabusInfo';
 import AssessmentCriteria from './syllabus/AssessmentCriteria';
 import SyllabusSchedule from './syllabus/SyllabusSchedule';
+import SubjectClasses from './syllabus/SubjectClasses';
 import {
   SubjectModal,
   SyllabusModal,
@@ -32,6 +33,7 @@ const Syllabus = () => {
   const [syllabus, setSyllabus] = useState(null);
   const [syllabusSchedules, setSyllabusSchedules] = useState([]);
   const [assessmentCriteria, setAssessmentCriteria] = useState([]);
+  const [classes, setClasses] = useState([]);
 
   // Modal states
   const [isSubjectModalVisible, setIsSubjectModalVisible] = useState(false);
@@ -58,10 +60,12 @@ const Syllabus = () => {
   const [showSyllabusInfo, setShowSyllabusInfo] = useState(true);
   const [showSchedule, setShowSchedule] = useState(true);
   const [showAssessment, setShowAssessment] = useState(true);
+  const [showClasses, setShowClasses] = useState(true);
 
   useEffect(() => {
     if (subject) {
       fetchSyllabus();
+      fetchClasses();
     }
   }, [subject]);
 
@@ -111,6 +115,18 @@ const Syllabus = () => {
     } catch (error) {
       console.error('Error fetching assessment criteria:', error);
       message.error('Không thể tải tiêu chí đánh giá');
+    }
+  };
+
+  const fetchClasses = async () => {
+    try {
+      const response = await axios.get(`${API_URL}${endpoints.manageClass.getAll}?subjectId=${subject.code}&page=1&pageSize=10`);
+      if (response.data) {
+        setClasses(response.data.items || []);
+      }
+    } catch (error) {
+      console.error('Error fetching classes:', error);
+      message.error('Không thể tải danh sách lớp học');
     }
   };
 
@@ -377,6 +393,19 @@ const Syllabus = () => {
               onEdit={handleSubjectEdit}
               onDelete={handleSubjectDelete}
             />
+          )}
+          <Divider />
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Title level={3}>Danh sách lớp học</Title>
+            <Button
+              type="text"
+              icon={showClasses ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+              onClick={() => setShowClasses(!showClasses)}
+            />
+          </div>
+          {showClasses && (
+            <SubjectClasses classes={classes} />
           )}
           <Divider />
 
