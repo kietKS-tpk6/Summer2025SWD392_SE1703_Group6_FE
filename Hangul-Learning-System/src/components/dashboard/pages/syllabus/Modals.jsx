@@ -51,9 +51,28 @@ export const SubjectModal = ({ visible, onOk, onCancel, form, initialValues }) =
       <Form.Item
         name="minAverageScoreToPass"
         label="Điểm đạt"
-        rules={[{ required: true, message: 'Vui lòng nhập điểm đạt' }]}
+        rules={[
+          { required: true, message: 'Vui lòng nhập điểm đạt' },
+          {
+            validator: (_, value) =>
+              value >= 0 && value <= 10
+                ? Promise.resolve()
+                : Promise.reject(new Error('Điểm phải nằm trong khoảng từ 0 đến 10')),
+          },
+        ]}
       >
-        <Input type="number" min={0} max={10} step={0.1} />
+        <Input
+          type="number"
+          min={0}
+          max={10}
+          step={0.1}
+          onKeyDown={(e) => {
+            // Ngăn nhập ký tự không hợp lệ như e, +, -
+            if (['e', 'E', '+', '-'].includes(e.key)) {
+              e.preventDefault();
+            }
+          }}
+        />
       </Form.Item>
     </Form>
   </Modal>
