@@ -30,7 +30,7 @@ const Syllabus = () => {
   const [syllabus, setSyllabus] = useState(null);
   const [syllabusSchedules, setSyllabusSchedules] = useState([]);
   const [assessmentCriteria, setAssessmentCriteria] = useState([]);
-  
+
   // Modal states
   const [isSubjectModalVisible, setIsSubjectModalVisible] = useState(false);
   const [isSyllabusModalVisible, setIsSyllabusModalVisible] = useState(false);
@@ -39,13 +39,13 @@ const Syllabus = () => {
   const [subjectDeleteModalVisible, setSubjectDeleteModalVisible] = useState(false);
   const [assessmentDeleteModalVisible, setAssessmentDeleteModalVisible] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
-  
+
   // Form instances
   const [subjectForm] = Form.useForm();
   const [syllabusForm] = Form.useForm();
   const [assessmentForm] = Form.useForm();
   const [scheduleForm] = Form.useForm();
-  
+
   // Editing states
   const [editingCriteria, setEditingCriteria] = useState(null);
   const [editingSchedule, setEditingSchedule] = useState(null);
@@ -315,8 +315,8 @@ const Syllabus = () => {
     return (
       <div style={{ padding: '24px', textAlign: 'center' }}>
         <Title level={3}>Không tìm thấy thông tin môn học</Title>
-        <Button 
-          type="primary" 
+        <Button
+          type="primary"
           icon={<ArrowLeftOutlined />}
           onClick={() => navigate('/dashboard/subject')}
         >
@@ -328,8 +328,8 @@ const Syllabus = () => {
 
   return (
     <div style={{ padding: '24px' }}>
-      <Button 
-        type="primary" 
+      <Button
+        type="primary"
         icon={<ArrowLeftOutlined />}
         onClick={() => navigate('/dashboard/subject')}
         style={{ marginBottom: '16px' }}
@@ -355,6 +355,15 @@ const Syllabus = () => {
             fetchSyllabus();
           }}
         />
+        <Divider />
+
+        <SyllabusSchedule
+          schedules={syllabusSchedules}
+          onAdd={handleScheduleAdd}
+          onEdit={handleScheduleEdit}
+          onDelete={handleScheduleDelete}
+          subject={subject}
+        />
 
         <Divider />
 
@@ -366,15 +375,7 @@ const Syllabus = () => {
           subject={subject}
         />
 
-        <Divider />
 
-        <SyllabusSchedule
-          schedules={syllabusSchedules}
-          onAdd={handleScheduleAdd}
-          onEdit={handleScheduleEdit}
-          onDelete={handleScheduleDelete}
-          subject={subject}
-        />
       </Card>
 
       {/* Modals */}
