@@ -44,7 +44,7 @@ const SubjectClasses = ({ classes }) => {
       key: 'priceOfClass',
       width: 120,
       render: (price) => (
-        <span>{price.toLocaleString('vi-VN')}.000 VNĐ</span>
+        <span>{price.toLocaleString('vi-VN')} VNĐ</span>
       ),
     },
     {
