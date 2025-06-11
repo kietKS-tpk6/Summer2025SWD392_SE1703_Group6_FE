@@ -14,27 +14,33 @@ const SyllabusSchedule = ({
   const columns = [
     {
       title: 'Tuần',
-      dataIndex: 'Week',
-      key: 'Week',
+      dataIndex: 'week',
+      key: 'week',
       width: 80,
-      sorter: (a, b) => a.Week - b.Week,
+      sorter: (a, b) => a.week - b.week,
+    },
+    {
+      title: 'Slot',
+      dataIndex: 'slot',
+      key: 'slot',
+      width: 100,
     },
     {
       title: 'Tiêu đề bài học',
-      dataIndex: 'LessonTitle',
-      key: 'LessonTitle',
+      dataIndex: 'lessonTitle',
+      key: 'lessonTitle',
       width: 200,
     },
     {
       title: 'Nội dung',
-      dataIndex: 'Content',
-      key: 'Content',
+      dataIndex: 'content',
+      key: 'content',
       width: 300,
     },
     {
       title: 'Thời lượng',
-      dataIndex: 'DurationMinutes',
-      key: 'DurationMinutes',
+      dataIndex: 'durationMinutes',
+      key: 'durationMinutes',
       width: 120,
       render: (duration) => (
         <Space>
@@ -45,12 +51,12 @@ const SyllabusSchedule = ({
     },
     {
       title: 'Tài nguyên',
-      dataIndex: 'Resources',
-      key: 'Resources',
+      dataIndex: 'resources',
+      key: 'resources',
       width: 200,
       render: (resources) => (
         <Space wrap>
-          {resources.split(',').map((resource, index) => (
+          {resources.split(';').map((resource, index) => (
             <Tag key={index} color="blue">{resource.trim()}</Tag>
           ))}
         </Space>
@@ -71,7 +77,7 @@ const SyllabusSchedule = ({
           <Button
             danger
             icon={<DeleteOutlined />}
-            onClick={() => onDelete(record.SyllabusScheduleID)}
+            onClick={() => onDelete(record.syllabusScheduleID)}
             disabled={!subject.isActive}
           />
         </Space>
@@ -95,7 +101,7 @@ const SyllabusSchedule = ({
       <Table
         columns={columns}
         dataSource={schedules}
-        rowKey="SyllabusScheduleID"
+        rowKey="syllabusScheduleID"
         pagination={false}
       />
     </div>
