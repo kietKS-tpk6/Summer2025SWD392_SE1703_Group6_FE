@@ -101,9 +101,9 @@ const ViewClassDetail = () => {
               <Card className="class-detail-info-card" variant="borderless">
                 {/* Giá và Purchase */}
                     <div className="class-detail-price-box">
-                  <span className="class-detail-currency">$</span>
+                  <span className="class-detail-currency">VNĐ</span>
                   <span className="class-detail-price-number">
-                    {classData.priceOfClass ? classData.priceOfClass.toLocaleString() : '--'}
+                    {classData.priceOfClass ? (classData.priceOfClass * 1000).toLocaleString() : '--'}
                   </span>
                 </div>
                 <Button
@@ -156,9 +156,7 @@ const ViewClassDetail = () => {
                       <span className="class-detail-meta-label" style={{ marginRight: 6 }}>Giảng viên:</span>
                       <span className="class-detail-meta-value">{classData.lecturerName}</span>
                     </div>
-                    <div className="class-detail-lecturer-id">
-                      ID: {classData.lecturerID}
-                    </div>
+ 
                   </div>
                 </div>
               </Card>

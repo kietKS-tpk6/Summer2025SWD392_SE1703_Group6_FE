@@ -67,7 +67,7 @@ const ClassCard = ({
           <span className="class-card-lecturer">{lecturerName}</span>
         </div>
         <div className="class-card-info-row" style={{ margin: '18px 0 16px 0' }}>
-          <span className="class-card-price">{priceOfClass} <span style={{ fontSize: 13, fontWeight: 500 }}>VNĐ</span></span>
+          <span className="class-card-price">{priceOfClass ? (priceOfClass * 1000).toLocaleString() : '--'} <span style={{ fontSize: 13, fontWeight: 500 }}>VNĐ</span></span>
           <Tag color={statusColor(status)} className="class-card-status">
             {statusText(status)}
           </Tag>
