@@ -51,9 +51,28 @@ export const SubjectModal = ({ visible, onOk, onCancel, form, initialValues }) =
       <Form.Item
         name="minAverageScoreToPass"
         label="Điểm đạt"
-        rules={[{ required: true, message: 'Vui lòng nhập điểm đạt' }]}
+        rules={[
+          { required: true, message: 'Vui lòng nhập điểm đạt' },
+          {
+            validator: (_, value) =>
+              value >= 0 && value <= 10
+                ? Promise.resolve()
+                : Promise.reject(new Error('Điểm phải nằm trong khoảng từ 0 đến 10')),
+          },
+        ]}
       >
-        <Input type="number" min={0} max={10} step={0.1} />
+        <Input
+          type="number"
+          min={0}
+          max={10}
+          step={0.1}
+          onKeyDown={(e) => {
+            // Ngăn nhập ký tự không hợp lệ như e, +, -
+            if (['e', 'E', '+', '-'].includes(e.key)) {
+              e.preventDefault();
+            }
+          }}
+        />
       </Form.Item>
     </Form>
   </Modal>
@@ -195,39 +214,46 @@ export const ScheduleModal = ({ visible, onOk, onCancel, form, initialValues }) 
       initialValues={initialValues}
     >
       <Form.Item
-        name="Week"
+        name="week"
         label="Tuần"
         rules={[{ required: true, message: 'Vui lòng nhập tuần' }]}
       >
         <InputNumber min={1} style={{ width: '100%' }} />
       </Form.Item>
       <Form.Item
-        name="LessonTitle"
+        name="slot"
+        label="Slot"
+        rules={[{ required: true, message: 'Vui lòng nhập slot' }]}
+      >
+        <Input maxLength={50} />
+      </Form.Item>
+      <Form.Item
+        name="lessonTitle"
         label="Tiêu đề bài học"
         rules={[{ required: true, message: 'Vui lòng nhập tiêu đề bài học' }]}
       >
-        <Input maxLength={100} />
+        <Input maxLength={200} />
       </Form.Item>
       <Form.Item
-        name="Content"
+        name="content"
         label="Nội dung"
         rules={[{ required: true, message: 'Vui lòng nhập nội dung' }]}
       >
-        <TextArea rows={4} maxLength={255} />
+        <TextArea rows={4} maxLength={500} />
       </Form.Item>
       <Form.Item
-        name="DurationMinutes"
+        name="durationMinutes"
         label="Thời lượng (phút)"
         rules={[{ required: true, message: 'Vui lòng nhập thời lượng' }]}
       >
         <InputNumber min={1} style={{ width: '100%' }} />
       </Form.Item>
       <Form.Item
-        name="Resources"
+        name="resources"
         label="Tài nguyên"
         rules={[{ required: true, message: 'Vui lòng nhập tài nguyên' }]}
       >
-        <TextArea rows={2} placeholder="Nhập các tài nguyên, phân cách bằng dấu phẩy" />
+        <TextArea rows={2} placeholder="Nhập các tài nguyên, phân cách bằng dấu chấm phẩy (;)" />
       </Form.Item>
     </Form>
   </Modal>

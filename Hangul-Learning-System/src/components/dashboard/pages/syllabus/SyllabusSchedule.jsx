@@ -51,6 +51,12 @@ const SyllabusSchedule = ({
       width: 300,
     },
     {
+      title: 'Slot',
+      dataIndex: 'slot',
+      key: 'slot',
+      width: 100,
+    },
+    {
       title: 'Thời lượng',
       dataIndex: 'durationMinutes',
       key: 'DurationMinutes',
