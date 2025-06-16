@@ -13,7 +13,7 @@ const weekDayMap = {
   0: 'Chủ nhật',
 };
 
-const weekOrder = [1, 2, 3, 4, 5, 6, 0]; // Chủ nhật cuối
+const weekOrder = [1, 2, 3, 4, 5, 6, 0]; 
 
 const TeachingScheduleModal = ({ open, onClose }) => {
   const [data, setData] = useState([]);
@@ -26,7 +26,7 @@ const TeachingScheduleModal = ({ open, onClose }) => {
     setLoading(true);
     setError(null);
     axios.get(`${API_URL}api/Account/teaching-schedule`)
-      .then(res => setData(res.data))
+      .then(res => setData(res.data.data))
       .catch(() => setError('Lỗi khi tải lịch dạy!'))
       .finally(() => setLoading(false));
   }, [open]);
@@ -79,7 +79,7 @@ const TeachingScheduleModal = ({ open, onClose }) => {
       open={open}
       onCancel={onClose}
       footer={null}
-      title="Lịch dạy của giảng viên (Dạng lưới)"
+      title="Lịch dạy của giảng viên"
       width={900}
       style={{ top: 30 }}
     >
