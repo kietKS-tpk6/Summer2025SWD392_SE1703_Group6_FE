@@ -114,6 +114,7 @@ const Classes = () => {
           onChange: (page, pageSize) => setPagination({ ...pagination, current: page, pageSize }),
         }}
         rowKey="classID"
+        scroll={{ x: 1200 }}
       />
       <CreateClassModal
         open={openCreateModal}
