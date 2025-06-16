@@ -49,7 +49,24 @@ const BasicInfoForm = React.forwardRef(({ lectures = [], subjects = [], formData
         name="accountID"
         rules={[{ required: true, message: 'Vui lòng chọn giảng viên!' }]}
       >
-        <Select placeholder="Chọn giảng viên">
+        <Select 
+          placeholder="Chọn giảng viên"
+          onChange={(value, option) => {
+            const selectedLecturer = lectures.find(lec => lec.accountID === value);
+            if (selectedLecturer) {
+              const fullName = `${selectedLecturer.lastName} ${selectedLecturer.firstName}`;
+              form.setFieldsValue({ 
+                accountID: value,
+                lecturerName: fullName 
+              });
+              handleValuesChange(null, { 
+                ...form.getFieldsValue(), 
+                accountID: value,
+                lecturerName: fullName 
+              });
+            }
+          }}
+        >
           {lectures.map(lec => (
             <Select.Option key={lec.accountID} value={lec.accountID}>
               {lec.lastName + ' ' + lec.firstName}
@@ -59,17 +76,47 @@ const BasicInfoForm = React.forwardRef(({ lectures = [], subjects = [], formData
       </Form.Item>
 
       <Form.Item
+        name="lecturerName"
+        hidden
+      >
+        <Input />
+      </Form.Item>
+
+      <Form.Item
         label="Môn học"
         name="subjectID"
         rules={[{ required: true, message: 'Vui lòng chọn môn học!' }]}
       >
-        <Select placeholder="Chọn môn học">
+        <Select 
+          placeholder="Chọn môn học"
+          onChange={(value, option) => {
+            const selectedSubject = subjects.find(sub => sub.subjectID === value);
+            if (selectedSubject) {
+              form.setFieldsValue({ 
+                subjectID: value,
+                subjectName: selectedSubject.subjectName 
+              });
+              handleValuesChange(null, { 
+                ...form.getFieldsValue(), 
+                subjectID: value,
+                subjectName: selectedSubject.subjectName 
+              });
+            }
+          }}
+        >
           {subjects.map(sub => (
             <Select.Option key={sub.subjectID} value={sub.subjectID}>
               {sub.subjectName}
             </Select.Option>
           ))}
         </Select>
+      </Form.Item>
+
+      <Form.Item
+        name="subjectName"
+        hidden
+      >
+        <Input />
       </Form.Item>
 
       <Form.Item
