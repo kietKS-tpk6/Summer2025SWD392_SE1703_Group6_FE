@@ -90,6 +90,7 @@ export function getClassesTableColumns(statusFilter, handlers) {
         actions.push(
           <Button
             type="primary"
+            size="small"
             icon={<EyeOutlined />}
             onClick={() => onView(record)}
             key="view"
@@ -102,6 +103,7 @@ export function getClassesTableColumns(statusFilter, handlers) {
         actions.push(
           <Button
             type="primary"
+            size="small"
             icon={<EditOutlined />}
             onClick={() => onEdit(record)}
             key="edit"
@@ -112,6 +114,7 @@ export function getClassesTableColumns(statusFilter, handlers) {
         actions.push(
           <Button
             danger
+            size="small"
             icon={<DeleteOutlined />}
             onClick={() => onDelete(record)}
             key="delete"
@@ -124,9 +127,11 @@ export function getClassesTableColumns(statusFilter, handlers) {
         actions.push(
           <Button
             type="primary"
+            size="small"
             icon={<RocketOutlined />}
             onClick={() => onOpenRecruit(record)}
             key="openRecruit"
+            style={{ padding: '0 8px' }}
           >
             Bật tuyển sinh
           </Button>
@@ -137,6 +142,7 @@ export function getClassesTableColumns(statusFilter, handlers) {
         actions.push(
           <Button
             type="primary"
+            size="small"
             icon={<EyeOutlined />}
             onClick={() => onView(record)}
             key="view"
