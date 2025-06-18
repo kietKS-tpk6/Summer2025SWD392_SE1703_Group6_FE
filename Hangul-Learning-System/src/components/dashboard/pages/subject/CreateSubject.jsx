@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Steps, Button, Form, message, Typography } from 'antd';
+import { Steps, Button, Form, Typography, message } from 'antd';
 import { ArrowLeftOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { subjectService } from '../../../../services/subjectService';
+import Notification from '../../../common/Notification';
 
-// Import step components
 import BasicInfoStep from './steps/BasicInfoStep';
 import ConfigurationStep from './steps/ConfigurationStep';
 import ClassInfoStep from './steps/ClassInfoStep';
@@ -22,6 +22,12 @@ const CreateSubject = () => {
   const [current, setCurrent] = useState(0);
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [notificationConfig, setNotificationConfig] = useState({
+    visible: false,
+    type: 'success',
+    message: '',
+    description: ''
+  });
   const [subjectData, setSubjectData] = useState({
     basicInfo: null,
     configuration: null,
@@ -33,31 +39,33 @@ const CreateSubject = () => {
   const [editingSlot, setEditingSlot] = useState(null);
   const [editForm] = Form.useForm();
 
+  const handleCloseNotification = () => {
+    setNotificationConfig(prev => ({ ...prev, visible: false }));
+  };
+
   useEffect(() => {
     if (isEditing && subjectId) {
       const fetchSubjectData = async () => {
         try {
           const data = await subjectService.getSubjectById(subjectId);
-          // Set basicInfo in subjectData state for CreateSubject
           setSubjectData(prev => ({
             ...prev,
             basicInfo: {
-                subjectID: data.subjectID,
-                subjectName: data.subjectName,
-                description: data.description,
-                minAverageScoreToPass: data.minAverageScoreToPass,
-                isActive: data.isActive,
-                createAt: data.createAt,
+              subjectID: data.subjectID,
+              subjectName: data.subjectName,
+              description: data.description,
+              minAverageScoreToPass: data.minAverageScoreToPass,
+              isActive: data.isActive,
+              createAt: data.createAt,
             }
           }));
-          // Also set form fields for the main form in CreateSubject
           form.setFieldsValue({
             name: data.subjectName,
             description: data.description,
             minAverageScoreToPass: data.minAverageScoreToPass,
           });
         } catch (error) {
-          console.error('Error fetching subject data for CreateSubject:', error);
+          console.error('Error fetching subject data:', error);
           message.error('Không thể tải thông tin môn học để chỉnh sửa.');
         }
       };
@@ -101,46 +109,17 @@ const CreateSubject = () => {
   };
 
   const handleBasicInfoNext = (values) => {
-    setSubjectData(prev => ({
-      ...prev,
-      basicInfo: values
-    }));
+    setSubjectData(prev => ({ ...prev, basicInfo: values }));
     setCurrent(current + 1);
   };
 
   const steps = [
-    {
-      title: 'Thông tin môn học',
-      content: <BasicInfoStep onNext={handleBasicInfoNext} form={form} subjectId={subjectId} isEditing={isEditing} />
-    },
-    {
-      title: 'Cấu hình môn học',
-      content: <ConfigurationStep onGenerateClassSlots={generateClassSlots} />
-    },
-    {
-      title: 'Thông tin buổi học',
-      content: (
-        <ClassInfoStep
-          classSlots={classSlots}
-          editingSlot={editingSlot}
-          setEditingSlot={setEditingSlot}
-          handleEditSlot={handleEditSlot}
-          handleUpdateSlot={handleUpdateSlot}
-        />
-      )
-    },
-    {
-      title: 'Thông tin đánh giá',
-      content: <AssessmentStep form={form} configuration={subjectData.configuration} />
-    },
-    {
-      title: 'Chọn slot kiểm tra',
-      content: <TestSlotsStep classSlots={classSlots} form={form} />
-    },
-    {
-      title: 'Xác nhận thông tin',
-      content: <ConfirmationStep form={form} />
-    }
+    { title: 'Thông tin môn học', content: <BasicInfoStep onNext={handleBasicInfoNext} form={form} subjectId={subjectId} isEditing={isEditing} /> },
+    { title: 'Cấu hình môn học', content: <ConfigurationStep onGenerateClassSlots={generateClassSlots} /> },
+    { title: 'Thông tin buổi học', content: <ClassInfoStep classSlots={classSlots} editingSlot={editingSlot} setEditingSlot={setEditingSlot} handleEditSlot={handleEditSlot} handleUpdateSlot={handleUpdateSlot} /> },
+    { title: 'Thông tin đánh giá', content: <AssessmentStep form={form} configuration={subjectData.configuration} /> },
+    { title: 'Chọn slot kiểm tra', content: <TestSlotsStep classSlots={classSlots} form={form} /> },
+    { title: 'Xác nhận thông tin', content: <ConfirmationStep form={form} /> }
   ];
 
   const next = async () => {
@@ -154,12 +133,12 @@ const CreateSubject = () => {
 
       if (current === 1) {
         setSubjectData(prev => ({
-            ...prev,
-            configuration: {
-                totalWeeks: values.totalWeeks,
-                slotsPerWeek: values.slotsPerWeek,
-                totalTests: values.totalTests
-            }
+          ...prev,
+          configuration: {
+            totalWeeks: values.totalWeeks,
+            slotsPerWeek: values.slotsPerWeek,
+            totalTests: values.totalTests
+          }
         }));
         if (!values.totalWeeks || !values.slotsPerWeek) {
           message.error('Vui lòng nhập đầy đủ thông tin cấu hình');
@@ -170,8 +149,8 @@ const CreateSubject = () => {
 
       if (current === 3) {
         setSubjectData(prev => ({
-            ...prev,
-            assessmentInfo: values.criteria
+          ...prev,
+          assessmentInfo: values.criteria
         }));
         const criteria = values.criteria || [];
         const totalWeight = criteria.reduce((sum, item) => sum + (item.weightPercent || 0), 0);
@@ -205,50 +184,31 @@ const CreateSubject = () => {
         subjectName: subjectData.basicInfo?.name,
         description: subjectData.basicInfo?.description,
         minAverageScoreToPass: subjectData.basicInfo?.minAverageScoreToPass,
-        // Add other data from subjectData and classSlots here as needed by your backend APIs
-        // For example, if your create/update subject API needs all details at once
       };
 
       let finalSubjectId = subjectId;
 
       if (isEditing && subjectId) {
-        const updateBasicInfoPayload = {
+        const updatePayload = {
           subjectID: subjectId,
-          subjectName: combinedSubjectData.subjectName,
-          description: combinedSubjectData.description,
-          minAverageScoreToPass: combinedSubjectData.minAverageScoreToPass,
+          ...combinedSubjectData,
           isActive: subjectData.basicInfo?.isActive || true,
           createAt: subjectData.basicInfo?.createAt || new Date().toISOString()
         };
-        await subjectService.updateSubject(updateBasicInfoPayload);
-        message.success('Cập nhật thông tin môn học thành công.');
-        // TODO: Call other update APIs for syllabus, assessment, schedules, etc.
-
+        await subjectService.updateSubject(updatePayload);
+        setNotificationConfig({ visible: true, type: 'success', message: 'Thành công!', description: 'Cập nhật thông tin môn học thành công.' });
       } else {
-        const createBasicInfoPayload = {
-          subjectName: combinedSubjectData.subjectName,
-          description: combinedSubjectData.description,
-          minAverageScoreToPass: combinedSubjectData.minAverageScoreToPass,
-        };
-        const createResponse = await subjectService.createSubject(createBasicInfoPayload);
+        const createResponse = await subjectService.createSubject(combinedSubjectData);
         finalSubjectId = createResponse.subjectID;
-        message.success('Tạo môn học thành công.');
-        // TODO: Call other create APIs for syllabus, assessment, schedules, etc. using finalSubjectId
+        setNotificationConfig({ visible: true, type: 'success', message: 'Thành công!', description: 'Tạo môn học mới thành công.' });
       }
 
-      // Placeholder for further API calls (e.g., Syllabus, Assessment, Schedule)
-      // These will depend on your backend structure
-
-      message.success('Hoàn thành quá trình lưu môn học!');
-      navigate('/dashboard/subject');
+      setTimeout(() => {
+        navigate('/dashboard/subject');
+      }, 2000);
     } catch (error) {
       console.error('Error in final submission:', error);
-      message.error('Có lỗi xảy ra trong quá trình lưu môn học. Vui lòng thử lại.');
-      if (error.errorFields) {
-        error.errorFields.forEach(field => {
-          message.error(field.errors[0]);
-        });
-      }
+      setNotificationConfig({ visible: true, type: 'error', message: 'Lỗi!', description: 'Có lỗi xảy ra trong quá trình lưu môn học. Vui lòng thử lại.' });
     } finally {
       setLoading(false);
     }
@@ -256,53 +216,27 @@ const CreateSubject = () => {
 
   return (
     <div style={{ padding: '24px' }}>
-      <div style={{ marginBottom: '24px' }}>
-        <Button
-          type="primary"
-          icon={<ArrowLeftOutlined />}
-          onClick={() => navigate('/dashboard/subject')}
-          style={{ marginBottom: '16px' }}
-        >
-          Quay lại
-        </Button>
-        <Title level={2}>{isEditing ? 'Chỉnh sửa môn học' : 'Tạo môn học mới'}</Title>
-      </div>
-
+      <Notification {...notificationConfig} onClose={handleCloseNotification} />
+      <Title level={3}>{isEditing ? 'Chỉnh sửa môn học' : 'Tạo môn học mới'}</Title>
       <Steps current={current} style={{ marginBottom: 24 }}>
-        {steps.map(item => (
-          <Step key={item.title} title={item.title} />
+        {steps.map((item, index) => (
+          <Step key={index} title={item.title} />
         ))}
       </Steps>
-
-      <Form
-        form={form}
-        layout="vertical"
-        initialValues={subjectData}
-      >
-        <div className="steps-content">{steps[current].content}</div>
-        <div className="steps-action" style={{ marginTop: 24 }}>
-          {current > 0 && (
-            <Button style={{ margin: '0 8px' }} onClick={prev}>
-              <ArrowLeftOutlined /> Quay lại
-            </Button>
-          )}
+      <Form form={form} layout="vertical">
+        {steps[current].content}
+        <div style={{ marginTop: 24, display: 'flex', justifyContent: 'space-between' }}>
+          <Button icon={<ArrowLeftOutlined />} onClick={prev} disabled={current === 0}>Quay lại</Button>
           {current < steps.length - 1 && (
-            <Button type="primary" onClick={next}>
-              Tiếp theo <ArrowRightOutlined />
-            </Button>
+            <Button type="primary" icon={<ArrowRightOutlined />} onClick={next}>Tiếp theo</Button>
           )}
           {current === steps.length - 1 && (
-            <Button type="primary" onClick={handleSubmit} loading={loading}>
-              Hoàn thành
-            </Button>
+            <Button type="primary" loading={loading} onClick={handleSubmit}>Lưu môn học</Button>
           )}
-          <Button style={{ margin: '0 8px' }} onClick={() => navigate('/dashboard/subject')}>
-            Hủy
-          </Button>
         </div>
       </Form>
     </div>
   );
 };
 
-export default CreateSubject; 
+export default CreateSubject;
