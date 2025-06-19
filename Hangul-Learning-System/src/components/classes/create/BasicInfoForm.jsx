@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Select, Upload, Button, message  } from 'antd';
+import { Form, Input, Select, Upload, Button, message, InputNumber } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { API_URL } from '../../../config/api';
@@ -7,14 +7,40 @@ import { API_URL } from '../../../config/api';
 const BasicInfoForm = React.forwardRef(({ lectures = [], subjects = [], formData = {}, onChange }, ref) => {
   const [form] = Form.useForm();
   const [uploading, setUploading] = React.useState(false);
-  const [imageURL, setImageURL] = useState(); 
+  const [imageURL, setImageURL] = useState();
+  const [config, setConfig] = useState({
+    minStudent: 0,
+    maxStudent: 60
+  });
+
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const [minRes, maxRes] = await Promise.all([
+          axios.get(`${API_URL}api/SystemConfig/get-config-by-key/class_minStudent`),
+          axios.get(`${API_URL}api/SystemConfig/get-config-by-key/class_maxStudent`)
+        ]);
+        
+        setConfig({
+          minStudent: parseInt(minRes.data.data.value) || 0,
+          maxStudent: parseInt(maxRes.data.data.value) || 60
+        });
+      } catch (error) {
+        console.error('Error fetching config:', error);
+      }
+    };
+
+    fetchConfig();
+  }, []);
 
   const handleValuesChange = (_, allValues) => {
     onChange && onChange(allValues);
   };
+
   React.useImperativeHandle(ref, () => ({
     validate: () => form.validateFields(),
   }));
+
   const handleUpload = async ({ file }) => {
     setUploading(true);
     const formDataUpload = new FormData();
@@ -34,7 +60,6 @@ const BasicInfoForm = React.forwardRef(({ lectures = [], subjects = [], formData
     }
     setUploading(false);
   };
-  
 
   return (
     <Form
@@ -45,51 +70,13 @@ const BasicInfoForm = React.forwardRef(({ lectures = [], subjects = [], formData
       ref={ref}
     >
       <Form.Item
-        label="Giảng viên"
-        name="accountID"
-        rules={[{ required: true, message: 'Vui lòng chọn giảng viên!' }]}
-      >
-        <Select 
-          placeholder="Chọn giảng viên"
-          onChange={(value, option) => {
-            const selectedLecturer = lectures.find(lec => lec.accountID === value);
-            if (selectedLecturer) {
-              const fullName = `${selectedLecturer.lastName} ${selectedLecturer.firstName}`;
-              form.setFieldsValue({ 
-                accountID: value,
-                lecturerName: fullName 
-              });
-              handleValuesChange(null, { 
-                ...form.getFieldsValue(), 
-                accountID: value,
-                lecturerName: fullName 
-              });
-            }
-          }}
-        >
-          {lectures.map(lec => (
-            <Select.Option key={lec.accountID} value={lec.accountID}>
-              {lec.lastName + ' ' + lec.firstName}
-            </Select.Option>
-          ))}
-        </Select>
-      </Form.Item>
-
-      <Form.Item
-        name="lecturerName"
-        hidden
-      >
-        <Input />
-      </Form.Item>
-
-      <Form.Item
         label="Môn học"
         name="subjectID"
         rules={[{ required: true, message: 'Vui lòng chọn môn học!' }]}
       >
         <Select 
           placeholder="Chọn môn học"
-          onChange={(value, option) => {
+          onChange={(value) => {
             const selectedSubject = subjects.find(sub => sub.subjectID === value);
             if (selectedSubject) {
               form.setFieldsValue({ 
@@ -139,13 +126,74 @@ const BasicInfoForm = React.forwardRef(({ lectures = [], subjects = [], formData
         >
           <Button icon={<UploadOutlined />} loading={uploading}>Chọn ảnh</Button>
         </Upload>
-        {imageURL  && (
+        {imageURL && (
           <img
             src={imageURL}
             alt="preview"
             style={{ maxWidth: 200, marginTop: 8 }}
           />
         )}
+      </Form.Item>
+
+      <Form.Item
+        label={`Số học viên tối thiểu (>= ${config.minStudent})`}
+        name="minStudentAcp"
+        rules={[
+          {
+            required: true,
+            message: 'Vui lòng nhập số học viên tối thiểu!',
+          },
+          {
+            type: 'number',
+            min: config.minStudent,
+            message: `Số học viên tối thiểu phải lớn hơn hoặc bằng ${config.minStudent}!`,
+          },
+        ]}
+      >
+        <InputNumber min={config.minStudent} style={{ width: '100%' }} placeholder='Nhập số học viên tối thiểu' />
+      </Form.Item>
+
+      <Form.Item
+        label={`Số học viên tối đa (<= ${config.maxStudent})`}
+        name="maxStudentAcp"
+        rules={[
+          {
+            required: true,
+            message: 'Vui lòng nhập số học viên tối đa!',
+          },
+          {
+            type: 'number',
+            max: config.maxStudent,
+            message: `Số học viên tối đa phải nhỏ hơn hoặc bằng ${config.maxStudent}!`,
+          },
+          ({ getFieldValue }) => ({
+            validator(_, value) {
+              const minStudentAcp = getFieldValue('minStudentAcp');
+              if (!value || !minStudentAcp || value > minStudentAcp) {
+                return Promise.resolve();
+              }
+              return Promise.reject('Số học viên tối đa phải lớn hơn số học viên tối thiểu!');
+            },
+          }),
+        ]}
+      >
+        <InputNumber max={config.maxStudent} style={{ width: '100%' }} placeholder='Nhập số học viên tối đa' />
+      </Form.Item>
+
+      <Form.Item
+        label="Học phí lớp"
+        name="priceOfClass"
+        rules={[
+          { required: true, message: 'Vui lòng nhập học phí!' },
+          { type: 'number', min: 0, message: 'Học phí phải là số không âm!' },
+        ]}
+        extra="Đơn vị: VNĐ"
+      >
+        <InputNumber 
+          min={0} 
+          style={{ width: '100%' }} 
+          placeholder="Nhập học phí"
+        />
       </Form.Item>
     </Form>
   );

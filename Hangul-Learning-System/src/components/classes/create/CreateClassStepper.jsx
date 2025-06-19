@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect  } from 'react';
-import { Steps, Button, message } from 'antd';
+import { Steps, Button, message, notification } from 'antd';
 import BasicInfoForm from './BasicInfoForm';
-import ClassConfigForm from './ClassConfigForm';
 import LessonCreator from './LessonCreator';
 import TeachingScheduleModal from './TeachingScheduleModal';
 import ConfirmCreateClass from './ConfirmCreateClass';
 import { API_URL } from '../../../config/api';
 import axios from 'axios';
+import dayjs from 'dayjs';
 
 const CreateClassStepper = ({
   lectures,
@@ -18,7 +18,6 @@ const CreateClassStepper = ({
   const [current, setCurrent] = useState(0);
   const [openScheduleModal, setOpenScheduleModal] = useState(false);
   const basicInfoFormRef = useRef(); 
-  const classConfigFormRef = useRef();
   const lessonCreatorRef = useRef();
   const [maxDaysPerWeek, setMaxDaysPerWeek] = useState(3); // mặc định 3
   const [teachingSchedulesDetail, setTeachingSchedulesDetail] = useState([]);
@@ -96,26 +95,13 @@ const CreateClassStepper = ({
       ),
     },
     {
-      title: 'Cấu hình lớp',
-      content: (
-        <ClassConfigForm
-          ref={classConfigFormRef}
-          formData={formData.classConfig}
-          teachingSchedulesDetail={teachingSchedulesDetail}
-          onChange={(values) =>
-            setFormData((prev) => ({ ...prev, classConfig: values }))
-          }
-        />
-      ),
-    },
-    {
       title: 'Xếp lịch học',
       content: (
         <LessonCreator
           ref={lessonCreatorRef}
+          lectures={lectures}
           formData={{
             ...formData.lessons,
-            officialStartDate: formData.classConfig?.officialStartDate,
             accountID: formData.basicInfo?.accountID
           }}
           teachingSchedulesDetail={teachingSchedulesDetail}
@@ -139,13 +125,8 @@ const CreateClassStepper = ({
       } catch (_) {}
     } else if (current === 1) {
       try {
-        await classConfigFormRef.current?.validate();
-        setCurrent(2);
-      } catch (_) {}
-    } else if (current === 2) {
-      try {
         await lessonCreatorRef.current?.validate();
-        setCurrent(3);
+        setCurrent(2);
       } catch (_) {}
     } else {
       setCurrent(current + 1);
@@ -153,6 +134,63 @@ const CreateClassStepper = ({
   };
 
   const prev = () => setCurrent(current - 1);
+
+  const handleApiError = (error) => {
+    if (axios.isAxiosError(error)) {
+      const response = error.response?.data;
+  
+      if (response?.errors?.length > 0) {
+        response.errors.forEach((err) => {
+          message.error(err.message);
+        });
+      } else if (response?.message) {
+        message.error(response.message);
+      } else {
+        message.error('Đã xảy ra lỗi không xác định');
+      }
+    } else {
+      message.error('Lỗi không phải từ server: ' + error.message);
+    }
+  };
+  
+  const handleFinish = async () => {
+    try {
+      setLoading(true);
+      const { basicInfo, lessons } = formData;
+
+      const classResponse = await axios.post(`${API_URL}api/Class/create`, {
+        lecturerID: lessons.accountID,
+        subjectID: basicInfo.subjectID,
+        className: basicInfo.className,
+        minStudentAcp: basicInfo.minStudentAcp,
+        maxStudentAcp: basicInfo.maxStudentAcp,
+        priceOfClass: basicInfo.priceOfClass,
+        teachingStartTime: lessons.teachingStartTime,
+        imageURL: basicInfo.imageURL
+      });
+      console.log(classResponse.data)
+      const classId = classResponse.data.data;
+      const lessonResponse = await axios.post(`${API_URL}api/Lesson/create-from-schedule`, {
+        classId: classId,
+        startHour: dayjs(lessons.lessonTime).format('HH:mm'),
+        daysOfWeek: lessons.weekDays
+      });
+      const testEventResponse = await axios.post(`${API_URL}api/TestEvent/setup-test-event/${classId}`);
+      
+      notification.success({
+        message: 'Tạo lớp học thành công!',
+        description: `${classResponse.data.message}. ${lessonResponse.data.message}. ${testEventResponse.data.message}`,
+        placement: 'topRight',
+        duration: 4
+      });
+      
+      onFinish?.();
+    } catch (error) {
+      handleApiError(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
@@ -174,7 +212,7 @@ const CreateClassStepper = ({
             Quay lại
           </Button>
         )}
-            {current === 2 && (
+        {current === 1 && (
           <Button onClick={() => setOpenScheduleModal(true)}>
             Xem lịch dạy giảng viên
           </Button>
@@ -190,10 +228,8 @@ const CreateClassStepper = ({
         {current === steps.length - 1 && (
           <Button
             type="primary"
-            onClick={() => {
-              message.success('Hoàn thành!');
-              onFinish?.();
-            }}
+            onClick={handleFinish}
+            loading={loading}
           >
             Hoàn thành
           </Button>

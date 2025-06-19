@@ -15,7 +15,7 @@ const weekDayMap = {
 };
 
 const ConfirmCreateClass = ({ formData }) => {
-  const { basicInfo, classConfig, lessons } = formData;
+  const { basicInfo, lessons } = formData;
 
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
@@ -24,7 +24,7 @@ const ConfirmCreateClass = ({ formData }) => {
           <Col span={12}>
             <Descriptions column={1}>
               <Descriptions.Item label="Tên lớp">{basicInfo.className}</Descriptions.Item>
-              <Descriptions.Item label="Giáo viên">{basicInfo.lecturerName}</Descriptions.Item>
+              <Descriptions.Item label="Giáo viên">{lessons.lecturerName}</Descriptions.Item>
               <Descriptions.Item label="Môn học">{basicInfo.subjectName}</Descriptions.Item>
             </Descriptions>
           </Col>
@@ -47,13 +47,13 @@ const ConfirmCreateClass = ({ formData }) => {
       <Card title="Cấu hình lớp">
         <Descriptions column={2}>
           <Descriptions.Item label="Số học viên tối thiểu">
-            {classConfig.minStudentAcp}
+            {basicInfo.minStudentAcp}
           </Descriptions.Item>
           <Descriptions.Item label="Số học viên tối đa">
-            {classConfig.maxStudentAcp}
+            {basicInfo.maxStudentAcp}
           </Descriptions.Item>
           <Descriptions.Item label="Học phí">
-            {classConfig.priceOfClass?.toLocaleString('vi-VN')} VNĐ
+            {basicInfo.priceOfClass?.toLocaleString('vi-VN')} VNĐ
           </Descriptions.Item>
           <Descriptions.Item label="Ngày học chính thức">
             {dayjs(lessons.teachingStartTime).format('DD/MM/YYYY HH:mm')}

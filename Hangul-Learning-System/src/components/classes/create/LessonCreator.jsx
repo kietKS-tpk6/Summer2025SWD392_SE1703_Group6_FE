@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect  } from 'react';
-import { Form, TimePicker, Checkbox, DatePicker } from 'antd';
+import { Form, TimePicker, Checkbox, DatePicker, Card, Typography, Input, Select } from 'antd';
 import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 dayjs.extend(isSameOrAfter);
+
+const { Text } = Typography;
 
 const weekDays = [
   { label: 'Thứ 2', value: 1 },
@@ -14,8 +16,9 @@ const weekDays = [
   { label: 'Chủ nhật', value: 0 },
 ];
 
-const LessonCreator = React.forwardRef(({ formData = {}, onChange, maxDaysPerWeek = 3, teachingSchedulesDetail, teachingWeekly }, ref) => {
+const LessonCreator = React.forwardRef(({ formData = {}, onChange, maxDaysPerWeek = 3, teachingSchedulesDetail, teachingWeekly, lectures = [] }, ref) => {
   const [form] = Form.useForm();
+  const [selectedLecturer, setSelectedLecturer] = useState(null);
 
   const initialLessonTime = formData.teachingStartTime
     ? dayjs(formData.teachingStartTime).format('HH:mm')
@@ -28,6 +31,21 @@ const LessonCreator = React.forwardRef(({ formData = {}, onChange, maxDaysPerWee
       });
     }
   }, [initialLessonTime]);
+
+  useEffect(() => {
+    if (formData.accountID && lectures.length > 0) {
+      const lecturer = lectures.find(lec => lec.accountID === formData.accountID);
+      if (lecturer) {
+        const fullName = `${lecturer.lastName} ${lecturer.firstName}`;
+        setSelectedLecturer(lecturer);
+        form.setFieldsValue({ lecturerName: fullName });
+        handleValuesChange(null, { 
+          ...form.getFieldsValue(), 
+          lecturerName: fullName 
+        });
+      }
+    }
+  }, [formData.accountID, lectures]);
 
   const handleValuesChange = (_, allValues) => {
     if (allValues.weekDays?.length > maxDaysPerWeek) {
@@ -127,6 +145,57 @@ const LessonCreator = React.forwardRef(({ formData = {}, onChange, maxDaysPerWee
       }}
       onValuesChange={handleValuesChange}
     >
+      <Form.Item
+        label="Giảng viên"
+        name="accountID"
+        rules={[{ required: true, message: 'Vui lòng chọn giảng viên!' }]}
+      >
+        <Select
+          placeholder="Chọn giảng viên"
+          onChange={(value) => {
+            const lecturer = lectures.find(lec => lec.accountID === value);
+            if (lecturer) {
+              const fullName = `${lecturer.lastName} ${lecturer.firstName}`;
+              setSelectedLecturer(lecturer);
+              form.setFieldsValue({ accountID: value, lecturerName: fullName });
+              handleValuesChange(null, {
+                ...form.getFieldsValue(),
+                accountID: value,
+                lecturerName: fullName
+              });
+            }
+          }}
+        >
+          {lectures.map(lec => (
+            <Select.Option key={lec.accountID} value={lec.accountID}>
+              {lec.lastName + ' ' + lec.firstName}
+            </Select.Option>
+          ))}
+        </Select>
+      </Form.Item>
+
+      {selectedLecturer && (
+        <Card size="small" style={{ marginBottom: 16, backgroundColor: '#f6f8fa' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Text strong>Giảng viên:</Text>
+            <Text>{selectedLecturer.lastName} {selectedLecturer.firstName}</Text>
+            {selectedLecturer.email && (
+              <>
+                <Text type="secondary">|</Text>
+                <Text type="secondary">{selectedLecturer.email}</Text>
+              </>
+            )}
+          </div>
+        </Card>
+      )}
+
+      <Form.Item
+        name="lecturerName"
+        hidden
+      >
+        <Input />
+      </Form.Item>
+
       <Form.Item
         label="Dự kiến ngày học chính thức"
         name="teachingStartTime"
