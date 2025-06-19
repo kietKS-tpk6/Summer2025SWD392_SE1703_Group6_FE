@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, Button, Typography, Divider, Table, Tag, Space, Modal, Form, Input, InputNumber, message, Descriptions, Select } from 'antd';
 import { ArrowLeftOutlined, ClockCircleOutlined, PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined, CalendarOutlined, EyeOutlined,
   EyeInvisibleOutlined } from '@ant-design/icons';
@@ -9,12 +9,11 @@ import { API_URL, endpoints } from '../../../config/api';
 
 // Import components
 import SubjectInfo from './syllabus/SubjectInfo';
-import SyllabusInfo from './syllabus/SyllabusInfo';
 import AssessmentCriteria from './syllabus/AssessmentCriteria';
 import SyllabusSchedule from './syllabus/SyllabusSchedule';
+import SubjectClasses from './syllabus/SubjectClasses';
 import {
   SubjectModal,
-  SyllabusModal,
   AssessmentModal,
   ScheduleModal,
   DeleteConfirmModal
@@ -28,14 +27,16 @@ const { confirm } = Modal;
 const Syllabus = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const subject = location.state?.subject;
+  const [searchParams] = useSearchParams();
+  const subjectId = searchParams.get('subjectId');
+  const [subject, setSubject] = useState(null);
   const [syllabus, setSyllabus] = useState(null);
   const [syllabusSchedules, setSyllabusSchedules] = useState([]);
   const [assessmentCriteria, setAssessmentCriteria] = useState([]);
+  const [classes, setClasses] = useState([]);
 
   // Modal states
   const [isSubjectModalVisible, setIsSubjectModalVisible] = useState(false);
-  const [isSyllabusModalVisible, setIsSyllabusModalVisible] = useState(false);
   const [isAssessmentModalVisible, setIsAssessmentModalVisible] = useState(false);
   const [isScheduleModalVisible, setIsScheduleModalVisible] = useState(false);
   const [subjectDeleteModalVisible, setSubjectDeleteModalVisible] = useState(false);
@@ -44,7 +45,6 @@ const Syllabus = () => {
 
   // Form instances
   const [subjectForm] = Form.useForm();
-  const [syllabusForm] = Form.useForm();
   const [assessmentForm] = Form.useForm();
   const [scheduleForm] = Form.useForm();
 
@@ -55,16 +55,15 @@ const Syllabus = () => {
 
   // Show Table
   const [showSubjectInfo, setShowSubjectInfo] = useState(true);
-  const [showSyllabusInfo, setShowSyllabusInfo] = useState(true);
   const [showSchedule, setShowSchedule] = useState(true);
   const [showAssessment, setShowAssessment] = useState(true);
-
+  const [showClasses, setShowClasses] = useState(true);
 
   useEffect(() => {
-    if (subject) {
-      fetchSyllabus();
+    if (subjectId) {
+      fetchSubject();
     }
-  }, [subject]);
+  }, [subjectId]);
 
   useEffect(() => {
     if (syllabus?.syllabusID) {
@@ -72,19 +71,76 @@ const Syllabus = () => {
     }
   }, [syllabus]);
 
-  const fetchSyllabus = async () => {
+  const fetchSubject = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_URL}${endpoints.syllabus.getSyllabusInfo}/${subject.code}`);
+      const response = await axios.get(`${API_URL}${endpoints.manageSubject.getById}${subjectId}`);
+      if (response.data) {
+        setSubject({
+          id: response.data.subjectID,
+          code: response.data.subjectID,
+          name: response.data.subjectName,
+          description: response.data.description,
+          isActive: response.data.isActive,
+          minAverageScoreToPass: response.data.minAverageScoreToPass,
+          createAt: response.data.createAt
+        });
+        fetchSyllabus();
+        fetchClasses();
+      }
+    } catch (error) {
+      console.error('Error fetching subject:', error);
+      message.error('Không thể tải thông tin môn học');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchSyllabus = async () => {
+    try {
+      if (!subject?.code) {
+        console.log('No subject code available');
+        return;
+      }
+      const response = await axios.get(`${API_URL}${endpoints.syllabus.getBySubjectId}/${subject.code}`);
       if (response.data) {
         setSyllabus(response.data);
-        setSyllabusSchedules(response.data.syllabusSchedules || []);
+        // Fetch schedules after getting syllabus
+        await fetchSyllabusSchedules(response.data.syllabusID);
+        // Fetch assessment criteria after getting syllabus
+        await fetchAssessmentCriteria(response.data.syllabusID);
       }
     } catch (error) {
       console.error('Error fetching syllabus:', error);
-      message.error('Không thể tải thông tin giáo trình');
-    } finally {
-      setLoading(false);
+      if (error.response?.status === 500) {
+        message.warning('Chưa có giáo trình cho môn học này');
+        setSyllabus(null);
+      } else {
+        message.error('Không thể tải thông tin giáo trình');
+      }
+    }
+  };
+
+  const fetchSyllabusSchedules = async (syllabusID) => {
+    try {
+      const response = await axios.get(`${API_URL}${endpoints.syllabus.getScheduleTest}/${syllabusID}`);
+      if (response.data) {
+        const formattedSchedules = response.data.map(schedule => ({
+          ...schedule,
+          key: schedule.syllabusScheduleID,
+          title: `Tiết ${schedule.week * schedule.slot}`,
+          week: schedule.week,
+          slot: schedule.slot,
+          content: schedule.content || '',
+          durationMinutes: schedule.durationMinutes || 0,
+          resources: schedule.resources || '',
+          hasTest: schedule.hasTest || false
+        }));
+        setSyllabusSchedules(formattedSchedules);
+      }
+    } catch (error) {
+      console.error('Error fetching schedules:', error);
+      message.error('Không thể tải lịch trình giảng dạy');
     }
   };
 
@@ -96,11 +152,37 @@ const Syllabus = () => {
       }
       const response = await axios.get(`${API_URL}${endpoints.syllabus.getAssessmentCriteria}/${syllabus.syllabusID}`);
       if (response.data) {
-        setAssessmentCriteria(response.data);
+        const formattedCriteria = response.data.map(criteria => ({
+          ...criteria,
+          key: criteria.assessmentCriteriaID,
+          weightPercent: criteria.weightPercent || 0,
+          category: criteria.category || '',
+          requiredCount: criteria.requiredCount || 0,
+          duration: criteria.duration || 0,
+          testType: criteria.testType || '',
+          note: criteria.note || '',
+          minPassingScore: criteria.minPassingScore || 0
+        }));
+        setAssessmentCriteria(formattedCriteria);
       }
     } catch (error) {
       console.error('Error fetching assessment criteria:', error);
       message.error('Không thể tải tiêu chí đánh giá');
+    }
+  };
+
+  const fetchClasses = async () => {
+    try {
+      if (!subject?.code) {
+        console.log('No subject code available');
+        return;
+      }
+      const response = await axios.get(`${API_URL}${endpoints.manageClass.getBySubjectCode}/${subject.code}`);
+      setClasses(response.data || []);
+    } catch (error) {
+      console.error('Error fetching classes:', error);
+      message.error('Không thể tải danh sách lớp học');
+      setClasses([]);
     }
   };
 
@@ -137,7 +219,7 @@ const Syllabus = () => {
           description: values.description,
           minAverageScoreToPass: values.minAverageScoreToPass || 0
         };
-        navigate(location.pathname, { state: { subject: updatedSubject }, replace: true });
+        setSubject(updatedSubject);
         message.success('Cập nhật môn học thành công');
         setIsSubjectModalVisible(false);
       }
@@ -161,43 +243,20 @@ const Syllabus = () => {
     }
   };
 
-  // Syllabus handlers
-  const handleSyllabusEdit = () => {
-    syllabusForm.setFieldsValue({
-      description: syllabus.description,
-      note: syllabus.note,
-      status: syllabus.status
-    });
-    setIsSyllabusModalVisible(true);
-  };
-
-  const handleSyllabusModalOk = async () => {
-    try {
-      const values = await syllabusForm.validateFields();
-      const user = JSON.parse(localStorage.getItem('user'));
-      if (!user?.accountId) {
-        message.error('Không tìm thấy thông tin người dùng');
-        return;
-      }
-      const payload = {
-        syllabusID: syllabus.syllabusID,
-        accountID: user.accountId,
-        description: values.description,
-        note: values.note,
-        status: values.status
-      };
-      await axios.put(`${API_URL}${endpoints.syllabus.update}`, payload);
-      message.success('Cập nhật thông tin giáo trình thành công');
-      setIsSyllabusModalVisible(false);
-      fetchSyllabus();
-    } catch (error) {
-      console.error('Error updating syllabus:', error);
-      message.error('Không thể cập nhật thông tin giáo trình');
-    }
-  };
-
   // Assessment handlers
   const handleAssessmentAdd = () => {
+    if (!syllabus || !syllabus.syllabusID) {
+      Modal.confirm({
+        title: 'Thông báo',
+        content: 'Vui lòng tạo thông tin giáo trình trước khi thêm tiêu chí đánh giá',
+        okText: 'Đồng ý',
+        cancelText: 'Hủy',
+        onOk: () => {
+          setIsAssessmentModalVisible(true);
+        }
+      });
+      return;
+    }
     setEditingCriteria(null);
     assessmentForm.resetFields();
     setIsAssessmentModalVisible(true);
@@ -217,36 +276,27 @@ const Syllabus = () => {
   const handleAssessmentModalOk = async () => {
     try {
       const values = await assessmentForm.validateFields();
+      let response;
+
       if (editingCriteria) {
-        const payload = {
-          assessmentCriteriaID: editingCriteria.assessmentCriteriaID,
-          syllabusID: syllabus.syllabusID,
-          weightPercent: values.weightPercent,
-          category: values.category,
-          requiredCount: values.requiredCount,
-          duration: values.duration,
-          testType: values.testType,
-          note: values.note || '',
-          minPassingScore: values.minPassingScore
-        };
-        await axios.put(`${API_URL}${endpoints.syllabus.updateAssessmentCriteria}/${editingCriteria.assessmentCriteriaID}`, payload);
-        message.success('Cập nhật tiêu chí đánh giá thành công');
+        // Update existing criteria
+        response = await axios.put(`${API_URL}${endpoints.syllabus.updateAssessmentCriteria}/${editingCriteria.assessmentCriteriaID}`, {
+          ...values,
+          syllabusID: syllabus.syllabusID
+        });
       } else {
-        const payload = {
-          syllabusID: syllabus.syllabusID,
-          weightPercent: values.weightPercent,
-          category: values.category,
-          requiredCount: values.requiredCount,
-          duration: values.duration,
-          testType: values.testType,
-          note: values.note || '',
-          minPassingScore: values.minPassingScore
-        };
-        await axios.post(`${API_URL}${endpoints.syllabus.createAssessmentCriteria}`, payload);
-        message.success('Thêm tiêu chí đánh giá thành công');
+        // Create new criteria
+        response = await axios.post(`${API_URL}${endpoints.syllabus.createAssessmentCriteria}`, {
+          ...values,
+          syllabusID: syllabus.syllabusID
+        });
       }
-      setIsAssessmentModalVisible(false);
-      fetchAssessmentCriteria();
+
+      if (response.data) {
+        message.success(editingCriteria ? 'Cập nhật tiêu chí đánh giá thành công' : 'Thêm tiêu chí đánh giá thành công');
+        setIsAssessmentModalVisible(false);
+        fetchAssessmentCriteria();
+      }
     } catch (error) {
       console.error('Error saving assessment criteria:', error);
       message.error('Không thể lưu tiêu chí đánh giá');
@@ -271,6 +321,18 @@ const Syllabus = () => {
 
   // Schedule handlers
   const handleScheduleAdd = () => {
+    if (!syllabus || !syllabus.syllabusID) {
+      Modal.confirm({
+        title: 'Thông báo',
+        content: 'Vui lòng tạo thông tin giáo trình trước khi thêm lịch trình',
+        okText: 'Đồng ý',
+        cancelText: 'Hủy',
+        onOk: () => {
+          setIsAssessmentModalVisible(true);
+        }
+      });
+      return;
+    }
     setEditingSchedule(null);
     scheduleForm.resetFields();
     setIsScheduleModalVisible(true);
@@ -302,18 +364,27 @@ const Syllabus = () => {
   const handleScheduleModalOk = async () => {
     try {
       const values = await scheduleForm.validateFields();
+      let response;
+
       if (editingSchedule) {
-        await axios.put(`${API_URL}${endpoints.syllabus.updateSchedule}/${editingSchedule.SyllabusScheduleID}`, values);
-        message.success('Cập nhật lịch trình thành công');
-      } else {
-        await axios.post(`${API_URL}${endpoints.syllabus.addSchedule}`, {
+        // Update existing schedule
+        response = await axios.put(`${API_URL}${endpoints.syllabus.updateSchedule}/${editingSchedule.syllabusScheduleID}`, {
           ...values,
-          SyllabusID: syllabus.SyllabusID
+          syllabusID: syllabus.syllabusID
         });
-        message.success('Thêm lịch trình thành công');
+      } else {
+        // Create new schedule
+        response = await axios.post(`${API_URL}${endpoints.syllabus.createSyllabusSchedule}`, {
+          ...values,
+          syllabusID: syllabus.syllabusID
+        });
       }
-      setIsScheduleModalVisible(false);
-      fetchSyllabus();
+
+      if (response.data) {
+        message.success(editingSchedule ? 'Cập nhật lịch trình thành công' : 'Thêm lịch trình thành công');
+        setIsScheduleModalVisible(false);
+        fetchSyllabusSchedules(syllabus.syllabusID);
+      }
     } catch (error) {
       console.error('Error saving schedule:', error);
       message.error('Không thể lưu lịch trình');
@@ -347,86 +418,94 @@ const Syllabus = () => {
       </Button>
 
       <Card loading={loading}>
-      <div style={{ padding: '0px' }}>
-    {/* <Title level={2}>Chi tiết môn học</Title> */}
+        <div style={{ padding: '0px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Title level={3}>Thông tin môn học</Title>
+            <Button
+              type="text"
+              icon={showSubjectInfo ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+              onClick={() => setShowSubjectInfo(!showSubjectInfo)}
+            />
+          </div>
+          {showSubjectInfo && (
+            <SubjectInfo
+              subject={subject}
+              onEdit={handleSubjectEdit}
+              onDelete={handleSubjectDelete}
+            />
+          )}
+          <Divider />
 
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <Title level={3}>Thông tin môn học</Title>
-      <Button
-        type="text"
-        icon={showSubjectInfo ? <EyeOutlined /> : <EyeInvisibleOutlined />}
-        onClick={() => setShowSubjectInfo(!showSubjectInfo)}
-      />
-    </div>
-    {showSubjectInfo && (
-      <SubjectInfo
-        subject={subject}
-        onEdit={handleSubjectEdit}
-        onDelete={handleSubjectDelete}
-      />
-    )}
-    <Divider />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Title level={3}>Danh sách lớp học</Title>
+            <Button
+              type="text"
+              icon={showClasses ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+              onClick={() => setShowClasses(!showClasses)}
+            />
+          </div>
+          {showClasses && (
+            <SubjectClasses classes={classes} />
+          )}
+          <Divider />
 
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <Title level={3}>Thông tin giáo trình</Title>
-      <Button
-        type="text"
-        icon={showSyllabusInfo ? <EyeOutlined /> : <EyeInvisibleOutlined />}
-        onClick={() => setShowSyllabusInfo(!showSyllabusInfo)}
-      />
-    </div>
-    {showSyllabusInfo && (
-      <SyllabusInfo
-        syllabus={syllabus}
-        onEdit={handleSyllabusEdit}
-        subject={subject}
-        onSyllabusCreated={(newSyllabus) => {
-          setSyllabus(newSyllabus);
-          fetchSyllabus();
-        }}
-      />
-    )}
-    <Divider />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Title level={3}>Lịch trình giảng dạy</Title>
+            <Button
+              type="text"
+              icon={showSchedule ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+              onClick={() => setShowSchedule(!showSchedule)}
+            />
+          </div>
+          {showSchedule && (
+            <SyllabusSchedule
+              schedules={syllabusSchedules}
+              onAdd={() => {
+                if (!syllabus || !syllabus.syllabusID) {
+                  Modal.warning({
+                    title: 'Thông báo',
+                    content: 'Vui lòng tạo giáo trình trước khi thêm lịch trình',
+                    okText: 'Đồng ý'
+                  });
+                  return;
+                }
+                handleScheduleAdd();
+              }}
+              onEdit={handleScheduleEdit}
+              onDelete={handleScheduleDelete}
+              subject={subject}
+            />
+          )}
+          <Divider />
 
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <Title level={3}>Lịch trình giảng dạy</Title>
-      <Button
-        type="text"
-        icon={showSchedule ? <EyeOutlined /> : <EyeInvisibleOutlined />}
-        onClick={() => setShowSchedule(!showSchedule)}
-      />
-    </div>
-    {showSchedule && (
-      <SyllabusSchedule
-        schedules={syllabusSchedules}
-        onAdd={handleScheduleAdd}
-        onEdit={handleScheduleEdit}
-        onDelete={handleScheduleDelete}
-        subject={subject}
-      />
-    )}
-    <Divider />
-
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <Title level={3}>Tiêu chí đánh giá</Title>
-      <Button
-        type="text"
-        icon={showAssessment ? <EyeOutlined /> : <EyeInvisibleOutlined />}
-        onClick={() => setShowAssessment(!showAssessment)}
-      />
-    </div>
-    {showAssessment && (
-      <AssessmentCriteria
-        assessmentCriteria={assessmentCriteria}
-        onAdd={handleAssessmentAdd}
-        onEdit={handleAssessmentEdit}
-        onDelete={handleAssessmentDelete}
-        subject={subject}
-      />
-    )}
-  </div>
-
-
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Title level={3}>Tiêu chí đánh giá</Title>
+            <Button
+              type="text"
+              icon={showAssessment ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+              onClick={() => setShowAssessment(!showAssessment)}
+            />
+          </div>
+          {showAssessment && (
+            <AssessmentCriteria
+              assessmentCriteria={assessmentCriteria}
+              onAdd={() => {
+                if (!syllabus || !syllabus.syllabusID) {
+                  Modal.warning({
+                    title: 'Thông báo',
+                    content: 'Vui lòng tạo giáo trình trước khi thêm tiêu chí đánh giá',
+                    okText: 'Đồng ý'
+                  });
+                  return;
+                }
+                handleAssessmentAdd();
+              }}
+              onEdit={handleAssessmentEdit}
+              onDelete={handleAssessmentDelete}
+              subject={subject}
+            />
+          )}
+        </div>
       </Card>
 
       {/* Modals */}
@@ -436,14 +515,6 @@ const Syllabus = () => {
         onCancel={() => setIsSubjectModalVisible(false)}
         form={subjectForm}
         initialValues={subject}
-      />
-
-      <SyllabusModal
-        visible={isSyllabusModalVisible}
-        onOk={handleSyllabusModalOk}
-        onCancel={() => setIsSyllabusModalVisible(false)}
-        form={syllabusForm}
-        initialValues={syllabus}
       />
 
       <AssessmentModal

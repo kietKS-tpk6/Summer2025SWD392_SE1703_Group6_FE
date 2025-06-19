@@ -7,6 +7,7 @@ import Dashboard from './components/dashboard/pages/Dashboard';
 import Users from './components/dashboard/pages/Users';
 import ClassManagement from './components/classes/Classes';
 import Subjects from './components/dashboard/pages/Subjects';
+import CreateSubject from './components/dashboard/pages/subject/CreateSubject';
 import Syllabus from './components/dashboard/pages/Syllabus';
 import Blog from './components/dashboard/pages/Blog';
 import Analytics from './components/dashboard/pages/Analytics';
@@ -38,6 +39,7 @@ const dashboardRoutes = [
   { path: '/users', element: <Users /> },
   { path: '/class', element: <ClassManagement /> },
   { path: '/subject', element: <Subjects /> },
+  { path: '/subject/create', element: <CreateSubject /> },
   { path: '/syllabus', element: <Syllabus /> },
   { path: '/blog', element: <Blog /> },
   { path: '/analytics', element: <Analytics /> },
