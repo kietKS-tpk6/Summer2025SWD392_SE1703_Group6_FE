@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Space, Input, Tag, Select } from 'antd';
+import { Table, Button, Space, Input, Tag, Select, Modal, message } from 'antd';
 import { SearchOutlined, PlusOutlined } from '@ant-design/icons';
 import axios from 'axios';
-import { API_URL } from '../../../config/api';
-import { getClassesTableColumns } from '../../classes/ClassesTableComponent';
-import CreateClassModal from '../../classes/create/CreateClassModal';
+import { API_URL } from '../../config/api';
+import { getClassesTableColumns } from './ClassesTableComponent';
+import CreateClassModal from './create/CreateClassModal';
 const { Search } = Input;
 const { Option } = Select;
 
@@ -65,7 +65,25 @@ const Classes = () => {
 
   const handleView = (record) => { /* ... */ };
   const handleEdit = (record) => { /* ... */ };
-  const handleDelete = (record) => { /* ... */ };
+  const handleDelete = (record) => {
+    // Xác nhận trước khi xoá
+    Modal.confirm({
+      title: 'Xác nhận xoá',
+      content: `Bạn có chắc chắn muốn xoá lớp "${record.className}"?` ,
+      okText: 'Xoá',
+      okType: 'danger',
+      cancelText: 'Huỷ',
+      onOk: async () => {
+        try {
+          await axios.delete(`${API_URL}api/Class/delete/${record.classID}`);
+          message.success('Xoá lớp học thành công!');
+          fetchData();
+        } catch (error) {
+          message.error('Xoá lớp học thất bại!');
+        }
+      }
+    });
+  };
   const handleOpenRecruit = async (record) => {
     await axios.post(`${API_URL}api/Class/update`, { ...record, status: 1 });
     fetchData();

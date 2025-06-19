@@ -5,7 +5,7 @@ import Sidebar from './components/dashboard/Sidebar';
 import LecturerSidebar from './components/dashboard/LecturerSidebar';
 import Dashboard from './components/dashboard/pages/Dashboard';
 import Users from './components/dashboard/pages/Users';
-import ClassManagement from './components/dashboard/pages/Classes';
+import ClassManagement from './components/classes/Classes';
 import Subjects from './components/dashboard/pages/Subjects';
 import Syllabus from './components/dashboard/pages/Syllabus';
 import Blog from './components/dashboard/pages/Blog';
