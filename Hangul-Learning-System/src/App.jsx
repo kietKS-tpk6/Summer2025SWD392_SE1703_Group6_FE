@@ -17,6 +17,7 @@ import Settings from './components/dashboard/pages/Settings';
 import ViewerPage from './pages/viewer-portal/ViewerPage';
 import HomeContent from './components/Homepage/Content';
 import ViewClassDetail from './pages/student-portal/ViewClassDetail';
+import WeeklyTimeTable from './pages/student-portal/WeeklyTimeTable';
 // import About from './pages/viewer-portal/About';
 // import Courses from './pages/viewer-portal/Courses';
 // import Contact from './pages/viewer-portal/Contact';
@@ -87,6 +88,7 @@ const studentRoutes = [
   { path: '/payment-failed', element: <PaymentFailed/>},
   { path: '/payment/:classId', element: <PaymentForm /> },
   { path: '/class-detail/:id', element: <ViewClassDetail/>},
+  { path: '/weekly-time-table', element: <WeeklyTimeTable/>},
 ];
 
 const App = () => {
