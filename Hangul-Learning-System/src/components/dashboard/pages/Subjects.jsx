@@ -7,15 +7,16 @@ import { API_URL, endpoints } from '../../../config/api';
 
 const { Option } = Select;
 const { confirm } = Modal;
+const { Search } = Input;
 
 const Subjects = () => {
   const navigate = useNavigate();
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [searchValue, setSearchValue] = useState('');
+  const [searchText, setSearchText] = useState('');
   const [showActive, setShowActive] = useState(true);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [subjectToDelete, setSubjectToDelete] = useState(null);
+  const [selectedSubject, setSelectedSubject] = useState(null);
 
   useEffect(() => {
     fetchSubjects();
@@ -61,42 +62,51 @@ const Subjects = () => {
     }
   };
 
-  const handleSearch = async (value) => {
-    if (!value) {
-      await fetchSubjects();
-      return;
-    }
+  const handleSearch = (value) => {
+    setSearchText(value);
+  };
+
+  const handleAdd = () => {
+    navigate('/dashboard/subject/create');
+  };
+
+  const handleEdit = (record) => {
+    navigate(`/dashboard/subject/edit/${record.code}`);
+  };
+
+  const handleDelete = (record) => {
+    setSelectedSubject(record);
+    setDeleteModalVisible(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedSubject) return;
 
     try {
       setLoading(true);
-      const response = await axios.get(`${API_URL}${endpoints.manageSubject.getById}${value}`);
+      console.log('Deleting subject with ID:', selectedSubject.id);
+      const deleteUrl = `${API_URL}${endpoints.manageSubject.delete}${selectedSubject.id}`;
+      console.log('Delete URL:', deleteUrl);
 
-      if (response.data) {
-        const subjectData = response.data;
-        setSubjects([{
-          id: subjectData.subjectID,
-          name: subjectData.subjectName,
-          code: subjectData.subjectID,
-          description: subjectData.description,
-          status: subjectData.isActive ? 'Đang mở' : 'Đã đóng',
-          minAverageScoreToPass: subjectData.minAverageScoreToPass,
-          createAt: new Date(subjectData.createAt).toLocaleDateString('vi-VN')
-        }]);
-      }
+      const response = await axios.delete(deleteUrl);
+      console.log('Delete response:', response);
+
+      message.success('Xóa môn học thành công');
+      await fetchSubjects();
     } catch (error) {
-      console.error('Error searching subject:', error);
-      message.error('Không tìm thấy môn học');
-      setSubjects([]);
+      console.error('Error deleting subject:', error);
+      console.error('Error response:', error.response);
+      message.error('Không thể xóa môn học. Vui lòng thử lại.');
     } finally {
       setLoading(false);
+      setDeleteModalVisible(false);
+      setSelectedSubject(null);
     }
   };
 
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isViewModalVisible, setIsViewModalVisible] = useState(false);
-  const [form] = Form.useForm();
-  const [editingSubject, setEditingSubject] = useState(null);
-  const [viewingSubject, setViewingSubject] = useState(null);
+  const handleView = (record) => {
+    navigate(`/dashboard/syllabus?subjectId=${record.code}`);
+  };
 
   const columns = [
     {
@@ -158,7 +168,7 @@ const Subjects = () => {
           <Button
             danger
             icon={<DeleteOutlined />}
-            onClick={() => handleDelete(record.id)}
+            onClick={() => handleDelete(record)}
             disabled={!record.isActive}  // disable nút Xóa nếu không active
           >
             Xóa
@@ -168,92 +178,10 @@ const Subjects = () => {
     },
   ];
 
-  const handleAdd = () => {
-    setEditingSubject(null);
-    form.resetFields();
-    setIsModalVisible(true);
-  };
-
-  const handleEdit = (record) => {
-    setEditingSubject(record);
-    form.setFieldsValue(record);
-    setIsModalVisible(true);
-  };
-
-  const handleDelete = (id) => {
-    console.log('Delete button clicked for ID:', id);
-    setSubjectToDelete(id);
-    setDeleteModalVisible(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!subjectToDelete) return;
-
-    try {
-      setLoading(true);
-      console.log('Deleting subject with ID:', subjectToDelete);
-      const deleteUrl = `${API_URL}${endpoints.manageSubject.delete}${subjectToDelete}`;
-      console.log('Delete URL:', deleteUrl);
-
-      const response = await axios.delete(deleteUrl);
-      console.log('Delete response:', response);
-
-      message.success('Xóa môn học thành công');
-      await fetchSubjects();
-    } catch (error) {
-      console.error('Error deleting subject:', error);
-      console.error('Error response:', error.response);
-      message.error('Không thể xóa môn học. Vui lòng thử lại.');
-    } finally {
-      setLoading(false);
-      setDeleteModalVisible(false);
-      setSubjectToDelete(null);
-    }
-  };
-
-  const handleModalOk = async () => {
-    try {
-      const values = await form.validateFields();
-
-      if (editingSubject) {
-        // Update existing subject
-        const response = await axios.put(`${API_URL}${endpoints.manageSubject.update}`, {
-          subjectID: editingSubject.id,
-          subjectName: values.name,
-          description: values.description,
-          isActive: true,
-          minAverageScoreToPass: values.minAverageScoreToPass || 0
-        });
-
-        if (response.data) {
-          // Refresh the subjects list after successful update
-          await fetchSubjects();
-          message.success('Cập nhật môn học thành công');
-        }
-      } else {
-        // Create new subject
-        const response = await axios.post(`${API_URL}${endpoints.manageSubject.create}`, {
-          subjectName: values.name,
-          description: values.description,
-          minAverageScoreToPass: values.minAverageScoreToPass || 0
-        });
-
-        if (response.data) {
-          // Refresh the subjects list after successful creation
-          await fetchSubjects();
-          message.success('Thêm môn học thành công');
-        }
-      }
-      setIsModalVisible(false);
-    } catch (error) {
-      console.error('Error saving subject:', error);
-      message.error('Không thể lưu môn học. Vui lòng thử lại.');
-    }
-  };
-
-  const handleView = (record) => {
-    navigate('/dashboard/syllabus', { state: { subject: record } });
-  };
+  const filteredSubjects = subjects.filter(subject =>
+    subject.name.toLowerCase().includes(searchText.toLowerCase()) ||
+    subject.description.toLowerCase().includes(searchText.toLowerCase())
+  );
 
   return (
     <div style={{ padding: '24px' }}>
@@ -268,7 +196,7 @@ const Subjects = () => {
           />
         </div>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-          <Input.Search
+          <Search
             placeholder="Nhập mã môn học để tìm kiếm"
             allowClear
             enterButton={<SearchOutlined />}
@@ -283,102 +211,15 @@ const Subjects = () => {
             Thêm môn học mới
           </Button>
         </div>
-
       </div>
 
       <Table
         columns={columns}
-        dataSource={subjects}
+        dataSource={filteredSubjects}
         rowKey="id"
         pagination={{ pageSize: 10 }}
         loading={loading}
       />
-
-      <Modal
-        title={editingSubject ? 'Sửa môn học' : 'Thêm môn học mới'}
-        open={isModalVisible}
-        onOk={handleModalOk}
-        onCancel={() => setIsModalVisible(false)}
-        width={600}
-      >
-        <Form
-          form={form}
-          layout="vertical"
-        >
-          <Form.Item
-            name="name"
-            label="Tên môn học"
-            rules={[{ required: true, message: 'Vui lòng nhập tên môn học' }]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="description"
-            label="Mô tả"
-            rules={[{ required: true, message: 'Vui lòng nhập mô tả' }]}
-          >
-            <Input.TextArea rows={4} />
-          </Form.Item>
-          <Form.Item
-            name="minAverageScoreToPass"
-            label="Điểm đạt"
-            rules={[
-              { required: true, message: 'Vui lòng nhập điểm đạt' },
-              {
-                validator: (_, value) =>
-                  value >= 0 && value <= 10
-                    ? Promise.resolve()
-                    : Promise.reject(new Error('Điểm phải nằm trong khoảng từ 0 đến 10')),
-              },
-            ]}
-          >
-            <Input
-              type="number"
-              min={0}
-              max={10}
-              step={0.1}
-              onKeyDown={(e) => {
-                // Ngăn nhập ký tự không hợp lệ như e, +, -
-                if (['e', 'E', '+', '-'].includes(e.key)) {
-                  e.preventDefault();
-                }
-              }}
-            />
-          </Form.Item>
-
-        </Form>
-      </Modal>
-
-      <Modal
-        title="Chi tiết môn học"
-        open={isViewModalVisible}
-        onCancel={() => setIsViewModalVisible(false)}
-        footer={null}
-        width={800}
-      >
-        {viewingSubject && (
-          <div>
-            <Descriptions bordered column={1}>
-              <Descriptions.Item label="Mã môn học">{viewingSubject.code}</Descriptions.Item>
-              <Descriptions.Item label="Tên môn học">{viewingSubject.name}</Descriptions.Item>
-              <Descriptions.Item label="Cấp độ">{viewingSubject.level}</Descriptions.Item>
-              <Descriptions.Item label="Mô tả">{viewingSubject.description}</Descriptions.Item>
-              <Descriptions.Item label="Trạng thái">{viewingSubject.status}</Descriptions.Item>
-            </Descriptions>
-            <div style={{ marginTop: '20px' }}>
-              <h3>Syllabus</h3>
-              <div style={{
-                padding: '16px',
-                backgroundColor: '#f5f5f5',
-                borderRadius: '4px',
-                whiteSpace: 'pre-wrap'
-              }}>
-                {viewingSubject.syllabus}
-              </div>
-            </div>
-          </div>
-        )}
-      </Modal>
 
       <Modal
         title="Xác nhận xóa"
@@ -386,7 +227,7 @@ const Subjects = () => {
         onOk={handleDeleteConfirm}
         onCancel={() => {
           setDeleteModalVisible(false);
-          setSubjectToDelete(null);
+          setSelectedSubject(null);
         }}
         okText="Xóa"
         cancelText="Hủy"
