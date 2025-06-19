@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Button, Tag, Rate, Spin, Row, Col, Typography, Divider, Tooltip, Avatar } from 'antd';
 import axios from 'axios';
-import { API_URL } from '../../config/api';
+import { API_URL, endpoints } from '../../config/api';
 import '../../styles/ViewClassDetail.css';
 import { useParams } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
@@ -23,12 +23,18 @@ const ViewClassDetail = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const [showSyllabus, setShowSyllabus] = useState(false);
+  const [isEnrolled, setIsEnrolled] = useState(false);
+
+  // Lấy studentId từ localStorage
+  const student = JSON.parse(localStorage.getItem('user'));
+  const studentId = student?.accountId;
 
   useEffect(() => {
     const fetchClass = async () => {
       try {
         const res = await axios.get(`${API_URL}api/Class/get-by-id?id=${id}`);
         setClassData(res.data);
+        console.log("subjectID:", res.data.subjectID);
       } catch (err) {
         setClassData(null);
       } finally {
@@ -41,7 +47,7 @@ const ViewClassDetail = () => {
   useEffect(() => {
     const fetchSyllabus = async () => {
       if (classData && classData.subjectID) {
-        const res = await axios.get(`${API_URL}api/Syllabus/get-syllabus-by-subject-id/${classData.subjectID}`);
+        const res = await axios.get(`${API_URL}${endpoints.syllabus.getSyllabusInfo(classData.subjectID)}`);
         setSyllabus(res.data);
         console.log('syllabusID:', res.data.syllabusID); 
         console.log('description:', res.data.description); 
@@ -55,7 +61,6 @@ const ViewClassDetail = () => {
       if (syllabus && syllabus.syllabusID) {
         const res = await axios.get(`${API_URL}api/SyllabusSchedule/schedules/${syllabus.syllabusID}`);
         setSyllabusSchedules(res.data);
-        // Ví dụ log ra slot, lessonTitle, week của từng item:
         res.data.forEach(item => {
           console.log('Slot:', item.slot, 'LessonTitle:', item.lessonTitle, 'Week:', item.week);
         });
@@ -63,6 +68,21 @@ const ViewClassDetail = () => {
     };
     fetchSchedules();
   }, [syllabus]);
+
+  // Check enrollment status
+  useEffect(() => {
+    const checkEnrollment = async () => {
+      if (studentId && id) {
+        try {
+          const res = await axios.get(`${API_URL}api/Enrollment/check-enrollment/${studentId}/${id}`);
+          setIsEnrolled(res.data.isEnrolled);
+        } catch (err) {
+          setIsEnrolled(false);
+        }
+      }
+    };
+    checkEnrollment();
+  }, [studentId, id]);
 
   if (loading || !classData) return <Spin size="large" style={{ margin: '80px auto', display: 'block' }} />;
 
@@ -103,18 +123,32 @@ const ViewClassDetail = () => {
                     <div className="class-detail-price-box">
                   <span className="class-detail-currency">VNĐ</span>
                   <span className="class-detail-price-number">
-                    {classData.priceOfClass ? (classData.priceOfClass * 1000).toLocaleString() : '--'}
+                    {classData.priceOfClass ? classData.priceOfClass.toLocaleString() : '--'}
                   </span>
                 </div>
-                <Button
-                  type="primary"
-                  size="large"
-                  className="class-detail-purchase-btn"
-                  block
-                  style={{ margin: '18px 0 8px 0', fontSize: 20, height: 48 }}
-                >
-                  Đăng ký ngay
-                </Button>
+                {isEnrolled ? (
+                  <Button
+                    type="primary"
+                    size="large"
+                    className="class-detail-purchase-btn"
+                    block
+                    style={{ margin: '18px 0 8px 0', fontSize: 20, height: 48 }}
+                    onClick={() => navigate('/student/schedule')}
+                  >
+                    Xem thời khóa biểu
+                  </Button>
+                ) : (
+                  <Button
+                    type="primary"
+                    size="large"
+                    className="class-detail-purchase-btn"
+                    block
+                    style={{ margin: '18px 0 8px 0', fontSize: 20, height: 48 }}
+                    onClick={() => navigate(`/payment/${id}`)}
+                  >
+                    Đăng ký ngay
+                  </Button>
+                )}
                 <Button
                   size="large"
                   className="class-detail-preview-btn"

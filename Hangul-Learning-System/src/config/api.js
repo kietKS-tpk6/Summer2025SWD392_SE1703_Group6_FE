@@ -58,4 +58,9 @@ export const endpoints = {
         updateSchedule: 'api/Syllabus/update-schedule',
         deleteSchedule: 'api/Syllabus/delete-schedule'
     },
+    payment: {
+    create: 'api/Payment/create',
+    getQr: (paymentId) => `api/Payment/qr/${paymentId}`,
+    getStatus: (paymentId) => `api/Payment/status/${paymentId}`
+  }
 };
