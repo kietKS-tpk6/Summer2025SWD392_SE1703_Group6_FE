@@ -22,6 +22,10 @@ const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Lấy role từ localStorage
+  const user = JSON.parse(localStorage.getItem('user'));
+  const role = user?.role;
+
   const menuItems = [
     {
       key: '/dashboard',
@@ -75,9 +79,61 @@ const Sidebar = () => {
     },
   ];
 
+  const menuItemsStudent = [
+    {
+      key: '/student',
+      icon: <DashboardOutlined />, // icon dashboard
+      label: 'Về Trang Chủ',
+    },
+    {
+      key: '/student/profile',
+      icon: <IdcardOutlined />, // icon thẻ ID
+      label: 'Thông tin cá nhân',
+    },
+    {
+      key: '/student/test-event',
+      icon: <BarChartOutlined />, // icon sự kiện
+      label: 'Lịch kiểm tra',
+    },
+    {
+      key: '/student/enrollment-history',
+      icon: <ReadOutlined />, // icon lịch sử
+      label: 'Lớp học đã đăng ký',
+    },
+    {
+      key: '/student/schedule',
+      icon: <CalendarOutlined />,
+      label: 'Thời khóa biểu',
+    },
+    {
+      key: '/student/certificate',
+      icon: <BookOutlined />, // icon chứng chỉ
+      label: 'Chứng chỉ',
+    },
+    {
+      key: '/student/studying-class',
+      icon: <ApartmentOutlined />, // icon lớp học
+      label: 'Lớp đang học',
+    },
+    {
+      key: '/logout',
+      icon: <SettingOutlined />, // icon logout tạm thời
+      label: 'Đăng xuất ',
+    },
+  ];
+
   const handleMenuClick = ({ key }) => {
+    if (key === '/logout') {
+      localStorage.removeItem('user');
+      navigate('/login');
+      return;
+    }
     navigate(key);
   };
+
+  // Chọn menu theo role
+  let menuToShow = menuItems;
+  if (role === 'Student') menuToShow = menuItemsStudent;
 
   return (
     <Sider
@@ -110,7 +166,7 @@ const Sidebar = () => {
           style={{ width: 100, height: 100, margin: '0 auto' }}
         />
         <div style={{ fontWeight: 700, fontSize: 20, color: '#000', marginTop: 10 }}>
-          Manager
+          {role === 'Student' ? 'Student' : 'Manager'}
         </div>
         <div style={{ fontSize: 12, color: '#b0b7c3' }}>Learn From Home</div>
       </div>
@@ -125,7 +181,7 @@ const Sidebar = () => {
         <Menu
           mode="inline"
           selectedKeys={[location.pathname]}
-          items={menuItems}
+          items={menuToShow}
           onClick={handleMenuClick}
           style={{
             border: 'none',
