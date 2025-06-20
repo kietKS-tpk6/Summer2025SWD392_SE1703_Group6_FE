@@ -133,7 +133,7 @@ const ViewClassDetail = () => {
                     className="class-detail-purchase-btn"
                     block
                     style={{ margin: '18px 0 8px 0', fontSize: 20, height: 48 }}
-                    onClick={() => navigate('/weekly-time-table')}
+                    onClick={() => navigate('/student/schedule?simple=true')}
                   >
                     Xem thời khóa biểu
                   </Button>
