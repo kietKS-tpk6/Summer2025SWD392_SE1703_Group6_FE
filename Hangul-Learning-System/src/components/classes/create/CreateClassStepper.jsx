@@ -7,6 +7,7 @@ import ConfirmCreateClass from './ConfirmCreateClass';
 import { API_URL } from '../../../config/api';
 import axios from 'axios';
 import dayjs from 'dayjs';
+import Notification from '../../common/Notification';
 
 const CreateClassStepper = ({
   lectures,
@@ -14,6 +15,7 @@ const CreateClassStepper = ({
   formData,
   setFormData,
   onFinish,
+  showNotify
 }) => {
   const [current, setCurrent] = useState(0);
   const [openScheduleModal, setOpenScheduleModal] = useState(false);
@@ -177,15 +179,33 @@ const CreateClassStepper = ({
       });
       const testEventResponse = await axios.post(`${API_URL}api/TestEvent/setup-test-event/${classId}`);
       
-      notification.success({
-        message: 'Tạo lớp học thành công!',
-        description: `${classResponse.data.message}. ${lessonResponse.data.message}. ${testEventResponse.data.message}`,
-        placement: 'topRight',
-        duration: 4
-      });
+      if (classResponse.data.success) {
+        showNotify({
+          type: 'success',
+          message: classResponse.data.message,
+          description: (
+            <>
+              {lessonResponse.data.message}
+              <br />
+              {testEventResponse.data.message}
+            </>
+          )
+        });
+      } else {
+        showNotify({
+          type: 'error',
+          message: classResponse.data.message || 'Tạo lớp học thất bại!',
+          description: ''
+        });
+      }
       
       onFinish?.();
     } catch (error) {
+      showNotify({
+        type: 'error',
+        message: 'Có lỗi xảy ra khi tạo lớp học!',
+        description: error.message
+      });
       handleApiError(error);
     } finally {
       setLoading(false);

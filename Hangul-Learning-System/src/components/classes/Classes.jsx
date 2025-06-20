@@ -5,6 +5,9 @@ import axios from 'axios';
 import { API_URL } from '../../config/api';
 import { getClassesTableColumns } from './ClassesTableComponent';
 import CreateClassModal from './create/CreateClassModal';
+import DeleteConfirm from '../common/DeleteConfirm';
+import Notification from '../common/Notification';
+
 const { Search } = Input;
 const { Option } = Select;
 
@@ -28,6 +31,21 @@ const Classes = () => {
   const [openCreateModal, setOpenCreateModal] = useState(false);
   const [statusFilter, setStatusFilter] = useState('all');
   const [data, setData] = useState([]);
+  const [deleteModal, setDeleteModal] = useState({ open: false, record: null });
+  const [notify, setNotify] = useState({
+    visible: false,
+    type: 'success',
+    message: '',
+    description: ''
+  });
+
+  const showNotify = (notifyProps, duration = 3) => {
+    const notifKey = Math.random().toString(36).substr(2, 9);
+    setNotify(n => ({ ...n, visible: false }));
+    setTimeout(() => {
+      setNotify({ ...notifyProps, visible: true, duration, notifKey });
+    }, 0);
+  };
 
   const fetchData = async (status = statusFilter, page = 1, pageSize = 10) => {
     setLoading(true);
@@ -63,26 +81,23 @@ const Classes = () => {
     fetchData(statusFilter, pagination.current, pagination.pageSize);
   };
 
+  
   const handleView = (record) => { /* ... */ };
   const handleEdit = (record) => { /* ... */ };
   const handleDelete = (record) => {
-    // Xác nhận trước khi xoá
-    Modal.confirm({
-      title: 'Xác nhận xoá',
-      content: `Bạn có chắc chắn muốn xoá lớp "${record.className}"?` ,
-      okText: 'Xoá',
-      okType: 'danger',
-      cancelText: 'Huỷ',
-      onOk: async () => {
-        try {
-          await axios.delete(`${API_URL}api/Class/delete/${record.classID}`);
-          message.success('Xoá lớp học thành công!');
-          fetchData();
-        } catch (error) {
-          message.error('Xoá lớp học thất bại!');
-        }
-      }
-    });
+    setDeleteModal({ open: true, record });
+  };
+  const handleDeleteConfirm = async () => {
+    const record = deleteModal.record;
+    try {
+      await axios.delete(`${API_URL}api/Class/delete/${record.classID}`);
+      message.success('Xoá lớp học thành công!');
+      fetchData();
+    } catch (error) {
+      message.error('Xoá lớp học thất bại!');
+    } finally {
+      setDeleteModal({ open: false, record: null });
+    }
   };
   const handleOpenRecruit = async (record) => {
     await axios.post(`${API_URL}api/Class/update`, { ...record, status: 1 });
@@ -140,6 +155,23 @@ const Classes = () => {
         onSuccess={() => {
           fetchData();
         }}
+        showNotify={showNotify}
+      />
+      <DeleteConfirm
+        open={deleteModal.open}
+        title="Xác nhận xoá"
+        content={deleteModal.record ? `Bạn có chắc chắn muốn xoá lớp "${deleteModal.record.className}"?` : ''}
+        onOk={handleDeleteConfirm}
+        onCancel={() => setDeleteModal({ open: false, record: null })}
+      />
+      <Notification
+        visible={notify.visible}
+        type={notify.type}
+        message={notify.message}
+        description={notify.description}
+        onClose={() => setNotify(n => ({ ...n, visible: false }))}
+        duration={notify.duration}
+        notifKey={notify.notifKey}
       />
     </div>
   );

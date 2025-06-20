@@ -9,7 +9,7 @@ const fetchSubjects = async () => {
   return res.data || [];
 };
 
-const CreateClassModal = ({ open, onClose, onSuccess }) => {
+const CreateClassModal = ({ open, onClose, onSuccess, showNotify }) => {
   const [lectures, setLectures] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -73,6 +73,7 @@ const CreateClassModal = ({ open, onClose, onSuccess }) => {
             onSuccess && onSuccess();
             onClose();
           }}
+          showNotify={showNotify}
         />
       )}
     </Modal>
