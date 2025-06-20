@@ -58,7 +58,7 @@ const HeaderBar = () => {
           ) : (
             <div className="app__navbar-user">
               <span className="app__navbar-hello">
-                <UserOutlined style={{ marginRight: 6, color: "#fbb040" }} />
+                <UserOutlined style={{ marginRight: 6, color: "#fbb040" }} onClick={() => navigate('/student/profile')} />
                 Chào, <b>{user.firstName}</b>
               </span>
               <button className="app__navbar-logout" onClick={handleLogout} title="Đăng xuất">

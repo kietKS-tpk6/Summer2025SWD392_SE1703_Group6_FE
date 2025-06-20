@@ -19,6 +19,7 @@ import ViewerPage from './pages/viewer-portal/ViewerPage';
 import HomeContent from './components/Homepage/Content';
 import ViewClassDetail from './pages/student-portal/ViewClassDetail';
 import WeeklyTimeTable from './pages/student-portal/WeeklyTimeTable';
+import StudentDetail from './pages/student-portal/StudentDetail';
 // import About from './pages/viewer-portal/About';
 // import Courses from './pages/viewer-portal/Courses';
 // import Contact from './pages/viewer-portal/Contact';
@@ -74,6 +75,7 @@ const publicRoutes = [
       { path: '/payment-success', element: <PaymentSuccess/>},
       { path: '/payment-failed', element: <PaymentFailed/>},
       { path: '/payment/:classId', element: <PaymentForm /> }
+      
       // { path: 'about', element: <About /> },
       // { path: 'courses', element: <Courses /> },
       // { path: 'contact', element: <Contact /> },
@@ -86,11 +88,13 @@ const publicRoutes = [
 // Student routes configuration
 const studentRoutes = [
   { path: '/student', element: <StudentPage /> },
+  { path: '/student/profile', element: <StudentDetail/> },
+  { path: '/student/schedule', element: <WeeklyTimeTable/> }, 
   { path: '/payment-success', element: <PaymentSuccess/>},
   { path: '/payment-failed', element: <PaymentFailed/>},
   { path: '/payment/:classId', element: <PaymentForm /> },
   { path: '/class-detail/:id', element: <ViewClassDetail/>},
-  { path: '/weekly-time-table', element: <WeeklyTimeTable/>},
+  //{ path: '/weekly-time-table', element: <WeeklyTimeTable/>},
 ];
 
 const App = () => {
