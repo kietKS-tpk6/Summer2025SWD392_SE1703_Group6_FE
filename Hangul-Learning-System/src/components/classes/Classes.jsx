@@ -91,10 +91,18 @@ const Classes = () => {
     const record = deleteModal.record;
     try {
       await axios.delete(`${API_URL}api/Class/delete/${record.classID}`);
-      message.success('Xoá lớp học thành công!');
+      showNotify({
+        type: 'success',
+        message: 'Xoá lớp học thành công!',
+        description: ''
+      });
       fetchData();
     } catch (error) {
-      message.error('Xoá lớp học thất bại!');
+      showNotify({
+        type: 'error',
+        message: 'Xoá lớp học thất bại!',
+        description: error?.message || ''
+      });
     } finally {
       setDeleteModal({ open: false, record: null });
     }
