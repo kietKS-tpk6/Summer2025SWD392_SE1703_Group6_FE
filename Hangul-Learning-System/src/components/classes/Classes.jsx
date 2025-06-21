@@ -108,8 +108,33 @@ const Classes = () => {
     }
   };
   const handleOpenRecruit = async (record) => {
-    await axios.post(`${API_URL}api/Class/update`, { ...record, status: 1 });
-    fetchData();
+    if (!record.classID) {
+      showNotify({
+        type: 'error',
+        message: 'Không thể mở tuyển sinh!',
+        description: 'Lớp học chưa được tạo thành công'
+      });
+      return;
+    }
+
+    try {
+      await axios.put(`${API_URL}api/Class/update-status`, {
+        classId: record.classID,
+        classStatus: 1
+      });
+      showNotify({
+        type: 'success',
+        message: 'Mở tuyển sinh thành công!',
+        description: `Lớp "${record.className}" đã được mở tuyển sinh`
+      });
+      fetchData();
+    } catch (error) {
+      showNotify({
+        type: 'error',
+        message: 'Mở tuyển sinh thất bại!',
+        description: error?.message || 'Có lỗi xảy ra khi mở tuyển sinh'
+      });
+    }
   };
 
   return (
