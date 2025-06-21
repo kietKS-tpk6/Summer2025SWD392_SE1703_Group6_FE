@@ -38,6 +38,13 @@ const AssessmentCriteria = ({
       render: (category) => CategoryEnum[category] || category
     },
     {
+      title: 'Ghi chú',
+      dataIndex: 'note',
+      key: 'note',
+      width: 200,
+      render: (note) => note || '-'
+    },
+    {
       title: 'Trọng số (%)',
       dataIndex: 'weightPercent',
       key: 'weightPercent',
@@ -67,13 +74,6 @@ const AssessmentCriteria = ({
       dataIndex: 'minPassingScore',
       key: 'minPassingScore',
       width: 150,
-    },
-    {
-      title: 'Ghi chú',
-      dataIndex: 'note',
-      key: 'note',
-      width: 200,
-      render: (note) => note || '-'
     },
     {
       title: 'Thao tác',

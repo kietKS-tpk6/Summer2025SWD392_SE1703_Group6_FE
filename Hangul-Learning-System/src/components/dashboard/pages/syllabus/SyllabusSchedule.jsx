@@ -9,8 +9,28 @@ const SyllabusSchedule = ({
   onAdd, 
   onEdit, 
   onDelete,
-  subject
+  subject,
+  canEdit = false
 }) => {
+  // Add a sequential slot number for display
+  const dataWithSlot = schedules.map((item, idx) => ({ ...item, displaySlot: idx + 1 }));
+
+  // Calculate rowSpan for week merging
+  const weekRowSpan = [];
+  let lastWeek = null;
+  let count = 0;
+  dataWithSlot.forEach((item, idx) => {
+    if (item.week !== lastWeek) {
+      // Count how many consecutive rows have the same week
+      count = dataWithSlot.filter(x => x.week === item.week).length;
+      weekRowSpan[idx] = count;
+      lastWeek = item.week;
+      count = 0;
+    } else {
+      weekRowSpan[idx] = 0;
+    }
+  });
+
   const columns = [
     {
       title: 'Tuần',
@@ -18,11 +38,18 @@ const SyllabusSchedule = ({
       key: 'week',
       width: 80,
       sorter: (a, b) => a.week - b.week,
+      render: (text, record, index) => {
+        const rowSpan = weekRowSpan[index];
+        return {
+          children: text,
+          props: { rowSpan }
+        };
+      }
     },
     {
       title: 'Slot',
-      dataIndex: 'slot',
-      key: 'slot',
+      dataIndex: 'displaySlot',
+      key: 'displaySlot',
       width: 100,
     },
     {
@@ -56,9 +83,12 @@ const SyllabusSchedule = ({
       width: 200,
       render: (resources) => (
         <Space wrap>
-          {resources.split(';').map((resource, index) => (
-            <Tag key={index} color="blue">{resource.trim()}</Tag>
-          ))}
+          {(resources && typeof resources === 'string')
+            ? resources.split(';').map((resource, index) => (
+                <Tag key={index} color="blue">{resource.trim()}</Tag>
+              ))
+            : <span>-</span>
+          }
         </Space>
       ),
     },
@@ -68,18 +98,13 @@ const SyllabusSchedule = ({
       width: 120,
       render: (_, record) => (
         <Space>
-          <Button
-            type="primary"
-            icon={<EditOutlined />}
-            onClick={() => onEdit(record)}
-            disabled={!subject.isActive}
-          />
-          <Button
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => onDelete(record.syllabusScheduleID)}
-            disabled={!subject.isActive}
-          />
+          {canEdit && (
+            <Button
+              type="primary"
+              icon={<EditOutlined />}
+              onClick={() => onEdit && onEdit(record)}
+            />
+          )}
         </Space>
       ),
     },
@@ -87,20 +112,9 @@ const SyllabusSchedule = ({
 
   return (
     <div style={{ marginBottom: '32px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <Title level={3} style={{ margin: 0 }}></Title>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={onAdd}
-          disabled={!subject.isActive}
-        >
-          Thêm lịch trình
-        </Button>
-      </div>
       <Table
         columns={columns}
-        dataSource={schedules}
+        dataSource={dataWithSlot}
         rowKey="syllabusScheduleID"
         pagination={false}
       />
