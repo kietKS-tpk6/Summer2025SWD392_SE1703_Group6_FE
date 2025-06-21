@@ -204,17 +204,21 @@ const Syllabus = () => {
         }
       }
 
-      const formattedCriteria = criteriaData.map(criteria => ({
-        ...criteria,
-        key: criteria.assessmentCriteriaID,
-        weightPercent: criteria.weightPercent || 0,
-        category: criteria.category || '',
-        requiredCount: criteria.requiredCount || 0,
-        duration: criteria.duration || 0,
-        testType: criteria.testType || '',
-        note: criteria.note || '',
-        minPassingScore: criteria.minPassingScore || 0
-      }));
+      const formattedCriteria = criteriaData.map(criteria => {
+        console.log('Raw criteria:', criteria);
+        console.log('Category value:', criteria.category, 'Type:', typeof criteria.category);
+        return {
+          ...criteria,
+          key: criteria.assessmentCriteriaID,
+          weightPercent: criteria.weightPercent || 0,
+          category: criteria.category || '',
+          requiredCount: criteria.requiredCount || 0,
+          duration: criteria.duration || 0,
+          testType: criteria.testType || '',
+          note: criteria.note || '',
+          minPassingScore: criteria.minPassingScore || 0
+        };
+      });
       setAssessmentCriteria(formattedCriteria);
     } catch (error) {
       console.error('Error fetching assessment criteria:', error);

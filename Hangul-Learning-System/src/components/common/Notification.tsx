@@ -21,9 +21,20 @@ const Notification: React.FC<NotificationProps> = ({
 
   useEffect(() => {
     if (visible) {
+      let descriptionText = '';
+      if (description) {
+        if (typeof description === 'string') {
+          descriptionText = description;
+        } else if (typeof description === 'object') {
+          descriptionText = JSON.stringify(description);
+        } else {
+          descriptionText = String(description);
+        }
+      }
+      
       api[type]({
         message,
-        description,
+        description: descriptionText,
         icon: type === 'success' ? (
           <CheckCircleOutlined style={{ color: '#52c41a' }} />
         ) : (

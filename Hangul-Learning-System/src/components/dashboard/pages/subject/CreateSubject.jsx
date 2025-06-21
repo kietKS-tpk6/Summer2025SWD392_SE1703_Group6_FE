@@ -112,8 +112,17 @@ const CreateSubject = () => {
         description,
         minAverageScoreToPass,
       });
-      const subjectID = subjectRes?.subjectID;
-      if (!subjectID) throw new Error('Không lấy được subjectID');
+      
+      console.log('Subject creation response:', subjectRes);
+      
+      // Lấy subjectID từ response theo cấu trúc thực tế
+      const subjectID = subjectRes?.message?.data || subjectRes?.subjectID;
+      if (!subjectID) {
+        console.error('Cannot get subjectID from response:', subjectRes);
+        throw new Error('Không lấy được subjectID từ response');
+      }
+      
+      console.log('Extracted subjectID:', subjectID);
 
       // 2. Tạo thời khóa biểu (slot học)
       const { totalWeeks, slotsPerWeek } = configuration;
@@ -187,11 +196,38 @@ const CreateSubject = () => {
       });
       setTimeout(() => navigate('/dashboard/subject'), 2000);
     } catch (error) {
+      console.log('Error object:', error);
+      console.log('Error response:', error.response);
+      console.log('Error response data:', error.response?.data);
+      
+      let errorMessage = 'Có lỗi xảy ra trong quá trình lưu môn học. Vui lòng thử lại.';
+      
+      try {
+        // Lấy message từ response của API
+        if (error.response && error.response.data) {
+          if (error.response.data.message) {
+            // Nếu message là object, lấy message.message
+            if (typeof error.response.data.message === 'object' && error.response.data.message.message) {
+              errorMessage = error.response.data.message.message;
+            } else if (typeof error.response.data.message === 'string') {
+              errorMessage = error.response.data.message;
+            }
+          } else if (error.response.data.errors) {
+            // Nếu có nhiều lỗi validation, nối chúng lại
+            const errorMessages = Object.values(error.response.data.errors).flat();
+            errorMessage = errorMessages.join(' | ');
+          }
+        }
+      } catch (parseError) {
+        console.error('Error parsing error message:', parseError);
+        errorMessage = 'Có lỗi xảy ra trong quá trình lưu môn học. Vui lòng thử lại.';
+      }
+      
       setNotificationConfig({
         visible: true,
         type: 'error',
         message: 'Lỗi!',
-        description: error.message || 'Có lỗi xảy ra trong quá trình lưu môn học. Vui lòng thử lại.',
+        description: errorMessage,
       });
     } finally {
       setLoading(false);

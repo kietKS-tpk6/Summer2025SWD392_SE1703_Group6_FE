@@ -77,6 +77,7 @@ const bulkUpdateSyllabusSchedule = async (payload) => {
     const response = await axios.put(`${API_URL}api/SyllabusSchedule/bulk-update`, payload);
     return response.data;
   } catch (error) {
+    console.error('Bulk-update error', error.response?.data);
     throw error;
   }
 };

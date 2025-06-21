@@ -34,6 +34,7 @@ export const endpoints = {
     manageSubject:{
         create: 'api/Subject/create',
         getAll: 'api/Subject/get-all',
+        getSubject: '/api/Subject/get-by-status', 
         update: 'api/Subject/update',
         updateStatus: 'api/Subject/update-status',
         getById: 'api/Subject/get-subject-by-',

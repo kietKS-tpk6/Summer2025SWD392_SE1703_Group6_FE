@@ -6,21 +6,27 @@ const { Title } = Typography;
 
 // Enums for Category and TestType
 const CategoryEnum = {
-  0: 'Midterm',
-  1: 'FifteenMinutes',
-  2: 'Final',
-  3: 'Other'
+  0: 'Quiz',
+  1: 'Presentation',
+  2: 'Midterm',
+  3: 'Final',
+  4: 'Attendance',
+  5: 'Assignment',
+  6: 'Class Participation',
 };
 
+// Cập nhật cho TestType
 const TestTypeEnum = {
-  0: 'MCQ',
-  1: 'Writing',
-  2: 'Speaking',
+  0: 'None',
+  1: 'Vocabulary',
+  2: 'Grammar',
   3: 'Listening',
   4: 'Reading',
-  5: 'Mix',
-  6: 'Other'
-}
+  5: 'Writing',
+  6: 'Mix',
+  7: 'Other',
+};
+
 
 const AssessmentCriteria = ({ 
   assessmentCriteria, 
@@ -35,7 +41,7 @@ const AssessmentCriteria = ({
       dataIndex: 'category',
       key: 'category',
       width: 150,
-      render: (category) => CategoryEnum[category] || category
+      render: (category) => CategoryEnum[Number(category)] || category
     },
     {
       title: 'Ghi chú',
@@ -52,23 +58,23 @@ const AssessmentCriteria = ({
     },
     {
       title: 'Số lượng yêu cầu',
-      dataIndex: 'requiredCount',
-      key: 'requiredCount',
+      dataIndex: 'requiredTestCount',
+      key: 'requiredTestCount',
       width: 150,
     },
-    {
-      title: 'Thời gian (phút)',
-      dataIndex: 'duration',
-      key: 'duration',
-      width: 150,
-    },
-    {
-      title: 'Loại bài kiểm tra',
-      dataIndex: 'testType',
-      key: 'testType',
-      width: 150,
-      render: (testType) => TestTypeEnum[testType] || testType
-    },
+    // {
+    //   title: 'Thời gian (phút)',
+    //   dataIndex: 'duration',
+    //   key: 'duration',
+    //   width: 150,
+    // },
+    // {
+    //   title: 'Loại bài kiểm tra',
+    //   dataIndex: 'testType',
+    //   key: 'testType',
+    //   width: 150,
+    //   render: (testType) => TestTypeEnum[testType] || testType
+    // },
     {
       title: 'Điểm đạt tối thiểu',
       dataIndex: 'minPassingScore',
