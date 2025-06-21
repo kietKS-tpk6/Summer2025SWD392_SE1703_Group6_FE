@@ -16,7 +16,7 @@ const weekDays = [
   { label: 'Chủ nhật', value: 0 },
 ];
 
-const LessonCreator = React.forwardRef(({ formData = {}, onChange, maxDaysPerWeek = 3, teachingSchedulesDetail, teachingWeekly, lectures = [] }, ref) => {
+const LessonCreator = React.forwardRef(({ formData = {}, onChange, maxDaysPerWeek = 3, teachingSchedulesDetail, teachingWeekly, lectures = [], onLecturerChange }, ref) => {
   const [form] = Form.useForm();
   const [selectedLecturer, setSelectedLecturer] = useState(null);
 
@@ -51,6 +51,18 @@ const LessonCreator = React.forwardRef(({ formData = {}, onChange, maxDaysPerWee
     if (allValues.weekDays?.length > maxDaysPerWeek) {
       allValues.weekDays = allValues.weekDays.slice(0, maxDaysPerWeek);
     }
+    
+    if (allValues.accountID && allValues.accountID !== formData.accountID) {
+      const lecturer = lectures.find(lec => lec.accountID === allValues.accountID);
+      if (lecturer) {
+        setSelectedLecturer(lecturer);
+      }
+    }
+    
+    if (allValues.accountID && allValues.accountID !== formData.accountID && onLecturerChange) {
+      onLecturerChange(allValues.accountID);
+    }
+    
     onChange && onChange(allValues);
   };
 
@@ -60,7 +72,8 @@ const LessonCreator = React.forwardRef(({ formData = {}, onChange, maxDaysPerWee
       return true;
     }
   
-    if (!formData.accountID) {
+    const accountID = form.getFieldValue('accountID');
+    if (!accountID) {
       console.warn('Thiếu accountID - không xác định được giảng viên');
       return false;
     }
@@ -74,7 +87,7 @@ const LessonCreator = React.forwardRef(({ formData = {}, onChange, maxDaysPerWee
   
     return !teachingWeekly.some(schedule => {
       const sameDay = parseInt(schedule.teachingDay, 10) === parseInt(dayOfWeek, 10);
-      if (!sameDay || schedule.lecturerID !== formData.accountID) return false;
+      if (!sameDay || schedule.lecturerID !== accountID) return false;
   
       const start = dayjs(schedule.startTime, 'HH:mm:ss');
       const end = dayjs(schedule.endTime, 'HH:mm:ss');
@@ -260,22 +273,17 @@ const LessonCreator = React.forwardRef(({ formData = {}, onChange, maxDaysPerWee
 
               const formattedTime = dayjs(lessonTime).format('HH:mm:ss');
               const intDays = value.map(v => parseInt(v, 10));
-              const conflictDetails = [];
+              const conflictDays = [];
 
               for (const day of intDays) {
-                const conflicts = getScheduleConflicts(day, formattedTime);
-                if (conflicts.length > 0) {
+                if (!isTimeSlotValid(day, formattedTime)) {
                   const label = weekDays.find(w => w.value === day)?.label;
-                  for (const c of conflicts) {
-                    const start = dayjs(c.startTime, 'HH:mm:ss').format('HH:mm');
-                    const end = dayjs(c.endTime, 'HH:mm:ss').format('HH:mm');
-                    conflictDetails.push(`${label} (${start} - ${end})`);
-                  }
+                  conflictDays.push(label);
                 }
               }
 
-              if (conflictDetails.length > 0) {
-                return Promise.reject(`Giảng viên đã có lịch dạy vào:\n${conflictDetails.join(', ')}`);
+              if (conflictDays.length > 0) {
+                return Promise.reject(`Giảng viên đã có lịch dạy vào: ${conflictDays.join(', ')}`);
               }
 
               if (intDays.length !== maxDaysPerWeek) {

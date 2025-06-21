@@ -7,6 +7,8 @@ import ConfirmCreateClass from './ConfirmCreateClass';
 import { API_URL } from '../../../config/api';
 import axios from 'axios';
 import dayjs from 'dayjs';
+import Notification from '../../common/Notification';
+import ActionConfirm from '../../common/ActionConfirm';
 
 const CreateClassStepper = ({
   lectures,
@@ -14,6 +16,7 @@ const CreateClassStepper = ({
   formData,
   setFormData,
   onFinish,
+  showNotify
 }) => {
   const [current, setCurrent] = useState(0);
   const [openScheduleModal, setOpenScheduleModal] = useState(false);
@@ -23,12 +26,15 @@ const CreateClassStepper = ({
   const [teachingSchedulesDetail, setTeachingSchedulesDetail] = useState([]);
   const [teachingWeekly, setTeachingWeekly] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [openConfirm, setOpenConfirm] = useState(false);
+  const [openRecruit, setOpenRecruit] = useState(false);
 
   const fetchTeachingScheduleDetail = async (accountID) => {
     try {
       const response = await axios.get(`${API_URL}api/Account/teaching-schedule-detail/${accountID}`);
       if (response.data.success) {
         setTeachingSchedulesDetail(response.data.data);
+        console.log(response.data.data);
       }
     } catch (error) {
       console.error('Error fetching teaching schedule detail:', error);
@@ -59,6 +65,12 @@ const CreateClassStepper = ({
     }));
     if (values.accountID) {
       fetchTeachingScheduleDetail(values.accountID);
+    }
+  };
+
+  const handleLessonCreatorChangeLecturer = (accountID) => {
+    if (accountID) {
+      fetchTeachingScheduleDetail(accountID);
     }
   };
 
@@ -100,14 +112,12 @@ const CreateClassStepper = ({
         <LessonCreator
           ref={lessonCreatorRef}
           lectures={lectures}
-          formData={{
-            ...formData.lessons,
-            accountID: formData.basicInfo?.accountID
-          }}
+          formData={formData.lessons}
           teachingSchedulesDetail={teachingSchedulesDetail}
           teachingWeekly={teachingWeekly}
           onChange={(data) => setFormData(prev => ({ ...prev, lessons: data }))}
           maxDaysPerWeek={maxDaysPerWeek}
+          onLecturerChange={handleLessonCreatorChangeLecturer}
         />
       )
     },
@@ -153,11 +163,10 @@ const CreateClassStepper = ({
     }
   };
   
-  const handleFinish = async () => {
+  const handleFinish = async (shouldOpenRecruit) => {
     try {
       setLoading(true);
       const { basicInfo, lessons } = formData;
-
       const classResponse = await axios.post(`${API_URL}api/Class/create`, {
         lecturerID: lessons.accountID,
         subjectID: basicInfo.subjectID,
@@ -168,7 +177,6 @@ const CreateClassStepper = ({
         teachingStartTime: lessons.teachingStartTime,
         imageURL: basicInfo.imageURL
       });
-      console.log(classResponse.data)
       const classId = classResponse.data.data;
       const lessonResponse = await axios.post(`${API_URL}api/Lesson/create-from-schedule`, {
         classId: classId,
@@ -176,19 +184,59 @@ const CreateClassStepper = ({
         daysOfWeek: lessons.weekDays
       });
       const testEventResponse = await axios.post(`${API_URL}api/TestEvent/setup-test-event/${classId}`);
-      
-      notification.success({
-        message: 'Tạo lớp học thành công!',
-        description: `${classResponse.data.message}. ${lessonResponse.data.message}. ${testEventResponse.data.message}`,
-        placement: 'topRight',
-        duration: 4
-      });
-      
+      console.log(classResponse.data);
+      console.log(lessonResponse.data);
+      console.log(testEventResponse.data);
+      if (classResponse.data.success) {
+        if (shouldOpenRecruit) {
+          await axios.post(`${API_URL}api/Class/update-status`, {
+            classId: classId,
+            classStatus: 1
+          });
+          showNotify({
+            type: 'success',
+            message: classResponse.data.message,
+            description: (
+              <>
+                {lessonResponse.data.message}
+                <br />
+                {testEventResponse.data.message}
+                <br />
+                Lớp đã được mở tuyển sinh!
+              </>
+            )
+          });
+        } else {
+          showNotify({
+            type: 'success',
+            message: classResponse.data.message,
+            description: (
+              <>
+                {lessonResponse.data.message}
+                <br />
+                {testEventResponse.data.message}
+              </>
+            )
+          });
+        }
+      } else {
+        showNotify({
+          type: 'error',
+          message: classResponse.data.message || 'Tạo lớp học thất bại!',
+          description: ''
+        });
+      }
       onFinish?.();
     } catch (error) {
+      showNotify({
+        type: 'error',
+        message: 'Có lỗi xảy ra khi tạo lớp học!',
+        description: error.message
+      });
       handleApiError(error);
     } finally {
       setLoading(false);
+      setOpenConfirm(false);
     }
   };
 
@@ -228,7 +276,7 @@ const CreateClassStepper = ({
         {current === steps.length - 1 && (
           <Button
             type="primary"
-            onClick={handleFinish}
+            onClick={() => setOpenConfirm(true)}
             loading={loading}
           >
             Hoàn thành
@@ -236,6 +284,15 @@ const CreateClassStepper = ({
         )}
       </div>
       <TeachingScheduleModal open={openScheduleModal} onClose={() => setOpenScheduleModal(false)} />
+      <ActionConfirm
+        open={openConfirm}
+        title="Mở tuyển sinh cho lớp?"
+        content="Bạn có muốn mở tuyển sinh cho lớp này luôn không?"
+        okText="Có, mở tuyển sinh"
+        cancelText="Không, để sau"
+        onOk={() => handleFinish(true)}
+        onCancel={() => handleFinish(false)}
+      />
     </>
   );
 };
