@@ -189,7 +189,7 @@ const CreateClassStepper = ({
       console.log(testEventResponse.data);
       if (classResponse.data.success) {
         if (shouldOpenRecruit) {
-          await axios.post(`${API_URL}api/Class/update-status`, {
+          await axios.put(`${API_URL}api/Class/update-status`, {
             classId: classId,
             classStatus: 1
           });
