@@ -3,9 +3,7 @@ import { Form, InputNumber, Input, Card, Divider, Table, Button, Space } from 'a
 
 const { TextArea } = Input;
 
-const ClassInfoStep = ({ classSlots, editingSlot, setEditingSlot, handleEditSlot, handleUpdateSlot }) => {
-  const [editForm] = Form.useForm();
-
+const ClassInfoStep = ({ classSlots, editingSlot, setEditingSlot, handleEditSlot, handleUpdateSlot, editForm }) => {
   // Tính rowSpan cho cột "Tuần"
   const mergedData = () => {
     const weekRowSpanMap = {};
@@ -62,13 +60,15 @@ const ClassInfoStep = ({ classSlots, editingSlot, setEditingSlot, handleEditSlot
       key: 'title',
       render: (text, record) =>
         editingSlot?.slot === record.slot ? (
-          <Form.Item
-            name="title"
-            style={{ margin: 0 }}
-            rules={[{ required: true, message: 'Vui lòng nhập tiêu đề' }]}
-          >
-            <Input />
-          </Form.Item>
+          <Form form={editForm} component={false}>
+            <Form.Item
+              name="title"
+              style={{ margin: 0 }}
+              rules={[{ required: true, message: 'Vui lòng nhập tiêu đề' }]}
+            >
+              <Input />
+            </Form.Item>
+          </Form>
         ) : (
           text
         ),
@@ -80,13 +80,15 @@ const ClassInfoStep = ({ classSlots, editingSlot, setEditingSlot, handleEditSlot
       width: '15%',
       render: (text, record) =>
         editingSlot?.slot === record.slot ? (
-          <Form.Item
-            name="durationMinutes"
-            style={{ margin: 0 }}
-            rules={[{ required: true, message: 'Vui lòng nhập thời lượng' }]}
-          >
-            <InputNumber min={1} style={{ width: '100%' }} />
-          </Form.Item>
+          <Form form={editForm} component={false}>
+            <Form.Item
+              name="durationMinutes"
+              style={{ margin: 0 }}
+              rules={[{ required: true, message: 'Vui lòng nhập thời lượng' }]}
+            >
+              <InputNumber min={1} style={{ width: '100%' }} />
+            </Form.Item>
+          </Form>
         ) : (
           text
         ),
@@ -98,9 +100,11 @@ const ClassInfoStep = ({ classSlots, editingSlot, setEditingSlot, handleEditSlot
       ellipsis: true,
       render: (text, record) =>
         editingSlot?.slot === record.slot ? (
-          <Form.Item name="resources" style={{ margin: 0 }}>
-            <Input />
-          </Form.Item>
+          <Form form={editForm} component={false}>
+            <Form.Item name="resources" style={{ margin: 0 }}>
+              <Input />
+            </Form.Item>
+          </Form>
         ) : (
           text
         ),

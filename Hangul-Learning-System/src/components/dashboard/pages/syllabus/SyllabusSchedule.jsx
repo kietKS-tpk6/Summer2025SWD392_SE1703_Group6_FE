@@ -8,27 +8,71 @@ const SyllabusSchedule = ({
   schedules, 
   onAdd, 
   onEdit, 
-  onDelete 
+  onDelete,
+  subject,
+  canEdit = false,
+  testMode = false,
+  onBulkUpdate
 }) => {
-  // Lấy role từ localStorage
-  let role = null;
-  try {
-    role = localStorage.getItem('role') || (JSON.parse(localStorage.getItem('user'))?.role);
-  } catch (e) {}
+  // Add a sequential slot number for display
+  const dataWithSlot = schedules.map((item, idx) => ({ ...item, displaySlot: idx + 1 }));
 
-  const weekGroups = schedules.reduce((acc, item) => {
-    const week = item.week;
-    if (!acc[week]) acc[week] = [];
-    acc[week].push(item);
-    return acc;
-  }, {});
+  // Calculate rowSpan for week merging (only for normal mode)
+  let weekRowSpan = [];
+  if (!testMode) {
+    let lastWeek = null;
+    let count = 0;
+    dataWithSlot.forEach((item, idx) => {
+      if (item.week !== lastWeek) {
+        count = dataWithSlot.filter(x => x.week === item.week).length;
+        weekRowSpan[idx] = count;
+        lastWeek = item.week;
+        count = 0;
+      } else {
+        weekRowSpan[idx] = 0;
+      }
+    });
+  }
 
-  const sortedWeeks = Object.keys(weekGroups).sort((a, b) => a - b);
-
-  // Xác định role
-  const isStudent = role === 'Student';
-  const isLecturer = role === 'Lecturer';
-  const isManager = role === 'Manager';
+  const testColumns = [
+    {
+      title: 'Slot',
+      dataIndex: 'displaySlot',
+      key: 'displaySlot',
+      width: 80,
+    },
+    {
+      title: 'Hạng mục',
+      dataIndex: 'category',
+      key: 'category',
+      width: 120,
+    },
+    {
+      title: 'Loại bài kiểm tra',
+      dataIndex: 'testType',
+      key: 'testType',
+      width: 150,
+    },
+    {
+      title: 'Thời lượng (phút)',
+      dataIndex: 'testDurationMinutes',
+      key: 'testDurationMinutes',
+      width: 120,
+    },
+    {
+      title: 'Cho phép làm lại',
+      dataIndex: 'allowMultipleAttempts',
+      key: 'allowMultipleAttempts',
+      width: 120,
+      render: (val) => val ? 'Có' : 'Không',
+    },
+    {
+      title: 'Điểm đạt tối thiểu',
+      dataIndex: 'minPassingScore',
+      key: 'minPassingScore',
+      width: 120,
+    },
+  ];
 
   const columns = [
     {
@@ -37,6 +81,13 @@ const SyllabusSchedule = ({
       key: 'Week',
       width: 80,
       sorter: (a, b) => a.week - b.week,
+      render: (text, record, index) => {
+        const rowSpan = weekRowSpan[index];
+        return {
+          children: text,
+          props: { rowSpan }
+        };
+      }
     },
     {
       title: 'Tiêu đề bài học',
@@ -52,8 +103,8 @@ const SyllabusSchedule = ({
     },
     {
       title: 'Slot',
-      dataIndex: 'slot',
-      key: 'slot',
+      dataIndex: 'displaySlot',
+      key: 'displaySlot',
       width: 100,
     },
     {
@@ -75,11 +126,11 @@ const SyllabusSchedule = ({
       width: 200,
       render: (resources) => (
         <Space wrap>
-          {typeof resources === 'string' && resources.length > 0
-            ? resources.split(',').map((resource, index) => (
+          {(resources && typeof resources === 'string')
+            ? resources.split(';').map((resource, index) => (
                 <Tag key={index} color="blue">{resource.trim()}</Tag>
               ))
-            : <Tag color="default">Không có</Tag>
+            : <span>-</span>
           }
         </Space>
       ),
@@ -91,71 +142,33 @@ const SyllabusSchedule = ({
       width: 120,
       render: (_, record) => (
         <Space>
-          <Button
-            type="primary"
-            icon={<EditOutlined />}
-            onClick={() => onEdit(record)}
-          />
-          <Button
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => onDelete(record.syllabusScheduleID)}
-          />
+          {canEdit && (
+            <Button
+              type="primary"
+              icon={<EditOutlined />}
+              onClick={() => onEdit && onEdit(record)}
+            />
+          )}
         </Space>
       ),
     },
   ].filter(Boolean);
 
   return (
-    <div>
-      <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Title level={3} style={{ margin: 0 }}>Lịch trình học tập</Title>
-        {/* Nút thêm chỉ hiện nếu không phải Student hoặc Lecturer */}
-        {!isStudent && !isLecturer && (
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={onAdd}
-          >
-            Thêm lịch trình
+    <div style={{ marginBottom: '32px' }}>
+      {canEdit && onBulkUpdate && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+          <Button type="primary" onClick={() => onBulkUpdate(schedules)}>
+            Lưu tất cả thay đổi
           </Button>
-        )}
-      </div>
-
-      {/* Hiển thị group theo tuần cho Student, Lecturer, Manager */}
-      {(isStudent || isLecturer || isManager) && (
-        <>
-          {sortedWeeks.length === 0 && <div style={{ color: '#888' }}>Chưa có lịch trình học.</div>}
-          {sortedWeeks.map(week => (
-            <div key={week} style={{ marginBottom: 24, borderRadius: 10, boxShadow: '0 2px 8px #f0f1f2', background: '#fff', padding: 16 }}>
-              <Title level={4} style={{ color: '#fbb040', marginBottom: 12 }}>Tuần {week}</Title>
-              {weekGroups[week].map(item => (
-                <div key={item.syllabusScheduleID} style={{ borderBottom: '1px solid #f5f5f5', padding: '8px 0' }}>
-                  <div style={{ fontWeight: 600, fontSize: 16 }}>{item.lessonTitle}</div>
-                  <div style={{ color: '#555', margin: '4px 0 2px 0' }}><b>Nội dung:</b> {item.content}</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 2 }}>
-                    <Space><ClockCircleOutlined /> {item.durationMinutes} phút</Space>
-                    {item.resources && item.resources.split(',').map((r, i) => (
-                      <Tag key={i} color="blue">{r.trim()}</Tag>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ))}
-        </>
+        </div>
       )}
-
-      {/* Table chỉ hiện cho Manager */}
-      {isManager && (
-        <Table 
-          columns={columns}
-          dataSource={schedules}
-          rowKey="syllabusScheduleID"
-          pagination={false}
-          scroll={{ x: 'max-content' }}
-        />
-      )}
+      <Table
+        columns={testMode ? testColumns : columns}
+        dataSource={dataWithSlot}
+        rowKey="syllabusScheduleID"
+        pagination={false}
+      />
     </div>
   );
 };

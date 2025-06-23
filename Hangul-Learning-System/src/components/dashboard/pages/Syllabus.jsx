@@ -18,6 +18,7 @@ import {
   ScheduleModal,
   DeleteConfirmModal
 } from './syllabus/Modals';
+import Notification from '../../common/Notification';
 
 const { Title, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -30,8 +31,8 @@ const Syllabus = () => {
   const [searchParams] = useSearchParams();
   const subjectId = searchParams.get('subjectId');
   const [subject, setSubject] = useState(null);
-  const [syllabus, setSyllabus] = useState(null);
   const [syllabusSchedules, setSyllabusSchedules] = useState([]);
+  const [syllabusScheduleTests, setSyllabusScheduleTests] = useState([]);
   const [assessmentCriteria, setAssessmentCriteria] = useState([]);
   const [classes, setClasses] = useState([]);
 
@@ -42,6 +43,11 @@ const Syllabus = () => {
   const [subjectDeleteModalVisible, setSubjectDeleteModalVisible] = useState(false);
   const [assessmentDeleteModalVisible, setAssessmentDeleteModalVisible] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
+  const [scheduleDeleteModalVisible, setScheduleDeleteModalVisible] = useState(false);
+  const [deleteScheduleId, setDeleteScheduleId] = useState(null);
+  // Modal confirm trạng thái môn học
+  const [statusConfirmVisible, setStatusConfirmVisible] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState(null);
 
   // Form instances
   const [subjectForm] = Form.useForm();
@@ -59,6 +65,26 @@ const Syllabus = () => {
   const [showAssessment, setShowAssessment] = useState(true);
   const [showClasses, setShowClasses] = useState(true);
 
+  // Class status enum
+  const ClassStatus = {
+    Pending: 0,
+    Open: 1,
+    Ongoing: 2,
+    Completed: 3,
+    Deleted: 4
+  };
+
+  // Utility to check if editing is allowed
+  const hasActiveClasses = classes.some(c => 
+    c.status === ClassStatus.Open || 
+    c.status === ClassStatus.Ongoing
+  );
+  // Disable all editing if any class is Open or Ongoing
+  const canEdit = subject && !hasActiveClasses && (subject.status === 0 || subject.status === 'Pending');
+
+  // Notification state
+  const [notification, setNotification] = useState({ visible: false, type: 'success', message: '', description: '' });
+
   useEffect(() => {
     if (subjectId) {
       fetchSubject();
@@ -66,10 +92,28 @@ const Syllabus = () => {
   }, [subjectId]);
 
   useEffect(() => {
-    if (syllabus?.syllabusID) {
+    if (subject?.code) {
+      fetchSyllabusSchedules();
+    }
+  }, [subject]);
+
+  useEffect(() => {
+    if (subject?.code) {
       fetchAssessmentCriteria();
     }
-  }, [syllabus]);
+  }, [subject]);
+
+  useEffect(() => {
+    if (subject?.code) {
+      fetchClasses();
+    }
+  }, [subject]);
+
+  useEffect(() => {
+    if (syllabusSchedules.length > 0) {
+      fetchSyllabusScheduleTests();
+    }
+  }, [syllabusSchedules]);
 
   const fetchSubject = async () => {
     try {
@@ -81,78 +125,89 @@ const Syllabus = () => {
           code: response.data.subjectID,
           name: response.data.subjectName,
           description: response.data.description,
-          isActive: response.data.isActive,
+          status: response.data.status,
           minAverageScoreToPass: response.data.minAverageScoreToPass,
           createAt: response.data.createAt
         });
-        fetchSyllabus();
-        fetchClasses();
       }
     } catch (error) {
       console.error('Error fetching subject:', error);
-      message.error('Không thể tải thông tin môn học');
+      setNotification({ visible: true, type: 'error', message: 'Không thể tải thông tin môn học' });
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchSyllabus = async () => {
+  const fetchSyllabusSchedules = async () => {
     try {
-      if (!subject?.code) {
-        console.log('No subject code available');
-        return;
-      }
-      const response = await axios.get(`${API_URL}${endpoints.syllabus.getBySubjectId}/${subject.code}`);
-      if (response.data) {
-        setSyllabus(response.data);
-        // Fetch schedules after getting syllabus
-        await fetchSyllabusSchedules(response.data.syllabusID);
-        // Fetch assessment criteria after getting syllabus
-        await fetchAssessmentCriteria(response.data.syllabusID);
-      }
+      if (!subject?.code) return;
+      const response = await axios.get(`${API_URL}${endpoints.syllabus.getSyllabusSchedule}`, {
+        params: { subject: subject.code }
+      });
+      const schedules = response.data.data || [];
+      setSyllabusSchedules(schedules);
     } catch (error) {
-      console.error('Error fetching syllabus:', error);
-      if (error.response?.status === 500) {
-        message.warning('Chưa có giáo trình cho môn học này');
-        setSyllabus(null);
-      } else {
-        message.error('Không thể tải thông tin giáo trình');
-      }
+      console.error('Error fetching syllabus schedules:', error);
+      setNotification({ visible: true, type: 'error', message: 'Không thể tải lịch trình giảng dạy' });
     }
   };
 
-  const fetchSyllabusSchedules = async (syllabusID) => {
-    try {
-      const response = await axios.get(`${API_URL}${endpoints.syllabus.getScheduleTest}/${syllabusID}`);
-      if (response.data) {
-        const formattedSchedules = response.data.map(schedule => ({
-          ...schedule,
-          key: schedule.syllabusScheduleID,
-          title: `Tiết ${schedule.week * schedule.slot}`,
-          week: schedule.week,
-          slot: schedule.slot,
-          content: schedule.content || '',
-          durationMinutes: schedule.durationMinutes || 0,
-          resources: schedule.resources || '',
-          hasTest: schedule.hasTest || false
-        }));
-        setSyllabusSchedules(formattedSchedules);
-      }
-    } catch (error) {
-      console.error('Error fetching schedules:', error);
-      message.error('Không thể tải lịch trình giảng dạy');
+  const fetchSyllabusScheduleTests = () => {
+    // Extract test schedules from syllabusSchedules
+    if (!Array.isArray(syllabusSchedules)) {
+      setSyllabusScheduleTests([]);
+      return;
     }
+    const tests = syllabusSchedules
+      .map((sch, idx) => ({ ...sch, displaySlot: idx + 1 }))
+      .filter(sch => sch.hasTest && sch.testData)
+      .map(sch => ({
+        syllabusScheduleID: sch.syllabusScheduleID,
+        displaySlot: sch.displaySlot, // use displaySlot from original schedule index
+        subjectID: sch.subjectID,
+        testType: sch.testData.testType,
+        testDurationMinutes: sch.testData.testDurationMinutes,
+        allowMultipleAttempts: sch.testData.allowMultipleAttempts,
+        category: sch.testData.category,
+        minPassingScore: sch.testData.minPassingScore
+      }));
+    setSyllabusScheduleTests(tests);
   };
 
   const fetchAssessmentCriteria = async () => {
     try {
-      if (!syllabus?.syllabusID) {
-        console.error('No syllabus ID available');
+      if (!subject?.code) {
+        console.error('No subject code available');
         return;
       }
-      const response = await axios.get(`${API_URL}${endpoints.syllabus.getAssessmentCriteria}/${syllabus.syllabusID}`);
+      const response = await axios.get(`${API_URL}${endpoints.syllabus.getAssessmentCriteria}/${subject.code}`);
+      console.log(response.data);
+      
+      // Check if response.data exists and is an array
+      let criteriaData = [];
       if (response.data) {
-        const formattedCriteria = response.data.map(criteria => ({
+        // If response.data is an array, use it directly
+        if (Array.isArray(response.data)) {
+          criteriaData = response.data;
+        }
+        // If response.data has a data property that's an array, use that
+        else if (response.data.data && Array.isArray(response.data.data)) {
+          criteriaData = response.data.data;
+        }
+        // If response.data has an items property that's an array, use that
+        else if (response.data.items && Array.isArray(response.data.items)) {
+          criteriaData = response.data.items;
+        }
+        // If it's a single object, wrap it in an array
+        else if (typeof response.data === 'object' && response.data !== null) {
+          criteriaData = [response.data];
+        }
+      }
+
+      const formattedCriteria = criteriaData.map(criteria => {
+        console.log('Raw criteria:', criteria);
+        console.log('Category value:', criteria.category, 'Type:', typeof criteria.category);
+        return {
           ...criteria,
           key: criteria.assessmentCriteriaID,
           weightPercent: criteria.weightPercent || 0,
@@ -162,32 +217,45 @@ const Syllabus = () => {
           testType: criteria.testType || '',
           note: criteria.note || '',
           minPassingScore: criteria.minPassingScore || 0
-        }));
-        setAssessmentCriteria(formattedCriteria);
-      }
+        };
+      });
+      setAssessmentCriteria(formattedCriteria);
     } catch (error) {
       console.error('Error fetching assessment criteria:', error);
-      message.error('Không thể tải tiêu chí đánh giá');
+      setNotification({ visible: true, type: 'error', message: 'Không thể tải tiêu chí đánh giá' });
+      setAssessmentCriteria([]);
     }
   };
 
   const fetchClasses = async () => {
+    // console.log('subject code:', subject?.code);
     try {
       if (!subject?.code) {
         console.log('No subject code available');
         return;
       }
-      const response = await axios.get(`${API_URL}${endpoints.manageClass.getBySubjectCode}/${subject.code}`);
-      setClasses(response.data || []);
+      const response = await axios.get(`${API_URL}${endpoints.manageClass.getAll}`, {
+        params: {
+          subjectId: subject.code,
+          page: 1,
+          pageSize: 10
+        }
+      });
+      const sortedClasses = (response.data.items || []).sort((a, b) => a.classID.localeCompare(b.classID));
+      setClasses(sortedClasses);
     } catch (error) {
       console.error('Error fetching classes:', error);
-      message.error('Không thể tải danh sách lớp học');
+      setNotification({ visible: true, type: 'error', message: 'Không thể tải danh sách lớp học' });
       setClasses([]);
     }
   };
 
   // Subject handlers
   const handleSubjectEdit = () => {
+    if (hasActiveClasses) {
+      setNotification({ visible: true, type: 'error', message: 'Không thể chỉnh sửa môn học khi có lớp đang mở hoặc đang diễn ra!' });
+      return;
+    }
     subjectForm.setFieldsValue({
       name: subject.name,
       description: subject.description,
@@ -198,17 +266,26 @@ const Syllabus = () => {
   };
 
   const handleSubjectDelete = () => {
+    if (hasActiveClasses) {
+      setNotification({ visible: true, type: 'error', message: 'Không thể xóa môn học khi có lớp đang mở hoặc đang diễn ra!' });
+      return;
+    }
     setSubjectDeleteModalVisible(true);
   };
 
   const handleSubjectModalOk = async () => {
     try {
       const values = await subjectForm.validateFields();
+      // Only allow update if status is 0 (pending) or 1 (active)
+      if (subject.status !== 0 && subject.status !== 1) {
+        setNotification({ visible: true, type: 'error', message: 'Chỉ có thể cập nhật khi môn học ở trạng thái Pending hoặc Active.' });
+        return;
+      }
       const response = await axios.put(`${API_URL}${endpoints.manageSubject.update}`, {
         subjectID: subject.code,
         subjectName: values.name,
         description: values.description,
-        isActive: true,
+        status: subject.status, // keep current status
         minAverageScoreToPass: values.minAverageScoreToPass || 0
       });
 
@@ -220,12 +297,12 @@ const Syllabus = () => {
           minAverageScoreToPass: values.minAverageScoreToPass || 0
         };
         setSubject(updatedSubject);
-        message.success('Cập nhật môn học thành công');
+        setNotification({ visible: true, type: 'success', message: 'Cập nhật môn học thành công' });
         setIsSubjectModalVisible(false);
       }
     } catch (error) {
       console.error('Error updating subject:', error);
-      message.error('Không thể cập nhật môn học. Vui lòng thử lại.');
+      setNotification({ visible: true, type: 'error', message: 'Không thể cập nhật môn học. Vui lòng thử lại.' });
     }
   };
 
@@ -233,104 +310,145 @@ const Syllabus = () => {
     try {
       const subjectId = subject.id || subject.code;
       await axios.delete(`${API_URL}${endpoints.manageSubject.delete}${subjectId}`);
-      message.success('Xóa môn học thành công');
+      setNotification({ visible: true, type: 'success', message: 'Xóa môn học thành công' });
       navigate('/dashboard/subject');
     } catch (error) {
       console.error('Error deleting subject:', error);
-      message.error('Không thể xóa môn học. Vui lòng thử lại.');
+      setNotification({ visible: true, type: 'error', message: 'Không thể xóa môn học. Vui lòng thử lại.' });
     } finally {
       setSubjectDeleteModalVisible(false);
     }
   };
 
-  // Assessment handlers
-  const handleAssessmentAdd = () => {
-    if (!syllabus || !syllabus.syllabusID) {
-      Modal.confirm({
-        title: 'Thông báo',
-        content: 'Vui lòng tạo thông tin giáo trình trước khi thêm tiêu chí đánh giá',
-        okText: 'Đồng ý',
-        cancelText: 'Hủy',
-        onOk: () => {
-          setIsAssessmentModalVisible(true);
-        }
-      });
+  const handleToggleSubjectStatus = () => {
+    if (hasActiveClasses) {
+      setNotification({ visible: true, type: 'error', message: 'Không thể thay đổi trạng thái môn học khi có lớp đang mở hoặc đang diễn ra!' });
       return;
     }
-    setEditingCriteria(null);
-    assessmentForm.resetFields();
-    setIsAssessmentModalVisible(true);
+    if (!subject) return;
+
+    // Chỉ kiểm tra khi chuyển từ pending sang active
+    if (subject.status === 0) {
+      // Kiểm tra lịch trình giảng dạy
+      if (!syllabusSchedules || syllabusSchedules.length === 0) {
+        setNotification({ 
+          visible: true, 
+          type: 'error', 
+          message: 'Không thể công khai môn học', 
+          description: 'Vui lòng thêm lịch trình giảng dạy trước khi công khai môn học.'
+        });
+        return;
+      }
+
+      // Kiểm tra lịch kiểm tra
+      if (!syllabusScheduleTests || syllabusScheduleTests.length === 0) {
+        setNotification({ 
+          visible: true, 
+          type: 'error', 
+          message: 'Không thể công khai môn học', 
+          description: 'Vui lòng thêm lịch kiểm tra trước khi công khai môn học.'
+        });
+        return;
+      }
+
+      // Kiểm tra tiêu chí đánh giá
+      if (!assessmentCriteria || assessmentCriteria.length === 0) {
+        setNotification({ 
+          visible: true, 
+          type: 'error', 
+          message: 'Không thể công khai môn học', 
+          description: 'Vui lòng thêm tiêu chí đánh giá trước khi công khai môn học.'
+        });
+        return;
+      }
+    }
+
+    const newStatus = subject.status === 0 ? 1 : 0;
+    setPendingStatus(newStatus);
+    setStatusConfirmVisible(true);
   };
 
+  const handleStatusConfirmOk = async () => {
+    try {
+      // Kiểm tra lại một lần nữa trước khi gọi API
+      if (pendingStatus === 1) {
+        if (!syllabusSchedules || syllabusSchedules.length === 0) {
+          setNotification({ 
+            visible: true, 
+            type: 'error', 
+            message: 'Không thể công khai môn học', 
+            description: 'Vui lòng thêm lịch trình giảng dạy trước khi công khai môn học.'
+          });
+          return;
+        }
+
+        if (!syllabusScheduleTests || syllabusScheduleTests.length === 0) {
+          setNotification({ 
+            visible: true, 
+            type: 'error', 
+            message: 'Không thể công khai môn học', 
+            description: 'Vui lòng thêm lịch kiểm tra trước khi công khai môn học.'
+          });
+          return;
+        }
+
+        if (!assessmentCriteria || assessmentCriteria.length === 0) {
+          setNotification({ 
+            visible: true, 
+            type: 'error', 
+            message: 'Không thể công khai môn học', 
+            description: 'Vui lòng thêm tiêu chí đánh giá trước khi công khai môn học.'
+          });
+          return;
+        }
+      }
+
+      await axios.put(`${API_URL}${endpoints.manageSubject.updateStatus}`, {
+        subjectID: subject.code,
+        status: pendingStatus
+      });
+      setSubject({ ...subject, status: pendingStatus });
+      setNotification({ 
+        visible: true, 
+        type: 'success', 
+        message: pendingStatus === 1 ? 'Môn học đã được công khai!' : 'Môn học đã được chuyển về trạng thái nháp!',
+        description: pendingStatus === 1 
+          ? 'Môn học đã được công khai với đầy đủ lịch trình, lịch kiểm tra và tiêu chí đánh giá.' 
+          : 'Môn học đã được chuyển về trạng thái nháp và có thể chỉnh sửa.'
+      });
+    } catch (error) {
+      setNotification({ 
+        visible: true, 
+        type: 'error', 
+        message: 'Không thể thay đổi trạng thái môn học.',
+        description: 'Đã xảy ra lỗi khi cập nhật trạng thái. Vui lòng thử lại sau.'
+      });
+    } finally {
+      setStatusConfirmVisible(false);
+      setPendingStatus(null);
+    }
+  };
+
+  const handleStatusConfirmCancel = () => {
+    setStatusConfirmVisible(false);
+    setPendingStatus(null);
+  };
+
+  // Assessment handlers
   const handleAssessmentEdit = (record) => {
+    if (hasActiveClasses) {
+      setNotification({ visible: true, type: 'error', message: 'Không thể chỉnh sửa tiêu chí đánh giá khi có lớp đang mở hoặc đang diễn ra!' });
+      return;
+    }
     setEditingCriteria(record);
     assessmentForm.setFieldsValue(record);
     setIsAssessmentModalVisible(true);
   };
 
-  const handleAssessmentDelete = (id) => {
-    setDeleteId(id);
-    setAssessmentDeleteModalVisible(true);
-  };
-
-  const handleAssessmentModalOk = async () => {
-    try {
-      const values = await assessmentForm.validateFields();
-      let response;
-
-      if (editingCriteria) {
-        // Update existing criteria
-        response = await axios.put(`${API_URL}${endpoints.syllabus.updateAssessmentCriteria}/${editingCriteria.assessmentCriteriaID}`, {
-          ...values,
-          syllabusID: syllabus.syllabusID
-        });
-      } else {
-        // Create new criteria
-        response = await axios.post(`${API_URL}${endpoints.syllabus.createAssessmentCriteria}`, {
-          ...values,
-          syllabusID: syllabus.syllabusID
-        });
-      }
-
-      if (response.data) {
-        message.success(editingCriteria ? 'Cập nhật tiêu chí đánh giá thành công' : 'Thêm tiêu chí đánh giá thành công');
-        setIsAssessmentModalVisible(false);
-        fetchAssessmentCriteria();
-      }
-    } catch (error) {
-      console.error('Error saving assessment criteria:', error);
-      message.error('Không thể lưu tiêu chí đánh giá');
-    }
-  };
-
-  const handleAssessmentDeleteConfirm = async () => {
-    try {
-      if (!deleteId) {
-        message.error('Không tìm thấy ID tiêu chí đánh giá');
-        return;
-      }
-      await axios.delete(`${API_URL}${endpoints.syllabus.deleteAssessmentCriteria}/${deleteId}`);
-      message.success('Xóa tiêu chí đánh giá thành công');
-      fetchAssessmentCriteria();
-      setAssessmentDeleteModalVisible(false);
-    } catch (error) {
-      console.error('Error deleting assessment criteria:', error);
-      message.error('Không thể xóa tiêu chí đánh giá');
-    }
-  };
-
   // Schedule handlers
   const handleScheduleAdd = () => {
-    if (!syllabus || !syllabus.syllabusID) {
-      Modal.confirm({
-        title: 'Thông báo',
-        content: 'Vui lòng tạo thông tin giáo trình trước khi thêm lịch trình',
-        okText: 'Đồng ý',
-        cancelText: 'Hủy',
-        onOk: () => {
-          setIsAssessmentModalVisible(true);
-        }
-      });
+    if (hasActiveClasses) {
+      setNotification({ visible: true, type: 'error', message: 'Không thể thêm lịch trình khi có lớp đang mở hoặc đang diễn ra!' });
       return;
     }
     setEditingSchedule(null);
@@ -339,26 +457,22 @@ const Syllabus = () => {
   };
 
   const handleScheduleEdit = (record) => {
+    if (hasActiveClasses) {
+      setNotification({ visible: true, type: 'error', message: 'Không thể chỉnh sửa lịch trình khi có lớp đang mở hoặc đang diễn ra!' });
+      return;
+    }
     setEditingSchedule(record);
     scheduleForm.setFieldsValue(record);
     setIsScheduleModalVisible(true);
   };
 
   const handleScheduleDelete = (id) => {
-    Modal.confirm({
-      title: 'Xác nhận xóa',
-      content: 'Bạn có chắc chắn muốn xóa lịch trình này?',
-      onOk: async () => {
-        try {
-          await axios.delete(`${API_URL}${endpoints.syllabus.deleteSchedule}/${id}`);
-          message.success('Xóa lịch trình thành công');
-          fetchSyllabus();
-        } catch (error) {
-          console.error('Error deleting schedule:', error);
-          message.error('Không thể xóa lịch trình');
-        }
-      },
-    });
+    if (hasActiveClasses) {
+      setNotification({ visible: true, type: 'error', message: 'Không thể xóa lịch trình khi có lớp đang mở hoặc đang diễn ra!' });
+      return;
+    }
+    setDeleteScheduleId(id);
+    setScheduleDeleteModalVisible(true);
   };
 
   const handleScheduleModalOk = async () => {
@@ -366,28 +480,144 @@ const Syllabus = () => {
       const values = await scheduleForm.validateFields();
       let response;
 
+      // Chuẩn bị dữ liệu cho bulk update
+      const scheduleItem = {
+        syllabusScheduleID: editingSchedule?.syllabusScheduleID || '',
+        content: values.content,
+        resources: values.resources,
+        lessonTitle: values.lessonTitle,
+        durationMinutes: values.durationMinutes,
+        hasTest: values.hasTest || false
+      };
+
+      // Nếu có test data, thêm vào
+      if (values.hasTest) {
+        scheduleItem.itemsAssessmentCriteria = {
+          assessmentCriteriaID: values.assessmentCriteriaID,
+          duration: values.testDurationMinutes,
+          testType: values.testType
+        };
+      }
+
       if (editingSchedule) {
-        // Update existing schedule
-        response = await axios.put(`${API_URL}${endpoints.syllabus.updateSchedule}/${editingSchedule.syllabusScheduleID}`, {
-          ...values,
-          syllabusID: syllabus.syllabusID
+        // Bulk update existing schedule
+        response = await axios.put(`${API_URL}${endpoints.syllabus.updateSchedule}`, {
+          subjectID: subject.code,
+          scheduleItems: [scheduleItem]
         });
       } else {
         // Create new schedule
         response = await axios.post(`${API_URL}${endpoints.syllabus.createSyllabusSchedule}`, {
           ...values,
-          syllabusID: syllabus.syllabusID
         });
       }
 
       if (response.data) {
-        message.success(editingSchedule ? 'Cập nhật lịch trình thành công' : 'Thêm lịch trình thành công');
+        setNotification({ 
+          visible: true, 
+          type: 'success', 
+          message: editingSchedule ? 'Cập nhật lịch trình thành công' : 'Thêm lịch trình thành công' 
+        });
         setIsScheduleModalVisible(false);
-        fetchSyllabusSchedules(syllabus.syllabusID);
+        fetchSyllabusSchedules();
       }
     } catch (error) {
       console.error('Error saving schedule:', error);
-      message.error('Không thể lưu lịch trình');
+      setNotification({ 
+        visible: true, 
+        type: 'error', 
+        message: 'Không thể lưu lịch trình',
+        description: error.response?.data?.message || 'Vui lòng thử lại sau'
+      });
+    }
+  };
+
+  const handleScheduleDeleteConfirm = async () => {
+    try {
+      if (!deleteScheduleId) {
+        setNotification({ visible: true, type: 'error', message: 'Không tìm thấy ID lịch trình' });
+        return;
+      }
+      await axios.delete(`${API_URL}${endpoints.syllabus.deleteSchedule}/${deleteScheduleId}`);
+      setNotification({ visible: true, type: 'success', message: 'Xóa lịch trình thành công' });
+      fetchSyllabusSchedules();
+      setScheduleDeleteModalVisible(false);
+      setDeleteScheduleId(null);
+    } catch (error) {
+      console.error('Error deleting schedule:', error);
+      setNotification({ visible: true, type: 'error', message: 'Không thể xóa lịch trình' });
+    }
+  };
+
+  // Hàm bulk update cho nhiều lịch trình cùng lúc
+  const handleBulkUpdateSchedules = async (schedules, isTestSchedule = false) => {
+    try {
+      const scheduleItems = schedules.map(schedule => {
+        const item = {
+          syllabusScheduleID: schedule.syllabusScheduleID,
+          content: schedule.content,
+          resources: schedule.resources,
+          lessonTitle: schedule.lessonTitle,
+          durationMinutes: schedule.durationMinutes,
+          hasTest: isTestSchedule
+        };
+
+        if (isTestSchedule && schedule.testData) {
+          item.itemsAssessmentCriteria = {
+            assessmentCriteriaID: schedule.testData.assessmentCriteriaID,
+            duration: schedule.testData.testDurationMinutes,
+            testType: schedule.testData.testType
+          };
+        }
+
+        return item;
+      });
+
+      const response = await axios.put(`${API_URL}${endpoints.syllabus.bulkUpdateSchedule}`, {
+        subjectID: subject.code,
+        scheduleItems: scheduleItems
+      });
+
+      if (response.data) {
+        setNotification({ 
+          visible: true, 
+          type: 'success', 
+          message: isTestSchedule ? 'Cập nhật lịch kiểm tra thành công' : 'Cập nhật lịch trình giảng dạy thành công'
+        });
+        fetchSyllabusSchedules();
+      }
+    } catch (error) {
+      console.error('Error bulk updating schedules:', error);
+      setNotification({ 
+        visible: true, 
+        type: 'error', 
+        message: error.response?.data?.message || (isTestSchedule ? 'Không thể cập nhật lịch kiểm tra' : 'Không thể cập nhật lịch trình giảng dạy'),
+        description: error.response?.data?.description || ''
+      });
+    }
+  };
+
+  // Hàm xử lý cập nhật lịch kiểm tra
+  const handleTestScheduleUpdate = async (testSchedule) => {
+    if (hasActiveClasses) {
+      setNotification({ 
+        visible: true, 
+        type: 'error', 
+        message: 'Không thể chỉnh sửa lịch kiểm tra khi có lớp đang mở hoặc đang diễn ra!' 
+      });
+      return;
+    }
+
+    try {
+      await handleBulkUpdateSchedules([testSchedule], true);
+    } catch (error) {
+      console.error('Error updating test schedule:', error);
+      setNotification({ 
+        visible: true, 
+        type: 'error', 
+        message: 'Không thể cập nhật lịch kiểm tra',
+        description: error.response?.data?.message || 'Vui lòng thử lại sau'
+      });
     }
   };
 
@@ -408,6 +638,13 @@ const Syllabus = () => {
 
   return (
     <div style={{ padding: '24px' }}>
+      <Notification
+        visible={notification.visible}
+        type={notification.type}
+        message={notification.message}
+        description={notification.description}
+        onClose={() => setNotification({ ...notification, visible: false })}
+      />
       <Button
         type="primary"
         icon={<ArrowLeftOutlined />}
@@ -432,6 +669,9 @@ const Syllabus = () => {
               subject={subject}
               onEdit={handleSubjectEdit}
               onDelete={handleSubjectDelete}
+              onToggleStatus={handleToggleSubjectStatus}
+              canEdit={canEdit}
+              hasActiveClasses={hasActiveClasses}
             />
           )}
           <Divider />
@@ -451,31 +691,29 @@ const Syllabus = () => {
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Title level={3}>Lịch trình giảng dạy</Title>
-            <Button
-              type="text"
-              icon={showSchedule ? <EyeOutlined /> : <EyeInvisibleOutlined />}
-              onClick={() => setShowSchedule(!showSchedule)}
-            />
           </div>
-          {showSchedule && (
-            <SyllabusSchedule
-              schedules={syllabusSchedules}
-              onAdd={() => {
-                if (!syllabus || !syllabus.syllabusID) {
-                  Modal.warning({
-                    title: 'Thông báo',
-                    content: 'Vui lòng tạo giáo trình trước khi thêm lịch trình',
-                    okText: 'Đồng ý'
-                  });
-                  return;
-                }
-                handleScheduleAdd();
-              }}
-              onEdit={handleScheduleEdit}
-              onDelete={handleScheduleDelete}
-              subject={subject}
-            />
-          )}
+          <SyllabusSchedule
+            schedules={syllabusSchedules}
+            onEdit={canEdit ? handleScheduleEdit : undefined}
+            onDelete={canEdit ? handleScheduleDelete : undefined}
+            onAdd={undefined}
+            subject={subject}
+            canEdit={canEdit}
+          />
+          <Divider />
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Title level={3}>Lịch kiểm tra</Title>
+          </div>
+          <SyllabusSchedule
+            schedules={syllabusScheduleTests}
+            onEdit={canEdit ? handleScheduleEdit : undefined}
+            onDelete={undefined}
+            onAdd={undefined}
+            subject={subject}
+            canEdit={canEdit}
+            testMode={true}
+          />
           <Divider />
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -489,20 +727,9 @@ const Syllabus = () => {
           {showAssessment && (
             <AssessmentCriteria
               assessmentCriteria={assessmentCriteria}
-              onAdd={() => {
-                if (!syllabus || !syllabus.syllabusID) {
-                  Modal.warning({
-                    title: 'Thông báo',
-                    content: 'Vui lòng tạo giáo trình trước khi thêm tiêu chí đánh giá',
-                    okText: 'Đồng ý'
-                  });
-                  return;
-                }
-                handleAssessmentAdd();
-              }}
-              onEdit={handleAssessmentEdit}
-              onDelete={handleAssessmentDelete}
+              onEdit={canEdit ? handleAssessmentEdit : undefined}
               subject={subject}
+              canEdit={canEdit}
             />
           )}
         </div>
@@ -519,7 +746,7 @@ const Syllabus = () => {
 
       <AssessmentModal
         visible={isAssessmentModalVisible}
-        onOk={handleAssessmentModalOk}
+        onOk={undefined}
         onCancel={() => setIsAssessmentModalVisible(false)}
         form={assessmentForm}
         initialValues={editingCriteria}
@@ -539,18 +766,25 @@ const Syllabus = () => {
         onCancel={() => setSubjectDeleteModalVisible(false)}
       />
 
+      <DeleteConfirmModal
+        visible={scheduleDeleteModalVisible}
+        onOk={handleScheduleDeleteConfirm}
+        onCancel={() => setScheduleDeleteModalVisible(false)}
+      />
+
+      {/* Modal xác nhận đổi trạng thái môn học */}
       <Modal
-        title="Xác nhận xóa tiêu chí đánh giá"
-        open={assessmentDeleteModalVisible}
-        onOk={handleAssessmentDeleteConfirm}
-        onCancel={() => setAssessmentDeleteModalVisible(false)}
-        okText="Xóa"
-        okType="danger"
+        title={pendingStatus === 1 ? 'Công khai môn học?' : 'Ẩn môn học?'}
+        open={statusConfirmVisible}
+        onOk={handleStatusConfirmOk}
+        onCancel={handleStatusConfirmCancel}
+        okText={pendingStatus === 1 ? 'Công khai' : 'Ẩn'}
         cancelText="Hủy"
       >
         <div>
-          <p>Bạn có chắc chắn muốn xóa tiêu chí đánh giá này?</p>
-          <p style={{ color: 'red' }}>Lưu ý: Hành động này không thể hoàn tác.</p>
+          {pendingStatus === 1
+            ? 'Bạn có chắc chắn muốn công khai môn học này? Sau khi công khai, sinh viên sẽ có thể nhìn thấy môn học.'
+            : 'Bạn có chắc chắn muốn chuyển môn học về trạng thái nháp? Môn học sẽ không còn hiển thị với sinh viên.'}
         </div>
       </Modal>
     </div>

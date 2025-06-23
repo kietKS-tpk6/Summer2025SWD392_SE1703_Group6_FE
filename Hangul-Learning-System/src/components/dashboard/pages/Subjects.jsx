@@ -40,8 +40,7 @@ const Subjects = () => {
         name: subject.subjectName,
         code: subject.subjectID,
         description: subject.description,
-        isActive: subject.isActive,
-        status: subject.isActive ? 'Đang mở' : 'Đã đóng',
+        status: subject.status,
         minAverageScoreToPass: subject.minAverageScoreToPass,
         createAt: new Date(subject.createAt).toLocaleString('vi-VN', {
           hour12: false,
@@ -144,6 +143,14 @@ const Subjects = () => {
       dataIndex: 'status',
       key: 'status',
       width: '8%',
+      render: (status) => {
+        let color = 'default';
+        let text = status;
+        if (status === 1 || status === 'Active') { color = 'green'; text = 'Đang hoạt động (Active)'; }
+        else if (status === 0 || status === 'Pending') { color = 'silver'; text = 'Nháp (Pending)'; }
+        else if (status === 2 || status === 'Deleted') { color = 'red'; text = 'Đã Xóa (Deleted)'; }
+        return <span style={{ color }}>{text}</span>;
+      }
     },
     {
       title: 'Thao tác',
@@ -156,22 +163,6 @@ const Subjects = () => {
             onClick={() => handleView(record)}
           >
             Xem
-          </Button>
-          <Button
-            type="primary"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-            disabled={!record.isActive}  // disable nút Sửa nếu không active
-          >
-            Sửa
-          </Button>
-          <Button
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => handleDelete(record)}
-            disabled={!record.isActive}  // disable nút Xóa nếu không active
-          >
-            Xóa
           </Button>
         </Space>
       ),

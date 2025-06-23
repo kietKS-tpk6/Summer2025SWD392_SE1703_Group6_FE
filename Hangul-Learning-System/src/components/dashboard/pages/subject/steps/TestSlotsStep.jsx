@@ -1,28 +1,46 @@
 import React from 'react';
-import { Form, InputNumber, Button, Card, Space, Table, Tag, Select, Divider } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { Form, Input, Card, Table, Select, InputNumber } from 'antd';
 
 const { Option } = Select;
 
-const CategoryEnum = {
-  0: 'Midterm',
-  1: 'FifteenMinutes',
-  2: 'Final',
-  3: 'Other'
-};
-
 const TestTypeEnum = {
-  0: 'MCQ',
-  1: 'Writing',
-  2: 'Speaking',
+  0: 'None',
+  1: 'Vocabulary',
+  2: 'Grammar',
   3: 'Listening',
   4: 'Reading',
-  5: 'Mix',
-  6: 'Other'
+  5: 'Writing',
+  6: 'Mix',
+  7: 'Other'
 };
 
-const TestSlotsStep = ({ classSlots, form }) => {
-  const criteria = Form.useWatch('criteria', form) || [];
+const AssessmentCategoryLabel = {
+  0: 'Quiz',
+  1: 'Presentation',
+  2: 'Midterm',
+  3: 'Final',
+  4: 'Attendance',
+  5: 'Assignment',
+  6: 'Class Participation'
+};
+
+const TestSlotsStep = ({ classSlots, form, assessmentInfo }) => {
+  const criteria = assessmentInfo || [];
+
+  const testSlots = Form.useWatch('testSlots', form) || [];
+
+  const getUsedCounts = () => {
+    const countMap = {};
+    testSlots.forEach(slot => {
+      const category = slot?.criteriaId;
+      if (category !== undefined && category !== null) {
+        countMap[category] = (countMap[category] || 0) + 1;
+      }
+    });
+    return countMap;
+  };
+
+  const usedCounts = getUsedCounts();
 
   const columns = [
     {
@@ -38,51 +56,86 @@ const TestSlotsStep = ({ classSlots, form }) => {
       width: '10%',
     },
     {
-      title: 'Tiêu đề',
-      dataIndex: 'title',
-      key: 'title',
-    },
-    {
-      title: 'Thời lượng (phút)',
-      dataIndex: 'durationMinutes',
-      key: 'durationMinutes',
-      width: '15%',
-    },
-    {
-      title: 'Tài nguyên',
-      dataIndex: 'resources',
-      key: 'resources',
-      ellipsis: true,
-    },
-    {
       title: 'Bài kiểm tra',
       key: 'testCriteria',
-      width: '25%',
-      render: (_, record) => (
-        <Form.Item
-          name={['testSlots', record.slot - 1, 'criteriaId']}
-          style={{ margin: 0 }}
-        >
-          <Select
-            placeholder="Chọn bài kiểm tra"
-            allowClear
-            style={{ width: '100%' }}
+      width: '30%',
+      render: (_, record) => {
+        const currentSlotIndex = record.slot - 1;
+        const currentSelected = testSlots[currentSlotIndex]?.criteriaId;
+
+        return (
+          <Form.Item
+            name={['testSlots', currentSlotIndex, 'criteriaId']}
+            style={{ margin: 0 }}
           >
-            {criteria.map((criterion, index) => (
-              <Option key={index} value={index}>
-                {CategoryEnum[criterion.category]} - {TestTypeEnum[criterion.testType]} ({criterion.weightPercent}%)
-              </Option>
-            ))}
-          </Select>
-        </Form.Item>
-      )
+            <Select
+              placeholder="Chọn bài kiểm tra"
+              allowClear
+              style={{ width: '100%' }}
+            >
+              {criteria.map((criterion, index) => {
+                const used = usedCounts[criterion.category] || 0;
+                const limit = criterion.requiredTestCount;
+                const isDisabled = used >= limit && currentSelected !== criterion.category;
+                return (
+                  <Option
+                    key={index}
+                    value={criterion.category}
+                    disabled={isDisabled}
+                  >
+                    {AssessmentCategoryLabel[criterion.category]} ({used}/{limit})
+                  </Option>
+                );
+              })}
+            </Select>
+          </Form.Item>
+        );
+      }
+    }
+    ,
+    {
+      title: 'Thời lượng (phút)',
+      key: 'duration',
+      width: '15%',
+      render: (_, record) => {
+        const criteriaId = testSlots[record.slot - 1]?.criteriaId;
+        const isDisabled = criteriaId === undefined || criteriaId === null;
+        return (
+          <Form.Item name={['testSlots', record.slot - 1, 'duration']} style={{ margin: 0 }}>
+            <InputNumber
+              min={1}
+              style={{ width: '100%' }}
+              placeholder="Thời lượng"
+              disabled={isDisabled}
+            />
+          </Form.Item>
+        );
+      }
+    },
+    {
+      title: 'Kỹ năng',
+      key: 'testType',
+      width: '20%',
+      render: (_, record) => {
+        const criteriaId = testSlots[record.slot - 1]?.criteriaId;
+        const isDisabled = criteriaId === undefined || criteriaId === null;
+        return (
+          <Form.Item name={['testSlots', record.slot - 1, 'testType']} style={{ margin: 0 }}>
+            <Select placeholder="Chọn kỹ năng" disabled={isDisabled} style={{ width: '100%' }}>
+              {Object.entries(TestTypeEnum).map(([value, label]) => (
+                <Option key={value} value={Number(value)}>{label}</Option>
+              ))}
+            </Select>
+          </Form.Item>
+        );
+      }
     }
   ];
 
   return (
     <Card>
       <div style={{ marginBottom: 16 }}>
-        <h3>Danh sách buổi học</h3>
+        <h3>Danh sách slot kiểm tra</h3>
         <Table
           dataSource={classSlots}
           columns={columns}
@@ -95,4 +148,4 @@ const TestSlotsStep = ({ classSlots, form }) => {
   );
 };
 
-export default TestSlotsStep; 
+export default TestSlotsStep;

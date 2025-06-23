@@ -9,8 +9,9 @@ const ConfigurationStep = ({ onGenerateClassSlots }) => {
         label="Tổng số tuần"
         rules={[{ required: true, message: 'Vui lòng nhập tổng số tuần' }]}
       >
-        <InputNumber 
-          min={1} 
+        <InputNumber
+          min={1}
+          placeholder="VD: 10"
           style={{ width: '100%' }}
         />
       </Form.Item>
@@ -30,10 +31,20 @@ const ConfigurationStep = ({ onGenerateClassSlots }) => {
           }
         ]}
       >
-        <InputNumber 
+        <InputNumber
           min={1}
+          max={5}
+          placeholder="VD: 3"
           style={{ width: '100%' }}
         />
+      </Form.Item>
+
+      <Form.Item
+        name="defaultDuration"
+        label="Thời lượng mặc định mỗi tiết (phút)"
+        rules={[{ required: true, message: 'Vui lòng nhập thời lượng mặc định cho mỗi tiết' }]}
+      >
+        <InputNumber min={1} style={{ width: '100%' }} />
       </Form.Item>
     </Card>
   );
