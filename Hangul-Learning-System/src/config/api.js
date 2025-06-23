@@ -57,12 +57,13 @@ export const endpoints = {
         // Syllabus Schedule
         getSyllabusSchedule: 'api/SyllabusSchedule/get-schedule-by-subject',
         addSchedule: 'api/Syllabus/add-schedule',
-        updateSchedule: 'api/Syllabus/update-schedule',
+        updateSchedule: 'api/SyllabusSchedule/bulk-update',
         deleteSchedule: 'api/Syllabus/delete-schedule',
 
+
         // Schedule Test
-        getScheduleTest: 'api/SyllabusSchedule/schedules',
-        createScheduleTest: 'api/SyllabusSchedule/schedules',
+        getScheduleTest: 'api/SyllabusSchedule/get-schedule-by-subject',
+        // createScheduleTest: 'api/SyllabusSchedule/schedules',
 
         // NEW: Create Syllabus Schedule
         createSyllabusSchedule: 'api/SyllabusSchedule/create-syllabus-schedule',

@@ -10,26 +10,69 @@ const SyllabusSchedule = ({
   onEdit, 
   onDelete,
   subject,
-  canEdit = false
+  canEdit = false,
+  testMode = false,
+  onBulkUpdate
 }) => {
   // Add a sequential slot number for display
   const dataWithSlot = schedules.map((item, idx) => ({ ...item, displaySlot: idx + 1 }));
 
-  // Calculate rowSpan for week merging
-  const weekRowSpan = [];
-  let lastWeek = null;
-  let count = 0;
-  dataWithSlot.forEach((item, idx) => {
-    if (item.week !== lastWeek) {
-      // Count how many consecutive rows have the same week
-      count = dataWithSlot.filter(x => x.week === item.week).length;
-      weekRowSpan[idx] = count;
-      lastWeek = item.week;
-      count = 0;
-    } else {
-      weekRowSpan[idx] = 0;
-    }
-  });
+  // Calculate rowSpan for week merging (only for normal mode)
+  let weekRowSpan = [];
+  if (!testMode) {
+    let lastWeek = null;
+    let count = 0;
+    dataWithSlot.forEach((item, idx) => {
+      if (item.week !== lastWeek) {
+        count = dataWithSlot.filter(x => x.week === item.week).length;
+        weekRowSpan[idx] = count;
+        lastWeek = item.week;
+        count = 0;
+      } else {
+        weekRowSpan[idx] = 0;
+      }
+    });
+  }
+
+  const testColumns = [
+    {
+      title: 'Slot',
+      dataIndex: 'displaySlot',
+      key: 'displaySlot',
+      width: 80,
+    },
+    {
+      title: 'Hạng mục',
+      dataIndex: 'category',
+      key: 'category',
+      width: 120,
+    },
+    {
+      title: 'Loại bài kiểm tra',
+      dataIndex: 'testType',
+      key: 'testType',
+      width: 150,
+    },
+    {
+      title: 'Thời lượng (phút)',
+      dataIndex: 'testDurationMinutes',
+      key: 'testDurationMinutes',
+      width: 120,
+    },
+    {
+      title: 'Cho phép làm lại',
+      dataIndex: 'allowMultipleAttempts',
+      key: 'allowMultipleAttempts',
+      width: 120,
+      render: (val) => val ? 'Có' : 'Không',
+    },
+    {
+      title: 'Điểm đạt tối thiểu',
+      dataIndex: 'minPassingScore',
+      key: 'minPassingScore',
+      width: 120,
+    },
+  ];
 
   const columns = [
     {
@@ -112,8 +155,15 @@ const SyllabusSchedule = ({
 
   return (
     <div style={{ marginBottom: '32px' }}>
+      {canEdit && onBulkUpdate && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+          <Button type="primary" onClick={() => onBulkUpdate(schedules)}>
+            Lưu tất cả thay đổi
+          </Button>
+        </div>
+      )}
       <Table
-        columns={columns}
+        columns={testMode ? testColumns : columns}
         dataSource={dataWithSlot}
         rowKey="syllabusScheduleID"
         pagination={false}

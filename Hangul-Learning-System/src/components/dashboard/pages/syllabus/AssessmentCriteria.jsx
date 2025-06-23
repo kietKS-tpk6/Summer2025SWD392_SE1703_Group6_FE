@@ -93,12 +93,12 @@ const AssessmentCriteria = ({
             onClick={() => onEdit(record)}
             disabled={!subject.isActive}
           />
-          <Button
+          {/* <Button
             danger
             icon={<DeleteOutlined />}
             onClick={() => onDelete(record.assessmentCriteriaID)}
             disabled={!subject.isActive}
-          />
+          /> */}
         </Space>
       ),
     },
@@ -106,7 +106,7 @@ const AssessmentCriteria = ({
 
   return (
     <div style={{ marginBottom: '32px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+      {/* <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
         <Title level={3} style={{ margin: 0 }}></Title>
         <Button
           type="primary"
@@ -116,7 +116,7 @@ const AssessmentCriteria = ({
         >
           Thêm tiêu chí
         </Button>
-      </div>
+      </div> */}
       <Table
         columns={columns}
         dataSource={assessmentCriteria}

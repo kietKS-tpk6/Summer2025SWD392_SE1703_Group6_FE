@@ -213,20 +213,24 @@ export const ScheduleModal = ({ visible, onOk, onCancel, form, initialValues }) 
       layout="vertical"
       initialValues={initialValues}
     >
-      <Form.Item
-        name="week"
-        label="Tuần"
-        rules={[{ required: true, message: 'Vui lòng nhập tuần' }]}
-      >
-        <InputNumber min={1} style={{ width: '100%' }} />
-      </Form.Item>
-      <Form.Item
-        name="slot"
-        label="Slot"
-        rules={[{ required: true, message: 'Vui lòng nhập slot' }]}
-      >
-        <Input maxLength={50} />
-      </Form.Item>
+      {!(initialValues && initialValues.syllabusScheduleID) && (
+        <>
+          <Form.Item
+            name="week"
+            label="Tuần"
+            rules={[{ required: true, message: 'Vui lòng nhập tuần' }]}
+          >
+            <InputNumber min={1} style={{ width: '100%' }} />
+          </Form.Item>
+          <Form.Item
+            name="slot"
+            label="Slot"
+            rules={[{ required: true, message: 'Vui lòng nhập slot' }]}
+          >
+            <Input maxLength={50} />
+          </Form.Item>
+        </>
+      )}
       <Form.Item
         name="lessonTitle"
         label="Tiêu đề bài học"
@@ -251,7 +255,7 @@ export const ScheduleModal = ({ visible, onOk, onCancel, form, initialValues }) 
       <Form.Item
         name="resources"
         label="Tài nguyên"
-        rules={[{ required: true, message: 'Vui lòng nhập tài nguyên' }]}
+        rules={[]}
       >
         <TextArea rows={2} placeholder="Nhập các tài nguyên, phân cách bằng dấu chấm phẩy (;)" />
       </Form.Item>
