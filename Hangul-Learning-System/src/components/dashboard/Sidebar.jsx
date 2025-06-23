@@ -43,6 +43,11 @@ const Sidebar = () => {
       label: 'Quản lí môn học',
     },
     {
+      key: '/dashboard/assessment',
+      icon: <BarChartOutlined />, // icon bài kiểm tra
+      label: 'Quản lí bài kiểm tra',
+    },
+    {
       key: '/dashboard/class',
       icon: <ApartmentOutlined />, // icon sơ đồ lớp/phòng
       label: 'Quản lí lớp học',
@@ -77,6 +82,7 @@ const Sidebar = () => {
       icon: <SettingOutlined />,
       label: 'Cài đặt',
     },
+    
   ];
 
   const menuItemsStudent = [
