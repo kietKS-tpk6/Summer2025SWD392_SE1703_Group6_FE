@@ -7,6 +7,7 @@ import { getClassesTableColumns } from './ClassesTableComponent';
 import CreateClassModal from './create/CreateClassModal';
 import DeleteConfirm from '../common/DeleteConfirm';
 import Notification from '../common/Notification';
+import { useNavigate } from 'react-router-dom';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -38,6 +39,8 @@ const Classes = () => {
     message: '',
     description: ''
   });
+
+  const navigate = useNavigate();
 
   const showNotify = (notifyProps, duration = 3) => {
     const notifKey = Math.random().toString(36).substr(2, 9);
@@ -81,8 +84,10 @@ const Classes = () => {
     fetchData(statusFilter, pagination.current, pagination.pageSize);
   };
 
-  
-  const handleView = (record) => { /* ... */ };
+  const handleView = (record) => {
+    navigate('detail', { state: { classId: record.classID } });
+  };
+
   const handleEdit = (record) => { /* ... */ };
   const handleDelete = (record) => {
     setDeleteModal({ open: true, record });
