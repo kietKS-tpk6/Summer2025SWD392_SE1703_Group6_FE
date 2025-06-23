@@ -20,6 +20,8 @@ import HomeContent from './components/Homepage/Content';
 import ViewClassDetail from './pages/student-portal/ViewClassDetail';
 import WeeklyTimeTable from './pages/student-portal/WeeklyTimeTable';
 import StudentDetail from './pages/student-portal/StudentDetail';
+import AssessmentManagement from './components/assessments/Assessments'; // hoặc tên file bạn muốn
+
 // import About from './pages/viewer-portal/About';
 // import Courses from './pages/viewer-portal/Courses';
 // import Contact from './pages/viewer-portal/Contact';
@@ -50,6 +52,7 @@ const dashboardRoutes = [
   { path: '/schedule', element: <Schedule /> },
   { path: '/profile', element: <Profile /> },
   { path: '/settings', element: <Settings /> },
+  { path: '/assessment', element: <AssessmentManagement /> },
 ];
 
 // Lecturer routes configuration
