@@ -28,6 +28,7 @@ import PaymentSuccess from './components/payment/PaymentSuccess';
 import PaymentFailed from './components/payment/PaymentFailed';
 import PaymentForm from './components/payment/PaymentForm';
 import LecturerDashboard from './components/dashboard/pages/LecturerDashboard';
+import ClassDetail from './components/classes/detail/ClassDetail';
 import './App.css';
 import 'antd/dist/reset.css';
 
@@ -38,6 +39,7 @@ const dashboardRoutes = [
   { path: '/', element: <Dashboard /> },
   { path: '/users', element: <Users /> },
   { path: '/class', element: <ClassManagement /> },
+  { path: '/class/detail', element: <ClassDetail /> },
   { path: '/subject', element: <Subjects /> },
   { path: '/subject/create', element: <CreateSubject /> },
   { path: '/syllabus', element: <Syllabus /> },
