@@ -6,21 +6,27 @@ const { Title } = Typography;
 
 // Enums for Category and TestType
 const CategoryEnum = {
-  0: 'Midterm',
-  1: 'FifteenMinutes',
-  2: 'Final',
-  3: 'Other'
+  0: 'Quiz',
+  1: 'Presentation',
+  2: 'Midterm',
+  3: 'Final',
+  4: 'Attendance',
+  5: 'Assignment',
+  6: 'Class Participation',
 };
 
+// Cập nhật cho TestType
 const TestTypeEnum = {
-  0: 'MCQ',
-  1: 'Writing',
-  2: 'Speaking',
+  0: 'None',
+  1: 'Vocabulary',
+  2: 'Grammar',
   3: 'Listening',
   4: 'Reading',
-  5: 'Mix',
-  6: 'Other'
-}
+  5: 'Writing',
+  6: 'Mix',
+  7: 'Other',
+};
+
 
 const AssessmentCriteria = ({ 
   assessmentCriteria, 
@@ -35,7 +41,14 @@ const AssessmentCriteria = ({
       dataIndex: 'category',
       key: 'category',
       width: 150,
-      render: (category) => CategoryEnum[category] || category
+      render: (category) => CategoryEnum[Number(category)] || category
+    },
+    {
+      title: 'Ghi chú',
+      dataIndex: 'note',
+      key: 'note',
+      width: 200,
+      render: (note) => note || '-'
     },
     {
       title: 'Trọng số (%)',
@@ -45,35 +58,28 @@ const AssessmentCriteria = ({
     },
     {
       title: 'Số lượng yêu cầu',
-      dataIndex: 'requiredCount',
-      key: 'requiredCount',
+      dataIndex: 'requiredTestCount',
+      key: 'requiredTestCount',
       width: 150,
     },
-    {
-      title: 'Thời gian (phút)',
-      dataIndex: 'duration',
-      key: 'duration',
-      width: 150,
-    },
-    {
-      title: 'Loại bài kiểm tra',
-      dataIndex: 'testType',
-      key: 'testType',
-      width: 150,
-      render: (testType) => TestTypeEnum[testType] || testType
-    },
+    // {
+    //   title: 'Thời gian (phút)',
+    //   dataIndex: 'duration',
+    //   key: 'duration',
+    //   width: 150,
+    // },
+    // {
+    //   title: 'Loại bài kiểm tra',
+    //   dataIndex: 'testType',
+    //   key: 'testType',
+    //   width: 150,
+    //   render: (testType) => TestTypeEnum[testType] || testType
+    // },
     {
       title: 'Điểm đạt tối thiểu',
       dataIndex: 'minPassingScore',
       key: 'minPassingScore',
       width: 150,
-    },
-    {
-      title: 'Ghi chú',
-      dataIndex: 'note',
-      key: 'note',
-      width: 200,
-      render: (note) => note || '-'
     },
     {
       title: 'Thao tác',
@@ -87,12 +93,12 @@ const AssessmentCriteria = ({
             onClick={() => onEdit(record)}
             disabled={!subject.isActive}
           />
-          <Button
+          {/* <Button
             danger
             icon={<DeleteOutlined />}
             onClick={() => onDelete(record.assessmentCriteriaID)}
             disabled={!subject.isActive}
-          />
+          /> */}
         </Space>
       ),
     },
@@ -100,7 +106,7 @@ const AssessmentCriteria = ({
 
   return (
     <div style={{ marginBottom: '32px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+      {/* <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
         <Title level={3} style={{ margin: 0 }}></Title>
         <Button
           type="primary"
@@ -110,7 +116,7 @@ const AssessmentCriteria = ({
         >
           Thêm tiêu chí
         </Button>
-      </div>
+      </div> */}
       <Table
         columns={columns}
         dataSource={assessmentCriteria}

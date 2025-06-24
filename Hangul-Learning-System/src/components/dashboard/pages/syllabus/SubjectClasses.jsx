@@ -5,6 +5,51 @@ import { UserOutlined, CalendarOutlined } from '@ant-design/icons';
 const { Title } = Typography;
 
 const SubjectClasses = ({ classes }) => {
+  // Class status enum
+  const ClassStatus = {
+    Pending: 0,
+    Open: 1,
+    Ongoing: 2,
+    Completed: 3,
+    Deleted: 4
+  };
+
+  // Function to get tag color based on status
+  const getStatusTagColor = (status) => {
+    switch (status) {
+      case ClassStatus.Pending:
+        return 'orange';
+      case ClassStatus.Open:
+        return 'blue';
+      case ClassStatus.Ongoing:
+        return 'green';
+      case ClassStatus.Completed:
+        return 'purple';
+      case ClassStatus.Deleted:
+        return 'red';
+      default:
+        return 'default';
+    }
+  };
+
+  // Function to get status text based on status code
+  const getStatusText = (status) => {
+    switch (status) {
+      case ClassStatus.Pending:
+        return 'Chờ duyệt';
+      case ClassStatus.Open:
+        return 'Đang mở';
+      case ClassStatus.Ongoing:
+        return 'Đang diễn ra';
+      case ClassStatus.Completed:
+        return 'Đã hoàn thành';
+      case ClassStatus.Deleted:
+        return 'Đã xóa';
+      default:
+        return 'Không xác định';
+    }
+  };
+
   const columns = [
     {
       title: 'Mã lớp',
@@ -65,8 +110,8 @@ const SubjectClasses = ({ classes }) => {
       key: 'status',
       width: 120,
       render: (status) => (
-        <Tag color={status === 1 ? 'green' : 'red'}>
-          {status === 1 ? 'Đang hoạt động' : 'Không hoạt động'}
+        <Tag color={getStatusTagColor(status)}>
+          {getStatusText(status)}
         </Tag>
       ),
     },

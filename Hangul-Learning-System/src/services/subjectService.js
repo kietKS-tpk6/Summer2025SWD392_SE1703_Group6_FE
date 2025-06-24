@@ -1,21 +1,31 @@
 import axios from 'axios';
 import { API_URL, endpoints } from '../config/api';
 
-const createSubject = async (subjectData) => {
+const createSubject = async ({ subjectName, description, minAverageScoreToPass }) => {
+  console.log('Sending subject:', { subjectName, description, minAverageScoreToPass });
   try {
-    const response = await axios.post(`${API_URL}${endpoints.manageSubject.create}`, subjectData);
+    const response = await axios.post(`${API_URL}${endpoints.manageSubject.create}`, {
+      subjectName,
+      description,
+      minAverageScoreToPass,
+    });
     const data = response.data;
-    // Extract subjectID from the message, e.g., "Subject created successfully with ID: SJ0022"
-    const match = data.message.match(/ID: (SJ\d+)/);
-    if (match && match[1]) {
-      return { subjectID: match[1], ...data }; // Return a consistent object with subjectID
+
+    // ✅ Trích xuất subjectID trực tiếp từ data.message.data
+    const subjectID = data?.message?.data;
+
+    if (subjectID) {
+      return { subjectID, ...data.message };
     }
-    return data; // Fallback if ID is not found in message
+
+    // Trường hợp không có subjectID
+    return data.message;
   } catch (error) {
     console.error('Error creating subject:', error);
     throw error;
   }
 };
+
 
 const getSubjectById = async (subjectId) => {
   try {
@@ -35,8 +45,49 @@ const updateSubject = async (subjectData) => {
   }
 };
 
+const createSyllabusSchedule = async (payload) => {
+  try {
+    const response = await axios.post(`${API_URL}api/SyllabusSchedule/create-syllabus-schedule`, payload);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const createAssessmentCriteriaMany = async (payload) => {
+  try {
+    const response = await axios.post(`${API_URL}api/AssessmentCriteria/create-many`, payload);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const updateAssessmentCriteriaList = async (payload) => {
+  try {
+    const response = await axios.put(`${API_URL}api/AssessmentCriteria/update-list`, payload);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const bulkUpdateSyllabusSchedule = async (payload) => {
+  try {
+    const response = await axios.put(`${API_URL}api/SyllabusSchedule/bulk-update`, payload);
+    return response.data;
+  } catch (error) {
+    console.error('Bulk-update error', error.response?.data);
+    throw error;
+  }
+};
+
 export const subjectService = {
   createSubject,
   getSubjectById,
   updateSubject,
+  createSyllabusSchedule,
+  createAssessmentCriteriaMany,
+  updateAssessmentCriteriaList,
+  bulkUpdateSyllabusSchedule,
 }; 
