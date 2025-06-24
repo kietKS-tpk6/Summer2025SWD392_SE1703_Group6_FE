@@ -233,13 +233,12 @@ const Syllabus = () => {
   };
 
   const fetchClasses = async () => {
-    // console.log('subject code:', subject?.code);
     try {
       if (!subject?.code) {
         console.log('No subject code available');
         return;
       }
-      const response = await axios.get(`${API_URL}${endpoints.manageClass.getAll}`, {
+      const response = await axios.get(`${API_URL}${endpoints.manageClass.getbySubject}`, {
         params: {
           subjectId: subject.code,
           page: 1,

@@ -25,7 +25,7 @@ export const endpoints = {
     create: 'api/Class/create',
     getAll: 'api/Class/get-all-paginated',
     getById: 'api/Class/get-by-id',
-    getbySubject: '/api/Class/get-by-subject',
+    getbySubject: 'api/Class/get-by-subject',
     update: 'api/Class/update',
     getByTeacher: 'api/Class/get-by-teacher',
     getByStudent: 'api/Class/get-by-subject-teacher',
