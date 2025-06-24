@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Form, Input, Select, Upload, Button, message, InputNumber } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import axios from 'axios';
-import { API_URL } from '../../../config/api';
+import { API_URL, endpoints } from '../../../config/api';
 
 const BasicInfoForm = React.forwardRef(({ lectures = [], subjects = [], formData = {}, onChange }, ref) => {
   const [form] = Form.useForm();
@@ -17,8 +17,8 @@ const BasicInfoForm = React.forwardRef(({ lectures = [], subjects = [], formData
     const fetchConfig = async () => {
       try {
         const [minRes, maxRes] = await Promise.all([
-          axios.get(`${API_URL}api/SystemConfig/get-config-by-key/class_minStudent`),
-          axios.get(`${API_URL}api/SystemConfig/get-config-by-key/class_maxStudent`)
+          axios.get(`${API_URL}${endpoints.systemConfig.getConfigByKey}class_minStudent`),
+          axios.get(`${API_URL}${endpoints.systemConfig.getConfigByKey}class_maxStudent`)
         ]);
         
         setConfig({
@@ -46,7 +46,7 @@ const BasicInfoForm = React.forwardRef(({ lectures = [], subjects = [], formData
     const formDataUpload = new FormData();
     formDataUpload.append('file', file);
     try {
-      const res = await axios.post(`${API_URL}api/Cloudinary/upload-image-class`, formDataUpload, {
+      const res = await axios.post(`${API_URL}${endpoints.cloudinary.uploadClassImage}`, formDataUpload, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       const url = res.data;
@@ -115,7 +115,7 @@ const BasicInfoForm = React.forwardRef(({ lectures = [], subjects = [], formData
             validator: async (_, value) => {
               if (!value) return Promise.resolve();
               try {
-                const res = await axios.get(`${API_URL}api/Class/check-name?className=${encodeURIComponent(value)}`);
+                const res = await axios.get(`${API_URL}${endpoints.class.checkName}?className=${encodeURIComponent(value)}`);
                 if (res.data.isDuplicate) {
                   return Promise.reject(res.data.message || 'Tên lớp đã tồn tại');
                 }
