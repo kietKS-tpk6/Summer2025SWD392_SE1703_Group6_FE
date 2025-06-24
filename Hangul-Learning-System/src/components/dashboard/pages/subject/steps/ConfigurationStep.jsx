@@ -33,7 +33,7 @@ const ConfigurationStep = ({ onGenerateClassSlots }) => {
       >
         <InputNumber
           min={1}
-          max={5}
+          // max={5}
           placeholder="VD: 3"
           style={{ width: '100%' }}
         />
@@ -43,8 +43,11 @@ const ConfigurationStep = ({ onGenerateClassSlots }) => {
         name="defaultDuration"
         label="Thời lượng mặc định mỗi tiết (phút)"
         rules={[{ required: true, message: 'Vui lòng nhập thời lượng mặc định cho mỗi tiết' }]}
+        
       >
-        <InputNumber min={1} style={{ width: '100%' }} />
+        <InputNumber min={1} style={{ width: '100%' }} 
+        placeholder="VD: 45"/>
+        
       </Form.Item>
     </Card>
   );
