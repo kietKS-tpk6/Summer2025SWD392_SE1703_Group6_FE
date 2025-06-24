@@ -430,33 +430,33 @@ const CreateAssessmentSection = ({ testType, sections = [], onChange }) => {
       >
         {sectionList.map((section, idx) => (
           <TabPane tab={`Section ${idx + 1}`} key={String(idx)} closable={sectionList.length > 1}>
-            {/* Header: Tên trang, Loại, Điểm */}
-            <Row gutter={16} style={{ marginBottom: 24 }}>
-              <Col span={8}>
-                <div style={{ marginBottom: 8 }}>Tên trang</div>
-                <Input
-                  placeholder="Tên trang/section"
-                  value={section.name || ''}
-                  onChange={e => handleHeaderChange('name', e.target.value)}
-                />
-              </Col>
-              <Col span={8}>
-                <div style={{ marginBottom: 8 }}>Loại</div>
-                {testType === 'Mix' ? (
-                  <Select
-                    value={section.type || 'MCQ'}
-                    onChange={val => handleHeaderChange('type', val)}
-                    style={{ width: '100%' }}
-                  >
-                    {SECTION_TYPE_OPTIONS.map(opt => (
-                      <Option key={opt.value} value={opt.value}>{opt.label}</Option>
-                    ))}
-                  </Select>
-                ) : (
-                  <Input value={testType === 'MCQ' ? 'MCQs' : 'Writing'} disabled />
-                )}
-              </Col>
-              <Col span={8}>
+      {/* Header: Tên trang, Loại, Điểm */}
+      <Row gutter={16} style={{ marginBottom: 24 }}>
+        <Col span={8}>
+          <div style={{ marginBottom: 8 }}>Tên trang</div>
+          <Input
+            placeholder="Tên trang/section"
+            value={section.name || ''}
+            onChange={e => handleHeaderChange('name', e.target.value)}
+          />
+        </Col>
+        <Col span={8}>
+          <div style={{ marginBottom: 8 }}>Loại</div>
+          {testType === 'Mix' ? (
+            <Select
+              value={section.type || 'MCQ'}
+              onChange={val => handleHeaderChange('type', val)}
+              style={{ width: '100%' }}
+            >
+              {SECTION_TYPE_OPTIONS.map(opt => (
+                <Option key={opt.value} value={opt.value}>{opt.label}</Option>
+              ))}
+            </Select>
+          ) : (
+            <Input value={testType === 'MCQ' ? 'MCQs' : 'Writing'} disabled />
+          )}
+        </Col>
+        <Col span={8}>
                 <Form.Item
                   label="Điểm"
                   name={`score_${idx}`}
@@ -467,20 +467,20 @@ const CreateAssessmentSection = ({ testType, sections = [], onChange }) => {
                   style={{ marginBottom: 0 }}
                   initialValue={section.score || ''}
                 >
-                  <InputNumber
-                    min={0}
-                    max={10}
-                    style={{ width: '100%' }}
-                    value={section.score || ''}
-                    onChange={val => handleHeaderChange('score', val)}
-                    placeholder="Nhập điểm cho section"
+          <InputNumber
+            min={0}
+            max={10}
+            style={{ width: '100%' }}
+            value={section.score || ''}
+            onChange={val => handleHeaderChange('score', val)}
+            placeholder="Nhập điểm cho section"
                     step={0.1}
-                  />
+          />
                 </Form.Item>
-              </Col>
-            </Row>
-            {/* Khung lớn nhập câu hỏi/đáp án */}
-            <div style={{ border: '1px solid #eee', borderRadius: 8, padding: 24, minHeight: 200 }}>
+        </Col>
+      </Row>
+      {/* Khung lớn nhập câu hỏi/đáp án */}
+      <div style={{ border: '1px solid #eee', borderRadius: 8, padding: 24, minHeight: 200 }}>
               {section.type === 'Writing' ? (
                 <>
                   {questions.map((q, qIdx) => (
@@ -518,14 +518,14 @@ const CreateAssessmentSection = ({ testType, sections = [], onChange }) => {
                     </div>
                   )}
                   {/* Nút + lớn để thêm câu hỏi (đưa xuống dưới) */}
-                  <Button
-                    type="dashed"
-                    icon={<PlusOutlined />}
-                    onClick={handleAddQuestion}
+        <Button
+          type="dashed"
+          icon={<PlusOutlined />}
+          onClick={handleAddQuestion}
                     style={{ width: '100%', marginTop: 24, height: 48, fontSize: 18 }}
-                  >
-                    Thêm câu hỏi
-                  </Button>
+        >
+          Thêm câu hỏi
+        </Button>
                 </>
               ) : (
                 <>
@@ -554,11 +554,11 @@ const CreateAssessmentSection = ({ testType, sections = [], onChange }) => {
                     </Upload>
                     {section.audioURL && <span style={{ color: '#1890ff' }}>{section.audioURL}</span>}
                   </div>
-                  {/* Danh sách câu hỏi */}
+        {/* Danh sách câu hỏi */}
                   {questions.map((q, qIdx) => (
-                    <Card
+          <Card
                       key={qIdx}
-                      style={{ marginBottom: 24 }}
+            style={{ marginBottom: 24 }}
                       title={
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <span>{`Câu ${qIdx + 1}:`}</span>
@@ -567,11 +567,11 @@ const CreateAssessmentSection = ({ testType, sections = [], onChange }) => {
                           </span>
                         </div>
                       }
-                      extra={
-                        <Button
-                          type="text"
-                          icon={<DeleteOutlined />}
-                          danger
+            extra={
+              <Button
+                type="text"
+                icon={<DeleteOutlined />}
+                danger
                           onClick={() => handleDeleteQuestion(qIdx)}
                         />
                       }
@@ -601,45 +601,45 @@ const CreateAssessmentSection = ({ testType, sections = [], onChange }) => {
                         </Upload>
                         {q.audioURL && <span style={{ color: '#1890ff' }}>{q.audioURL}</span>}
                       </div>
-                      <Input.TextArea
-                        placeholder="Nhập nội dung câu hỏi"
-                        value={q.content}
+            <Input.TextArea
+              placeholder="Nhập nội dung câu hỏi"
+              value={q.content}
                         onChange={e => handleQuestionChange(qIdx, 'content', e.target.value)}
-                        style={{ marginBottom: 16 }}
-                      />
-                      <div style={{ marginBottom: 8, fontWeight: 500 }}>
-                        Đáp án (chọn đáp án đúng):
+              style={{ marginBottom: 16 }}
+            />
+            <div style={{ marginBottom: 8, fontWeight: 500 }}>
+              Đáp án (chọn đáp án đúng):
                         {perQuestionScore(section) && (
-                          <span style={{ float: 'right', color: '#888' }}>
+                <span style={{ float: 'right', color: '#888' }}>
                             Điểm mỗi câu: {perQuestionScore(section)}
-                          </span>
-                        )}
-                      </div>
-                      <Radio.Group
-                        value={q.correct}
+                </span>
+              )}
+            </div>
+            <Radio.Group
+              value={q.correct}
                         onChange={e => handleCorrectChange(qIdx, e.target.value)}
-                        style={{ width: '100%' }}
-                      >
-                        <Space direction="vertical" style={{ width: '100%' }}>
-                          {q.answers.map((a, aIdx) => (
-                            <div key={a.key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <Radio value={aIdx} />
-                              <Input
-                                placeholder={`Đáp án ${a.key}`}
-                                value={a.text}
+              style={{ width: '100%' }}
+            >
+              <Space direction="vertical" style={{ width: '100%' }}>
+                {q.answers.map((a, aIdx) => (
+                  <div key={a.key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Radio value={aIdx} />
+                    <Input
+                      placeholder={`Đáp án ${a.key}`}
+                      value={a.text}
                                 onChange={e => handleAnswerChange(qIdx, aIdx, e.target.value)}
-                                style={{ flex: 1 }}
-                              />
-                            </div>
-                          ))}
-                        </Space>
-                      </Radio.Group>
-                    </Card>
-                  ))}
-                  {questions.length === 0 && (
-                    <div style={{ textAlign: 'center', color: '#aaa' }}>
-                      Chưa có câu hỏi nào. Nhấn <b>Thêm câu hỏi</b> để bắt đầu.
-                    </div>
+                      style={{ flex: 1 }}
+                    />
+                  </div>
+                ))}
+              </Space>
+            </Radio.Group>
+          </Card>
+        ))}
+        {questions.length === 0 && (
+          <div style={{ textAlign: 'center', color: '#aaa' }}>
+            Chưa có câu hỏi nào. Nhấn <b>Thêm câu hỏi</b> để bắt đầu.
+          </div>
                   )}
                   {/* Nút + lớn để thêm câu hỏi (đưa xuống dưới) */}
                   <Button
@@ -651,8 +651,8 @@ const CreateAssessmentSection = ({ testType, sections = [], onChange }) => {
                     Thêm câu hỏi
                   </Button>
                 </>
-              )}
-            </div>
+        )}
+      </div>
           </TabPane>
         ))}
       </Tabs>

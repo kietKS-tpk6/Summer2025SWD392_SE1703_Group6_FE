@@ -144,9 +144,32 @@ const Assessments = () => {
   };
 
   // Handler khi hoàn thành stepper
-  const handleStepperFinish = () => {
-    // TODO: xử lý lưu dữ liệu thực tế
-    handleCreateSubmit({ ...formData.basicInfo });
+  const handleStepperFinish = async () => {
+    const basic = formData.basicInfo;
+    const sections = formData.sections;
+  
+    try {
+      // Gọi API tạo bài kiểm tra
+      const res = await axios.post(`${API_URL}api/Test/create`, {
+        accountID: "A00000", // có thể lấy từ auth context
+        subjectID: basic.SubjectID,
+        testType: basic.testType === 'MCQ' ? 7 : basic.testType === 'Writing' ? 5 : 6,
+        category: basic.Category === 'Quiz' ? 0 : basic.Category === 'Midterm' ? 2 : 3,
+      });
+  
+      const newTestID = res.data?.testId;
+      if (!newTestID) throw new Error("Không lấy được TestID từ response");
+  
+      // Gọi tiếp API tạo section + câu hỏi ở đây
+      // (chờ bạn gửi API tiếp theo)
+  
+      message.success('Tạo bài kiểm tra thành công!');
+      setShowCreate(false);
+      setFormData({ basicInfo: {}, sections: [] });
+    } catch (error) {
+      console.error(error);
+      message.error('Lỗi khi tạo bài kiểm tra!');
+    }
   };
 
   // Handler khi chọn môn học
