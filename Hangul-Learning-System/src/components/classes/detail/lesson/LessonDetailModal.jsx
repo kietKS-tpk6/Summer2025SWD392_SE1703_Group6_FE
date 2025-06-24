@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { Modal, Button } from 'antd';
 import dayjs from 'dayjs';
 import UpdateLessonModal from './UpdateLessonModal';
+import { useNavigate } from 'react-router-dom';
 
 const LessonDetailModal = ({ open, lesson, onClose, onUpdate }) => {
   const [showUpdate, setShowUpdate] = useState(false);
+  const navigate = useNavigate();
 
   let isManager = false;
   try {
@@ -32,17 +34,14 @@ const LessonDetailModal = ({ open, lesson, onClose, onUpdate }) => {
         <div style={{ marginBottom: 18 }}>
           <span style={{ fontWeight: 500 }}>Nội dung:</span> {lesson.lessonTitle}
         </div>
-        {lesson.linkMeetURL && (
-          <a
-            href={lesson.linkMeetURL}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ textDecoration: 'none' }}
+        {lesson.classLessonID && (
+          <Button
+            type="primary"
+            style={{ marginRight: 8 }}
+            onClick={() => navigate('/dashboard/lesson-detail', { state: { lessonId: lesson.classLessonID } })}
           >
-            <button style={{ padding: '6px 18px', fontSize: 16, borderRadius: 4, background: '#52c41a', color: '#fff', border: 'none', cursor: 'pointer', marginRight: 8 }}>
-              Vào lớp
-            </button>
-          </a>
+            Xem chi tiết tiết học
+          </Button>
         )}
         {isManager && (
           <Button type="primary" onClick={() => setShowUpdate(true)} style={{ marginTop: 8 }}>
