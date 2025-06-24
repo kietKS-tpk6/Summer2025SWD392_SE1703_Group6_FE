@@ -25,7 +25,7 @@ export const endpoints = {
     create: 'api/Class/create',
     getAll: 'api/Class/get-all-paginated',
     getById: 'api/Class/get-by-id',
-    getbySubject: '/api/Class/get-by-subject',
+    getbySubject: 'api/Class/get-by-subject',
     update: 'api/Class/update',
     getByTeacher: 'api/Class/get-by-teacher',
     getByStudent: 'api/Class/get-by-subject-teacher',
@@ -50,7 +50,7 @@ export const endpoints = {
   manageSubject: {
     create: 'api/Subject/create',
     getAll: 'api/Subject/get-all',
-    getSubject: '/api/Subject/get-by-status',
+    getSubject: 'api/Subject/get-by-status',
     update: 'api/Subject/update',
     updateStatus: 'api/Subject/update-status',
     getById: 'api/Subject/get-subject-by-',

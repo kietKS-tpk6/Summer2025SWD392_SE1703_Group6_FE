@@ -98,7 +98,7 @@ const BasicInfoStep = ({ onNext, form, subjectId, isEditing }) => {
           >
             <InputNumber
               min={0}
-              max={10}
+              // max={10}
               step={0.1}
               style={{ width: '100%' }}
               placeholder="Nhập điểm đầu ra"
