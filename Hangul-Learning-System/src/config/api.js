@@ -65,6 +65,11 @@ export const endpoints = {
         // NEW: Create Syllabus Schedule
         createSyllabusSchedule: 'api/SyllabusSchedule/create-syllabus-schedule',
     },
+    class: {
+        // Class
+        checkName: 'api/Class/check-name',
+        
+    },
     cloudinary: {
         uploadAvatar: 'api/Cloudinary/upload-image-avatar',
         uploadClassImage: 'api/Cloudinary/upload-image-class',
