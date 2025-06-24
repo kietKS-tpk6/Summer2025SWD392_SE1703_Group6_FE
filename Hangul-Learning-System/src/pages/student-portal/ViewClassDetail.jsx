@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Button, Tag, Rate, Spin, Row, Col, Typography, Divider, Tooltip, Avatar } from 'antd';
+import { Card, Button, Tag, Rate, Spin, Row, Col, Typography, Divider, Tooltip, Avatar, List, Empty } from 'antd';
 import axios from 'axios';
 import { API_URL, endpoints } from '../../config/api';
 import '../../styles/ViewClassDetail.css';
@@ -7,7 +7,7 @@ import { useParams } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import HeaderBar from '../../components/header/Header';
 import FooterBar from '../../components/footer/Footer';
-import { UserOutlined } from '@ant-design/icons';
+import { UserOutlined, BookOutlined } from '@ant-design/icons';
 import Syllabus from '../../components/dashboard/pages/Syllabus';
 import { Collapse } from 'antd';
 import SyllabusSchedule from '../../components/dashboard/pages/syllabus/SyllabusSchedule';
@@ -17,9 +17,9 @@ const { Title, Text, Paragraph } = Typography;
 const ViewClassDetail = () => {
   const { id } = useParams();
   const [classData, setClassData] = useState(null);
-  const [syllabus, setSyllabus] = useState(null);
-  const [syllabusSchedules, setSyllabusSchedules] = useState([]);
-  const [description, setDescription] = useState('');
+  const [lessons, setLessons] = useState([]);
+  const [lessonsLoading, setLessonsLoading] = useState(true);
+  const [lessonsError, setLessonsError] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const [showSyllabus, setShowSyllabus] = useState(false);
@@ -44,30 +44,22 @@ const ViewClassDetail = () => {
     fetchClass();
   }, [id]);
 
+  // Lấy danh sách bài học
   useEffect(() => {
-    const fetchSyllabus = async () => {
-      if (classData && classData.subjectID) {
-        const res = await axios.get(`${API_URL}${endpoints.syllabus.getSyllabusInfo(classData.subjectID)}`);
-        setSyllabus(res.data);
-        console.log('syllabusID:', res.data.syllabusID); 
-        console.log('description:', res.data.description); 
+    const fetchLessons = async () => {
+      setLessonsLoading(true);
+      setLessonsError(null);
+      try {
+        const res = await axios.get(`${API_URL}api/Lesson/get-by-class/${id}`);
+        setLessons(res.data.data || []);
+      } catch (err) {
+        setLessonsError('Không thể tải danh sách bài học.');
+      } finally {
+        setLessonsLoading(false);
       }
     };
-    fetchSyllabus();
-  }, [classData]);
-
-  useEffect(() => {
-    const fetchSchedules = async () => {
-      if (syllabus && syllabus.syllabusID) {
-        const res = await axios.get(`${API_URL}api/SyllabusSchedule/schedules/${syllabus.syllabusID}`);
-        setSyllabusSchedules(res.data);
-        res.data.forEach(item => {
-          console.log('Slot:', item.slot, 'LessonTitle:', item.lessonTitle, 'Week:', item.week);
-        });
-      }
-    };
-    fetchSchedules();
-  }, [syllabus]);
+    if (id) fetchLessons();
+  }, [id]);
 
   // Check enrollment status
   useEffect(() => {
@@ -103,18 +95,78 @@ const ViewClassDetail = () => {
                   className="class-detail-image"
                 />
               </div>
-              <div className="class-detail-description-block" style={{ marginTop: 32 }}>
-                <Title level={4} className="class-detail-description-title">Mô tả khoá học</Title>
-                <Paragraph className="class-detail-description-text">
-                    {syllabus?.description || 'No description.'}
-                </Paragraph>
+              {/* Lịch trình học mới: Danh sách bài học */}
+              <div style={{ marginTop: 40 }}>
+                <Collapse bordered={false} style={{ background: 'transparent' }}>
+                  <Collapse.Panel 
+                    header={<span style={{ color: '#222', fontWeight: 700, fontSize: 18 }}>Lịch trình học</span>} 
+                    key="1" 
+                    style={{ background: '#fff', borderRadius: 12, border: 'none', boxShadow: 'none', marginBottom: 0 }}
+                  >
+                    {lessonsLoading ? (
+                      <Spin style={{ display: 'block', margin: '40px auto' }} size="large" />
+                    ) : lessonsError ? (
+                      <div style={{ color: 'red', textAlign: 'center', margin: 24 }}>{lessonsError}</div>
+                    ) : !lessons.length ? (
+                      <Empty description="Chưa có bài học nào cho lớp này." style={{ margin: 40 }} />
+                    ) : (
+                      <List
+                        grid={{ gutter: 24, column: 1 }}
+                        dataSource={lessons}
+                        renderItem={(lesson, idx) => (
+                          <List.Item style={{ padding: 0, marginBottom: 24 }}>
+                            <Card
+                              bordered={false}
+                              style={{
+                                borderRadius: 18,
+                                boxShadow: '0 4px 16px 0 rgba(250, 217, 52, 0.10)',
+                                background: '#fff9f3',
+                                transition: 'box-shadow 0.2s',
+                                minHeight: 80,
+                                display: 'flex',
+                                alignItems: 'center',
+                                cursor: 'pointer',
+                                border: '1px solid #ffe9b0',
+                              }}
+                              bodyStyle={{ display: 'flex', alignItems: 'center', padding: 20 }}
+                              hoverable
+                            >
+                              <div style={{
+                                minWidth: 40,
+                                minHeight: 40,
+                                borderRadius: '50%',
+                                background: '#ffe9b0',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                marginRight: 16,
+                                fontWeight: 700,
+                                fontSize: 16,
+                                color: '#fbb040',
+                                boxShadow: '0 2px 8px 0 rgba(250, 217, 52, 0.10)'
+                              }}>
+                                {idx + 1}
+                              </div>
+                              <div style={{ flex: 1 }}>
+                                <span style={{
+                                  fontSize: 15,
+                                  fontWeight: 500,
+                                  color: '#333',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 8
+                                }}>
+                                  {lesson.lessonTitle}
+                                </span>
+                              </div>
+                            </Card>
+                          </List.Item>
+                        )}
+                      />
+                    )}
+                  </Collapse.Panel>
+                </Collapse>
               </div>
-              {/* Lịch trình học */}
-              <Collapse style={{ marginTop: 40 }}>
-                <Collapse.Panel header="Lịch trình học" key="1">
-                  <SyllabusSchedule schedules={syllabusSchedules} />
-                </Collapse.Panel>
-              </Collapse>
             </Col>
             {/* Thông tin bên phải */}
             <Col xs={24} md={8}>
@@ -149,14 +201,6 @@ const ViewClassDetail = () => {
                     Đăng ký ngay
                   </Button>
                 )}
-                <Button
-                  size="large"
-                  className="class-detail-preview-btn"
-                  block
-                  style={{ marginBottom: 18, fontWeight: 700 }}
-                >
-                  Xem thử
-                </Button>
 
                 {/* Rating */}
                 <div className="class-detail-rating-block">
@@ -170,16 +214,8 @@ const ViewClassDetail = () => {
                 {/* Thông tin meta */}
                 <div className="class-detail-meta-table">
                   <div className="class-detail-meta-row">
-                    <span className="class-detail-meta-label">Trình độ</span>
-                    <span className="class-detail-meta-value">{classData.level || 'Beginner'}</span>
-                  </div>
-                  <div className="class-detail-meta-row">
                     <span className="class-detail-meta-label">Khai giảng</span>
                     <span className="class-detail-meta-value">{classData.teachingStartTime?.slice(0, 10) || '-'}</span>
-                  </div>
-                  <div className="class-detail-meta-row">
-                    <span className="class-detail-meta-label">Sĩ số</span>
-                    <span className="class-detail-meta-value">{classData.maxStudent}</span>
                   </div>
                 </div>                
 
