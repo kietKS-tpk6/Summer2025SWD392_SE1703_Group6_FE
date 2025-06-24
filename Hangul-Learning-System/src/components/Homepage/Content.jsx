@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Service1 from '../../assets/Service1.png';
 import Service2 from '../../assets/Service2.png';
 import Service3 from '../../assets/Service3.png';
@@ -17,6 +17,9 @@ import musicImg from '../../assets/music.png';
 import techinfoImg from '../../assets/techinfo.png';
 import datascienceImg from '../../assets/datascience.png';
 import ClassCardList from '../class/ClassCardList';
+import Courses from './Courses';
+import About from './About';
+import News from './News';
 
 const Services = [
   {
@@ -44,48 +47,56 @@ const Numbers = [
 
 const pagesContent = [
   {
+    id: 1,
     imageURL: graphicImg,
     title: "Photoshop CC 2018 Essential Training: The Basics",
     course: "Graphics Design",
     src: '#'
   },
   {
+    id: 2,
     imageURL: globalsystemImg,
     title: "Get Started Coding Android Apps With Kotlin",
     course: "Global System",
     src: '#'
   },
   {
+    id: 3,
     imageURL: citImg,
     title: "Create Turntable Animations With Cinema 4D",
     course: "Computer & Information Technology",
     src: '#'
   },
   {
+    id: 4,
     imageURL: webdevImg,
     title: "A Beginner's Guide to the New Bootstrap 4 Grid",
     course: "Web Development",
     src: '#'
   },
   {
+    id: 5,
     imageURL: artImg,
     title: "A Designer's Guide to Vue.js Components",
     course: "Art Departments",
     src: '#'
   },
   {
+    id: 6,
     imageURL: musicImg,
     title: "Code a Swift App With Realm Mobile Database",
     course: "Music",
     src: '#'
   },
   {
+    id: 7,
     imageURL: techinfoImg,
     title: "10 Essential Design Tips in Adobe Illustrator",
     course: "Technology Information",
     src: '#'
   },
   {
+    id: 8,
     imageURL: datascienceImg,
     title: "Modern PHP From The Beginning",
     course: "Data Science",
@@ -176,9 +187,9 @@ const Content = () => {
                 key={idx}
               >
                 <img src={item.imageURL} alt="course"/>
-                <a href={item.src} className='app__page-course'>{item.title}</a>
+                <Link to={`/page/${item.id}`} className='app__page-course'>{item.title}</Link>
                 <h6>{item.course}</h6>
-                <a href={item.src} className='app__page-course-link'>Keep reading...</a>
+                <Link to={`/page/${item.id}`} className='app__page-course-link'>Keep reading...</Link>
               </motion.div>
             ))}
           </div>

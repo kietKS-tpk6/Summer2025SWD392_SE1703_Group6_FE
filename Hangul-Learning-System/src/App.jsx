@@ -21,10 +21,10 @@ import ViewClassDetail from './pages/student-portal/ViewClassDetail';
 import WeeklyTimeTable from './pages/student-portal/WeeklyTimeTable';
 import StudentDetail from './pages/student-portal/StudentDetail';
 import AssessmentManagement from './components/assessments/Assessments'; // hoặc tên file bạn muốn
-
-// import About from './pages/viewer-portal/About';
-// import Courses from './pages/viewer-portal/Courses';
-// import Contact from './pages/viewer-portal/Contact';
+import PageDetail from './components/Homepage/PageDetail';
+import Courses from './components/Homepage/Courses';
+import About from './components/Homepage/About';
+import News from './components/Homepage/News';
 import StudentPage from './pages/student-portal/StudentPage';
 import NotFoundPage from './components/error/NotFoundPage';
 import LoginPage from './pages/authentication/LoginPage';
@@ -34,6 +34,7 @@ import PaymentFailed from './components/payment/PaymentFailed';
 import PaymentForm from './components/payment/PaymentForm';
 import LecturerDashboard from './components/dashboard/pages/LecturerDashboard';
 import ClassDetail from './components/classes/detail/ClassDetail';
+import MyCourses from './components/Homepage/MyCourses';
 import './App.css';
 import 'antd/dist/reset.css';
 
@@ -72,18 +73,17 @@ const lecturerRoutes = [
 // Public routes configuration
 const publicRoutes = [
   { 
-    // TRANG CHÍNH
     path: '/', element: <ViewerPage />,
-    // TRANG NAVIGATE
     children: [
       { path: '', element: <HomeContent /> },
+      { path: 'courses', element: <Courses /> },
+      { path: 'my-courses', element: <MyCourses /> },
+      { path: 'about', element: <About /> },
+      { path: 'news', element: <News /> },
+      { path: 'page/:id', element: <PageDetail /> },
       { path: '/payment-success', element: <PaymentSuccess/>},
       { path: '/payment-failed', element: <PaymentFailed/>},
       { path: '/payment/:classId', element: <PaymentForm /> }
-      
-      // { path: 'about', element: <About /> },
-      // { path: 'courses', element: <Courses /> },
-      // { path: 'contact', element: <Contact /> },
     ]
   },
   { path: '/login', element: <LoginPage /> },

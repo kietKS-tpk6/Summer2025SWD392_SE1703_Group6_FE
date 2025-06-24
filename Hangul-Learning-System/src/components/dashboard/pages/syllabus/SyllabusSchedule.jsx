@@ -14,6 +14,8 @@ const SyllabusSchedule = ({
   testMode = false,
   onBulkUpdate
 }) => {
+  const isStudent = localStorage.getItem('role') === 'Student';
+
   // Add a sequential slot number for display
   const dataWithSlot = schedules.map((item, idx) => ({ ...item, displaySlot: idx + 1 }));
 

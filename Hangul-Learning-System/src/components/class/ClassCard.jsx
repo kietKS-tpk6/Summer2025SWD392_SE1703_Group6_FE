@@ -16,6 +16,7 @@ const ClassCard = ({
   status,
   onView,
   id,
+  hidePriceAndStatus = false
 }) => {
   const navigate = useNavigate();
 
@@ -38,7 +39,7 @@ const ClassCard = ({
           <div className="class-card-img-wrap">
             <img alt={className} src={imageURL} className="class-card-img" />
             {status === 1 && (
-              <Tag color="green" className="class-card-badge">Mới</Tag>
+              <Tag color="green" className="class-card-badge">{hidePriceAndStatus ? 'Đã đăng ký' : 'Mới'}</Tag>
             )}
           </div>
         }
@@ -66,12 +67,14 @@ const ClassCard = ({
           />
           <span className="class-card-lecturer">{lecturerName}</span>
         </div>
-        <div className="class-card-info-row" style={{ margin: '18px 0 16px 0' }}>
-          <span className="class-card-price">{priceOfClass ? priceOfClass.toLocaleString() : '--'} <span style={{ fontSize: 13, fontWeight: 500 }}>VNĐ</span></span>
-          <Tag color={statusColor(status)} className="class-card-status">
-            {statusText(status)}
-          </Tag>
-        </div>
+        {!hidePriceAndStatus && (
+          <div className="class-card-info-row" style={{ margin: '18px 0 16px 0' }}>
+            <span className="class-card-price">{priceOfClass ? priceOfClass.toLocaleString() : '--'} <span style={{ fontSize: 13, fontWeight: 500 }}>VNĐ</span></span>
+            <Tag color={statusColor(status)} className="class-card-status">
+              {statusText(status)}
+            </Tag>
+          </div>
+        )}
         <Button
           type="primary"
           icon={<EyeOutlined />}
@@ -89,7 +92,7 @@ const ClassCard = ({
             letterSpacing: 1,
           }}
         >
-          Xem chi tiết
+          {hidePriceAndStatus ? 'Vào lớp học' : 'Xem chi tiết'}
         </Button>
       </Card>
     </motion.div>

@@ -394,7 +394,7 @@
 
 @media screen and (max-width: 1200px) {
     .app__pages {
-        width: 98vw;
+        width: 80vw;
     }
     .app__page-items {
         gap: 12px;
@@ -413,4 +413,18 @@
 
 .app__about-leaf:hover {
   filter: drop-shadow(0 8px 32px #43cb8355);
+}
+
+.my-courses-grid {
+  grid-template-columns: repeat(4, 1fr) !important;
+}
+@media (max-width: 1100px) {
+  .my-courses-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+@media (max-width: 700px) {
+  .my-courses-grid {
+    grid-template-columns: 1fr !important;
+  }
 }

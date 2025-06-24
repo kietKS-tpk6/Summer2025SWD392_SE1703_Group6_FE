@@ -1,8 +1,8 @@
 import React from 'react';
 import { Layout } from 'antd';
 import Sidebar from '../../components/dashboard/Sidebar';
-import HeaderBar from '../../components/header/Header';
-import FooterBar from '../../components/footer/Footer';
+// import HeaderBar from '../../components/header/Header';
+// import FooterBar from '../../components/footer/Footer';
 
 const { Content } = Layout;
 

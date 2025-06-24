@@ -25,6 +25,8 @@ const HeaderBar = () => {
   };
 
   const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null;
+  const token = localStorage.getItem('token');
+  const role = localStorage.getItem('role');
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -32,6 +34,12 @@ const HeaderBar = () => {
     localStorage.removeItem('user');
     navigate('/login');
   };
+
+  // Tạo danh sách items động
+  const dynamicItems = [...Items];
+  if (token && role === 'Student') {
+    dynamicItems.splice(2, 0, { label: 'Khóa học của tôi', key: '/my-courses' }); // Thêm vào sau 'Khóa học'
+  }
 
   return (
     <nav className="app__navbar-outer">
@@ -41,7 +49,7 @@ const HeaderBar = () => {
         </div>
         <div className='app__navlinks'>
           <ul>
-            {Items.map((item) => (
+            {dynamicItems.map((item) => (
               <li
                 className="app__navlink"
                 key={item.key}
@@ -80,7 +88,7 @@ const HeaderBar = () => {
             >
               <HiX onClick={() => setToggle(false)} />
               <ul>
-                {Items.map((item) => (
+                {dynamicItems.map((item) => (
                   <li key={item.key}>
                     <a onClick={() => {
                       navigate(item.key);
