@@ -136,7 +136,7 @@ const SyllabusSchedule = ({
       ),
     },
     // Thao tác chỉ hiện nếu không phải Student
-    !isStudent && {
+    canEdit && {
       title: 'Thao tác',
       key: 'action',
       width: 120,

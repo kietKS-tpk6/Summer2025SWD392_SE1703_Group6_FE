@@ -14,20 +14,20 @@ const Subjects = () => {
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
-  const [showActive, setShowActive] = useState(true);
+  const [statusFilter, setStatusFilter] = useState(1); // 1: Đang hoạt động, 0: Nháp, 2: Đã xóa
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState(null);
 
   useEffect(() => {
     fetchSubjects();
-  }, [showActive]);
+  }, [statusFilter]);
 
   const fetchSubjects = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_URL}${endpoints.manageSubject.getAll}`, {
+      const response = await axios.get(`${API_URL}${endpoints.manageSubject.getSubject}`, {
         params: {
-          isActive: showActive
+          status: statusFilter
         }
       });
       console.log('API Response:', response.data); // Debug log
@@ -179,12 +179,15 @@ const Subjects = () => {
       <div style={{ marginBottom: '16px', display: 'flex', gap: '16px', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span>Trạng thái:</span>
-          <Switch
-            checkedChildren="Đang mở"
-            unCheckedChildren="Đã đóng"
-            checked={showActive}
-            onChange={setShowActive}
-          />
+          <Select
+            value={statusFilter}
+            style={{ width: 160 }}
+            onChange={setStatusFilter}
+          >
+            <Option value={1}>Đang hoạt động</Option>
+            <Option value={0}>Nháp</Option>
+            <Option value={2}>Đã xóa</Option>
+          </Select>
         </div>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
           <Search

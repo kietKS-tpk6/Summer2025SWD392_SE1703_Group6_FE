@@ -1,0 +1,59 @@
+import React, { useEffect, useState } from 'react';
+import { List, Card, Typography, Spin, Button, Empty } from 'antd';
+import axios from 'axios';
+import { API_URL } from '../../config/api';
+
+const { Title, Text } = Typography;
+
+const ViewLessonsOfClass = ({ classId }) => {
+  const [lessons, setLessons] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchLessons = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await axios.get(`${API_URL}api/Lesson/get-by-class/${classId}`);
+        setLessons(res.data.data || []);
+      } catch (err) {
+        setError('Không thể tải danh sách bài học.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (classId) fetchLessons();
+  }, [classId]);
+
+  if (loading) return <Spin style={{ display: 'block', margin: '40px auto' }} size="large" />;
+  if (error) return <div style={{ color: 'red', textAlign: 'center', margin: 24 }}>{error}</div>;
+  if (!lessons.length) return <Empty description="Chưa có bài học nào cho lớp này." style={{ margin: 40 }} />;
+
+  return (
+    <div style={{ marginTop: 32 }}>
+      <Title level={4} style={{ marginBottom: 24 }}>Danh sách bài học</Title>
+      <List
+        grid={{ gutter: 24, column: 1 }}
+        dataSource={lessons}
+        renderItem={lesson => (
+          <List.Item>
+            <Card bordered>
+              <Title level={5}>{lesson.lessonTitle}</Title>
+              <div><Text strong>Thời gian:</Text> {new Date(lesson.startTime).toLocaleString()} - {new Date(lesson.endTime).toLocaleString()}</div>
+              <div><Text strong>Giảng viên:</Text> {lesson.lectureName}</div>
+              <div><Text strong>Môn học:</Text> {lesson.subjectName}</div>
+              {lesson.linkMeetURL && (
+                <div style={{ marginTop: 8 }}>
+                  <Button type="link" href={lesson.linkMeetURL} target="_blank">Vào lớp học trực tuyến</Button>
+                </div>
+              )}
+            </Card>
+          </List.Item>
+        )}
+      />
+    </div>
+  );
+};
+
+export default ViewLessonsOfClass;

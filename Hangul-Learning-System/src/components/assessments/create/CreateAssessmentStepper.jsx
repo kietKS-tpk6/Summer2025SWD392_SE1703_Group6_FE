@@ -2,12 +2,13 @@ import React, { useState, useRef } from 'react';
 import { Steps, Button, message } from 'antd';
 import AssessmentBasicForm from './AssessmentBasicForm';
 import CreateAssessmentSection from './CreateAssessmentSection';
-// TODO: import các component step khác khi tạo
-// import SectionSelector from './SectionSelector';
 // import SectionQuestionsForm from './SectionQuestionsForm';
 // import ConfirmCreateAssessment from './ConfirmCreateAssessment';
 
-const CreateAssessmentStepper = ({ formData, setFormData, onFinish, showNotify, subjects }) => {
+// TODO: tạo SectionQuestionsForm đúng logic mới
+const SectionQuestionsForm = () => <div>SectionQuestionsForm (TODO)</div>;
+
+const CreateAssessmentStepper = ({ formData, setFormData, onFinish, showNotify, subjects, categoryOptions, onSubjectChange }) => {
   const [current, setCurrent] = useState(0);
   const basicInfoFormRef = useRef();
 
@@ -20,24 +21,19 @@ const CreateAssessmentStepper = ({ formData, setFormData, onFinish, showNotify, 
           subjects={subjects}
           formData={formData.basicInfo}
           onChange={values => setFormData(prev => ({ ...prev, basicInfo: values }))}
+          categoryOptions={categoryOptions}
+          onSubjectChange={onSubjectChange}
         />
       ),
     },
     {
-      title: 'Chọn section',
+      title: 'Tạo section & nhập câu hỏi',
       content: (
         <CreateAssessmentSection
           testType={formData.basicInfo?.testType}
           sections={formData.sections}
           onChange={sections => setFormData(prev => ({ ...prev, sections }))}
         />
-      ),
-    },
-    {
-      title: 'Nhập câu hỏi',
-      content: (
-        <div>SectionQuestionsForm (TODO)</div>
-        // <SectionQuestionsForm ... />
       ),
     },
     {

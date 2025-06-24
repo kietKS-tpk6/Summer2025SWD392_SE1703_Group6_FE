@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { Card, Button, Typography, Divider, Table, Tag, Space, Modal, Form, Input, InputNumber, message, Descriptions, Select } from 'antd';
-import { ArrowLeftOutlined, ClockCircleOutlined, PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined, CalendarOutlined, EyeOutlined,
-  EyeInvisibleOutlined } from '@ant-design/icons';
+import { Card, Button, Typography, Divider, Table, Tag, Space, Modal, Form, Input, InputNumber, message, Descriptions, Select, Alert } from 'antd';
+import {
+  ArrowLeftOutlined, ClockCircleOutlined, PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined, CalendarOutlined, EyeOutlined,
+  EyeInvisibleOutlined, QuestionCircleOutlined
+} from '@ant-design/icons';
 import axios from 'axios';
 import { API_URL, endpoints } from '../../../config/api';
 
@@ -75,8 +77,8 @@ const Syllabus = () => {
   };
 
   // Utility to check if editing is allowed
-  const hasActiveClasses = classes.some(c => 
-    c.status === ClassStatus.Open || 
+  const hasActiveClasses = classes.some(c =>
+    c.status === ClassStatus.Open ||
     c.status === ClassStatus.Ongoing
   );
   // Disable all editing if any class is Open or Ongoing
@@ -84,6 +86,9 @@ const Syllabus = () => {
 
   // Notification state
   const [notification, setNotification] = useState({ visible: false, type: 'success', message: '', description: '' });
+
+  // Help modal state
+  const [helpVisible, setHelpVisible] = useState(false);
 
   useEffect(() => {
     if (subjectId) {
@@ -182,7 +187,7 @@ const Syllabus = () => {
       }
       const response = await axios.get(`${API_URL}${endpoints.syllabus.getAssessmentCriteria}/${subject.code}`);
       console.log(response.data);
-      
+
       // Check if response.data exists and is an array
       let criteriaData = [];
       if (response.data) {
@@ -228,13 +233,12 @@ const Syllabus = () => {
   };
 
   const fetchClasses = async () => {
-    // console.log('subject code:', subject?.code);
     try {
       if (!subject?.code) {
         console.log('No subject code available');
         return;
       }
-      const response = await axios.get(`${API_URL}${endpoints.manageClass.getAll}`, {
+      const response = await axios.get(`${API_URL}${endpoints.manageClass.getbySubject}`, {
         params: {
           subjectId: subject.code,
           page: 1,
@@ -331,10 +335,10 @@ const Syllabus = () => {
     if (subject.status === 0) {
       // Kiểm tra lịch trình giảng dạy
       if (!syllabusSchedules || syllabusSchedules.length === 0) {
-        setNotification({ 
-          visible: true, 
-          type: 'error', 
-          message: 'Không thể công khai môn học', 
+        setNotification({
+          visible: true,
+          type: 'error',
+          message: 'Không thể công khai môn học',
           description: 'Vui lòng thêm lịch trình giảng dạy trước khi công khai môn học.'
         });
         return;
@@ -342,10 +346,10 @@ const Syllabus = () => {
 
       // Kiểm tra lịch kiểm tra
       if (!syllabusScheduleTests || syllabusScheduleTests.length === 0) {
-        setNotification({ 
-          visible: true, 
-          type: 'error', 
-          message: 'Không thể công khai môn học', 
+        setNotification({
+          visible: true,
+          type: 'error',
+          message: 'Không thể công khai môn học',
           description: 'Vui lòng thêm lịch kiểm tra trước khi công khai môn học.'
         });
         return;
@@ -353,10 +357,10 @@ const Syllabus = () => {
 
       // Kiểm tra tiêu chí đánh giá
       if (!assessmentCriteria || assessmentCriteria.length === 0) {
-        setNotification({ 
-          visible: true, 
-          type: 'error', 
-          message: 'Không thể công khai môn học', 
+        setNotification({
+          visible: true,
+          type: 'error',
+          message: 'Không thể công khai môn học',
           description: 'Vui lòng thêm tiêu chí đánh giá trước khi công khai môn học.'
         });
         return;
@@ -373,30 +377,30 @@ const Syllabus = () => {
       // Kiểm tra lại một lần nữa trước khi gọi API
       if (pendingStatus === 1) {
         if (!syllabusSchedules || syllabusSchedules.length === 0) {
-          setNotification({ 
-            visible: true, 
-            type: 'error', 
-            message: 'Không thể công khai môn học', 
+          setNotification({
+            visible: true,
+            type: 'error',
+            message: 'Không thể công khai môn học',
             description: 'Vui lòng thêm lịch trình giảng dạy trước khi công khai môn học.'
           });
           return;
         }
 
         if (!syllabusScheduleTests || syllabusScheduleTests.length === 0) {
-          setNotification({ 
-            visible: true, 
-            type: 'error', 
-            message: 'Không thể công khai môn học', 
+          setNotification({
+            visible: true,
+            type: 'error',
+            message: 'Không thể công khai môn học',
             description: 'Vui lòng thêm lịch kiểm tra trước khi công khai môn học.'
           });
           return;
         }
 
         if (!assessmentCriteria || assessmentCriteria.length === 0) {
-          setNotification({ 
-            visible: true, 
-            type: 'error', 
-            message: 'Không thể công khai môn học', 
+          setNotification({
+            visible: true,
+            type: 'error',
+            message: 'Không thể công khai môn học',
             description: 'Vui lòng thêm tiêu chí đánh giá trước khi công khai môn học.'
           });
           return;
@@ -408,18 +412,18 @@ const Syllabus = () => {
         status: pendingStatus
       });
       setSubject({ ...subject, status: pendingStatus });
-      setNotification({ 
-        visible: true, 
-        type: 'success', 
+      setNotification({
+        visible: true,
+        type: 'success',
         message: pendingStatus === 1 ? 'Môn học đã được công khai!' : 'Môn học đã được chuyển về trạng thái nháp!',
-        description: pendingStatus === 1 
-          ? 'Môn học đã được công khai với đầy đủ lịch trình, lịch kiểm tra và tiêu chí đánh giá.' 
+        description: pendingStatus === 1
+          ? 'Môn học đã được công khai với đầy đủ lịch trình, lịch kiểm tra và tiêu chí đánh giá.'
           : 'Môn học đã được chuyển về trạng thái nháp và có thể chỉnh sửa.'
       });
     } catch (error) {
-      setNotification({ 
-        visible: true, 
-        type: 'error', 
+      setNotification({
+        visible: true,
+        type: 'error',
         message: 'Không thể thay đổi trạng thái môn học.',
         description: 'Đã xảy ra lỗi khi cập nhật trạng thái. Vui lòng thử lại sau.'
       });
@@ -513,19 +517,19 @@ const Syllabus = () => {
       }
 
       if (response.data) {
-        setNotification({ 
-          visible: true, 
-          type: 'success', 
-          message: editingSchedule ? 'Cập nhật lịch trình thành công' : 'Thêm lịch trình thành công' 
+        setNotification({
+          visible: true,
+          type: 'success',
+          message: editingSchedule ? 'Cập nhật lịch trình thành công' : 'Thêm lịch trình thành công'
         });
         setIsScheduleModalVisible(false);
         fetchSyllabusSchedules();
       }
     } catch (error) {
       console.error('Error saving schedule:', error);
-      setNotification({ 
-        visible: true, 
-        type: 'error', 
+      setNotification({
+        visible: true,
+        type: 'error',
         message: 'Không thể lưu lịch trình',
         description: error.response?.data?.message || 'Vui lòng thử lại sau'
       });
@@ -579,18 +583,18 @@ const Syllabus = () => {
       });
 
       if (response.data) {
-        setNotification({ 
-          visible: true, 
-          type: 'success', 
+        setNotification({
+          visible: true,
+          type: 'success',
           message: isTestSchedule ? 'Cập nhật lịch kiểm tra thành công' : 'Cập nhật lịch trình giảng dạy thành công'
         });
         fetchSyllabusSchedules();
       }
     } catch (error) {
       console.error('Error bulk updating schedules:', error);
-      setNotification({ 
-        visible: true, 
-        type: 'error', 
+      setNotification({
+        visible: true,
+        type: 'error',
         message: error.response?.data?.message || (isTestSchedule ? 'Không thể cập nhật lịch kiểm tra' : 'Không thể cập nhật lịch trình giảng dạy'),
         description: error.response?.data?.description || ''
       });
@@ -600,10 +604,10 @@ const Syllabus = () => {
   // Hàm xử lý cập nhật lịch kiểm tra
   const handleTestScheduleUpdate = async (testSchedule) => {
     if (hasActiveClasses) {
-      setNotification({ 
-        visible: true, 
-        type: 'error', 
-        message: 'Không thể chỉnh sửa lịch kiểm tra khi có lớp đang mở hoặc đang diễn ra!' 
+      setNotification({
+        visible: true,
+        type: 'error',
+        message: 'Không thể chỉnh sửa lịch kiểm tra khi có lớp đang mở hoặc đang diễn ra!'
       });
       return;
     }
@@ -612,9 +616,9 @@ const Syllabus = () => {
       await handleBulkUpdateSchedules([testSchedule], true);
     } catch (error) {
       console.error('Error updating test schedule:', error);
-      setNotification({ 
-        visible: true, 
-        type: 'error', 
+      setNotification({
+        visible: true,
+        type: 'error',
         message: 'Không thể cập nhật lịch kiểm tra',
         description: error.response?.data?.message || 'Vui lòng thử lại sau'
       });
@@ -645,14 +649,24 @@ const Syllabus = () => {
         description={notification.description}
         onClose={() => setNotification({ ...notification, visible: false })}
       />
-      <Button
-        type="primary"
-        icon={<ArrowLeftOutlined />}
-        onClick={() => navigate('/dashboard/subject')}
-        style={{ marginBottom: '16px' }}
-      >
-        Quay lại
-      </Button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Button
+          type="primary"
+          icon={<ArrowLeftOutlined />}
+          onClick={() => navigate('/dashboard/subject')}
+          style={{ marginBottom: '16px' }}
+        >
+          Quay lại
+        </Button>
+        <Button
+          type="default"
+          icon={<QuestionCircleOutlined />}
+          onClick={() => setHelpVisible(true)}
+          style={{ marginBottom: '16px' }}
+        >
+          Hướng dẫn
+        </Button>
+      </div>
 
       <Card loading={loading}>
         <div style={{ padding: '0px' }}>
@@ -785,6 +799,54 @@ const Syllabus = () => {
           {pendingStatus === 1
             ? 'Bạn có chắc chắn muốn công khai môn học này? Sau khi công khai, sinh viên sẽ có thể nhìn thấy môn học.'
             : 'Bạn có chắc chắn muốn chuyển môn học về trạng thái nháp? Môn học sẽ không còn hiển thị với sinh viên.'}
+        </div>
+      </Modal>
+
+      {/* Help Modal */}
+      <Modal
+        title={<span><QuestionCircleOutlined style={{ color: '#1890ff', marginRight: 8, fontSize: 22 }} />Hướng dẫn sử dụng quản lý môn học</span>}
+        open={helpVisible}
+        onOk={() => setHelpVisible(false)}
+        onCancel={() => setHelpVisible(false)}
+        okText="Đã hiểu"
+        cancelText="Đóng"
+        footer={null}
+      >
+        <div style={{ padding: 8 }}>
+          <div style={{ marginBottom: 16 }}>
+            <Alert
+              message={<b>Lưu ý quan trọng</b>}
+              description={
+                <div style={{ paddingLeft: 8 , fontSize: 15}}>
+                  <div style={{ marginBottom: 4 }}><b>•</b> Môn học chỉ được chỉnh sửa ở trạng thái <b>Nháp</b>.</div>
+                  <div style={{ marginBottom: 4 }}><b>•</b> Sau khi <b>Công khai</b>, <b>không thể chỉnh sửa</b> môn học.</div>
+                  <div><b>•</b> Sau khi tạo môn học, <b>không thể thêm mới</b> tiêu chí hoặc lịch trình, <b>chỉ được phép chỉnh sửa</b> các mục đã có.</div>
+                </div>
+              }
+              type="info"
+            // showIcon
+            />
+          </div>
+
+          {/* <div style={{ marginTop: 16 }}>
+            <Typography.Title level={5} style={{ marginBottom: 8 }}>Chi tiết:</Typography.Title>
+            <ul style={{ paddingLeft: 20, marginBottom: 0 }}>
+              <li style={{ marginBottom: 8 }}>
+                <b>Môn học sau khi công khai không được phép chỉnh sửa.</b>
+              </li>
+              <li style={{ marginBottom: 8 }}>
+                <b>Chỉ được phép chỉnh sửa ở trạng thái Nháp.</b>
+              </li>
+              <li style={{ marginBottom: 8 }}>
+                <b>Môn học sau khi tạo không được phép thêm tiêu chí, lịch trình. Chỉ được phép chỉnh sửa.</b>
+              </li>
+            </ul>
+          </div> */}
+          <div style={{ textAlign: 'right', marginTop: 24 }}>
+            <Button type="primary" onClick={() => setHelpVisible(false)}>
+              Đã hiểu
+            </Button>
+          </div>
         </div>
       </Modal>
     </div>
