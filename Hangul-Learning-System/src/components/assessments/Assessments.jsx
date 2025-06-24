@@ -19,6 +19,14 @@ const statusOptions = [
   { value: 'Deleted', label: 'Đã xóa' },
 ];
 
+const CATEGORY_LABELS = {
+  Quiz: 'Kiểm tra 15 phút',
+  Midterm: 'Thi giữa kì',
+  Final: 'Thi cuối kì',
+};
+const ALLOWED_CATEGORIES = ['Quiz', 'Midterm', 'Final'];
+const CATEGORY_ENUM_MAP = { 0: 'Quiz', 2: 'Midterm', 3: 'Final' };
+
 // Dữ liệu mẫu (cùng format với AssessmentsTableComponent)
 const sampleAssessments = [
   {
@@ -66,6 +74,7 @@ const Assessments = () => {
     basicInfo: {},
     sections: [],
   });
+  const [categoryOptions, setCategoryOptions] = useState([]);
 
   // Fetch subjects từ API khi vào trang
   useEffect(() => {
@@ -140,7 +149,33 @@ const Assessments = () => {
     handleCreateSubmit({ ...formData.basicInfo });
   };
 
-
+  // Handler khi chọn môn học
+  const handleSubjectChange = async (subjectID) => {
+    if (!subjectID) {
+      setCategoryOptions([]);
+      setFormData(f => ({ ...f, basicInfo: { ...f.basicInfo, SubjectID: undefined, Category: undefined } }));
+      return;
+    }
+    setFormData(f => ({ ...f, basicInfo: { ...f.basicInfo, SubjectID: subjectID, Category: undefined } }));
+    try {
+      const res = await fetch(`${API_URL}api/AssessmentCriteria/get-by-subject/${subjectID}`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.data)) {
+        const cats = Array.from(
+          new Set(
+            data.data
+              .map(item => CATEGORY_ENUM_MAP[parseInt(item.category)])
+              .filter(cat => ALLOWED_CATEGORIES.includes(cat))
+          )
+        );
+        setCategoryOptions(cats);
+      } else {
+        setCategoryOptions([]);
+      }
+    } catch (e) {
+      setCategoryOptions([]);
+    }
+  };
 
   return (
     <div>
@@ -187,6 +222,8 @@ const Assessments = () => {
             onFinish={handleStepperFinish}
             showNotify={({ type, message: msg, description }) => message[type](msg)}
             subjects={subjects}
+            categoryOptions={categoryOptions}
+            onSubjectChange={handleSubjectChange}
           />
         </div>
       )}
