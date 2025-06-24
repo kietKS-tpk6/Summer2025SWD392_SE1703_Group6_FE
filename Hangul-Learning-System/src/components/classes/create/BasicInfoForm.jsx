@@ -109,7 +109,23 @@ const BasicInfoForm = React.forwardRef(({ lectures = [], subjects = [], formData
       <Form.Item
         label="Tên lớp"
         name="className"
-        rules={[{ required: true, message: 'Vui lòng nhập tên lớp!' }]}
+        rules={[
+          { required: true, message: 'Vui lòng nhập tên lớp!' },
+          {
+            validator: async (_, value) => {
+              if (!value) return Promise.resolve();
+              try {
+                const res = await axios.get(`${API_URL}api/Class/check-name?className=${encodeURIComponent(value)}`);
+                if (res.data.isDuplicate) {
+                  return Promise.reject(res.data.message || 'Tên lớp đã tồn tại');
+                }
+                return Promise.resolve();
+              } catch (e) {
+                return Promise.reject('Không kiểm tra được tên lớp, thử lại!');
+              }
+            }
+          }
+        ]}
       >
         <Input placeholder="Nhập tên lớp" />
       </Form.Item>
