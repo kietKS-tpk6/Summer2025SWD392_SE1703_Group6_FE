@@ -57,9 +57,11 @@ nav {
   transition: color 0.2s;
 }
 
-.app__navlink a:hover {
-  color: var(--primary-color, #fdd492);
-  text-decoration: underline;
+.app__navlink a:hover, .app__navlink.active a {
+  color: #fbb040;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
 }
 
 .app__navbar-btn {
