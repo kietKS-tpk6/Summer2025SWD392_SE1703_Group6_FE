@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect  } from 'react';
 import { Form, TimePicker, Checkbox, DatePicker, Card, Typography, Input, Select } from 'antd';
 import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
+import axios from 'axios';
+import { API_URL } from '../../../config/api';
 dayjs.extend(isSameOrAfter);
 
 const { Text } = Typography;
@@ -19,6 +21,7 @@ const weekDays = [
 const LessonCreator = React.forwardRef(({ formData = {}, onChange, maxDaysPerWeek = 3, teachingSchedulesDetail, teachingWeekly, lectures = [], onLecturerChange }, ref) => {
   const [form] = Form.useForm();
   const [selectedLecturer, setSelectedLecturer] = useState(null);
+  const [minDaysBeforeStart, setMinDaysBeforeStart] = useState(0);
 
   const initialLessonTime = formData.teachingStartTime
     ? dayjs(formData.teachingStartTime).format('HH:mm')
@@ -46,6 +49,15 @@ const LessonCreator = React.forwardRef(({ formData = {}, onChange, maxDaysPerWee
       }
     }
   }, [formData.accountID, lectures]);
+
+  useEffect(() => {
+    axios.get(`${API_URL}api/SystemConfig/get-config-by-key/min_days_before_class_start_for_creation`)
+      .then(res => {
+        const value = parseInt(res.data.data.value, 10);
+        setMinDaysBeforeStart(isNaN(value) ? 0 : value);
+      })
+      .catch(() => setMinDaysBeforeStart(0));
+  }, []);
 
   const handleValuesChange = (_, allValues) => {
     if (allValues.weekDays?.length > maxDaysPerWeek) {
@@ -216,6 +228,7 @@ const LessonCreator = React.forwardRef(({ formData = {}, onChange, maxDaysPerWee
           { required: true, message: 'Vui lòng chọn ngày học chính thức!' },
           { 
             validator: (_, value) => {
+              if (!value) return Promise.resolve();
               if (!isDateValid(value)) {
                 return Promise.reject('Ngày và giờ này trùng với lịch dạy của giảng viên!');
               }
@@ -223,7 +236,7 @@ const LessonCreator = React.forwardRef(({ formData = {}, onChange, maxDaysPerWee
             }
           }
         ]}
-        extra="Ngày này sẽ áp dụng cho tiết học đầu tiên"
+        extra={`Chỉ được chọn từ ngày hiện tại + ${minDaysBeforeStart} ngày trở lên`}
       >
         <DatePicker 
           showTime
@@ -231,7 +244,8 @@ const LessonCreator = React.forwardRef(({ formData = {}, onChange, maxDaysPerWee
           placeholder="Chọn ngày học chính thức"
           format="DD/MM/YYYY HH:mm"
           disabledDate={(current) => {
-            return current && current < dayjs().startOf('day');
+            if (!current) return false;
+            return current < dayjs().add(minDaysBeforeStart, 'day').startOf('day');
           }}
         />
       </Form.Item>

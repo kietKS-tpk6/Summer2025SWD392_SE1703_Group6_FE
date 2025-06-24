@@ -68,6 +68,25 @@ export const endpoints = {
         // NEW: Create Syllabus Schedule
         createSyllabusSchedule: 'api/SyllabusSchedule/create-syllabus-schedule',
     },
+    class: {
+        // Class
+        checkName: 'api/Class/check-name',
+        
+    },
+    cloudinary: {
+        uploadAvatar: 'api/Cloudinary/upload-image-avatar',
+        uploadClassImage: 'api/Cloudinary/upload-image-class',
+        uploadTestSectionImage: 'api/Cloudinary/upload-image-test-section',
+        uploadQuestionImage: 'api/Cloudinary/upload-image-question',
+        uploadMCQOptionImage: 'api/Cloudinary/upload-image-mcq-option',
+        uploadTestSectionAudio: 'api/Cloudinary/upload-audio-test-section', 
+        uploadQuestionAudio: 'api/Cloudinary/upload-audio-question',
+        uploadMCQOptionAudio: 'api/Cloudinary/upload-audio-mcq-option',
+    },
+    systemConfig: {
+        getConfigByKey: 'api/SystemConfig/get-config-by-key/',
+    },
+   
     payment: {
     create: 'api/Payment/create',
     getQr: (paymentId) => `api/Payment/qr/${paymentId}`,

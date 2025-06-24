@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { Calendar, Badge, Card } from 'antd';
+import dayjs from 'dayjs';
 import axios from 'axios';
 import { API_URL } from '../../../config/api';
-import FlexibleScheduleCalendar from './FlexibleScheduleCalendar';
-import {Card} from 'antd';
+import LessonDetailModal from './lesson/LessonDetailModal';
+
 const fetchLessons = async (classId) => {
   const res = await axios.get(`${API_URL}api/Lesson/get-by-class/${classId}`);
   return res.data.data;
@@ -13,6 +15,9 @@ const MonthlyTimetableSection = ({ classId }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [collapsed, setCollapsed] = useState(false);
+  const [selectedLesson, setSelectedLesson] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
     if (!classId) return;
@@ -21,39 +26,86 @@ const MonthlyTimetableSection = ({ classId }) => {
     fetchLessons(classId)
       .then(res => {
         setLessons(res);
-        console.log('Lessons:', res);
       })
       .catch(() => setError('Không thể tải thời khóa biểu'))
       .finally(() => setLoading(false));
-  }, [classId]);
+  }, [classId, reload]);
+
+  // Group lessons by date (YYYY-MM-DD)
+  const lessonsByDate = React.useMemo(() => {
+    const map = {};
+    lessons.forEach(lesson => {
+      const date = dayjs(lesson.startTime).format('YYYY-MM-DD');
+      if (!map[date]) map[date] = [];
+      map[date].push(lesson);
+    });
+    return map;
+  }, [lessons]);
+
+  const handleBadgeClick = (lesson) => {
+    setSelectedLesson(lesson);
+    setModalOpen(true);
+  };
+
+  const handleLessonUpdate = () => {
+    setReload(r => r + 1);
+    setModalOpen(false);
+  };
+
+  const dateCellRender = (value) => {
+    const dateStr = value.format('YYYY-MM-DD');
+    const dayLessons = lessonsByDate[dateStr] || [];
+    return (
+      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+        {dayLessons.map((lesson, idx) => (
+          <li key={idx} style={{ marginBottom: 8 }}>
+            <span onClick={() => handleBadgeClick(lesson)} style={{ cursor: 'pointer' }}>
+              <Badge
+                status="processing"
+                text={
+                  <span style={{ fontWeight: 500 }}>
+                    {dayjs(lesson.startTime).format('HH:mm')} - {dayjs(lesson.endTime).format('HH:mm')}
+                  </span>
+                }
+              />
+            </span>
+          </li>
+        ))}
+      </ul>
+    );
+  };
 
   return (
     <div style={{ marginBottom: 16 }}>
-       <Card
-      style={{ marginBottom: 16 }}
-      bodyStyle={{ padding: collapsed ? 0 : 24 }}
-      title={
-        <div
-        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none', fontWeight: 500, fontSize: 16, marginBottom: collapsed ? 0 : 16 }}
-        onClick={() => setCollapsed((prev) => !prev)}
+      <Card
+        style={{ marginBottom: 16 }}
+        bodyStyle={{ padding: collapsed ? 0 : 24 }}
+        title={
+          <div
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none', fontWeight: 500, fontSize: 16, marginBottom: collapsed ? 0 : 16 }}
+            onClick={() => setCollapsed((prev) => !prev)}
+          >
+            <span>Thời khóa biểu tháng</span>
+            <span>{collapsed ? '▼' : '▲'}</span>
+          </div>
+        }
       >
-        <span>Thời khóa biểu tháng</span>
-        <span>{collapsed ? '▼' : '▲'}</span>
-      </div>
-      }
-    >
-      
-      {!collapsed && (
-        loading ? (
-          <div style={{ padding: 24 }}>Đang tải thời khóa biểu...</div>
-        ) : error ? (
-          <div style={{ padding: 24, color: 'red' }}>{error}</div>
-        ) : (
-          <FlexibleScheduleCalendar lessons={lessons} mode="class" />
-        )
-      )}
-    
-    </Card>
+        {!collapsed && (
+          loading ? (
+            <div style={{ padding: 24 }}>Đang tải thời khóa biểu...</div>
+          ) : error ? (
+            <div style={{ padding: 24, color: 'red' }}>{error}</div>
+          ) : (
+            <Calendar dateCellRender={dateCellRender} />
+          )
+        )}
+      </Card>
+      <LessonDetailModal
+        open={modalOpen}
+        lesson={selectedLesson}
+        onClose={() => setModalOpen(false)}
+        onUpdate={handleLessonUpdate}
+      />
     </div>
   );
 };

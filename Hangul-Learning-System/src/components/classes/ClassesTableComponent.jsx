@@ -3,6 +3,7 @@ import { Tag, Space, Button } from 'antd';
 import axios from 'axios';
 import { API_URL } from '../../config/api';
 import { EyeOutlined, EditOutlined, DeleteOutlined, RocketOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
 
 const classStatusMap = {
   0: { text: 'Chưa công khai', color: 'default' },
@@ -61,8 +62,19 @@ export function getClassesTableColumns(statusFilter, handlers) {
     title: 'Trạng thái',
     key: 'status',
     render: (_, record) => {
-      const { status, numberStudentEnroll, minStudentAcp, maxStudentAcp } = record;
+      const { status, numberStudentEnroll, minStudentAcp, maxStudentAcp, teachingStartTime } = record;
       const { text, color } = classStatusMap[status] || { text: status, color: 'default' };
+      const now = dayjs();
+      let extraTag = null;
+      if (status === 1 && teachingStartTime) {
+        const start = dayjs(teachingStartTime);
+        const diffDays = start.diff(now, 'day');
+        if (diffDays >= 0 && diffDays <= 5) {
+          extraTag = <Tag color="gold">Lớp sắp bắt đầu khai giảng</Tag>;
+        } else if (now.isAfter(start, 'minute')) {
+          extraTag = <Tag color="red">Lớp đã qua ngày khai giảng dự tính</Tag>;
+        }
+      }
       if (statusFilter === 1) {
         return (
           <Space>
@@ -73,10 +85,16 @@ export function getClassesTableColumns(statusFilter, handlers) {
             {numberStudentEnroll >= maxStudentAcp && (
               <Tag color="blue">Đã đầy</Tag>
             )}
+            {extraTag}
           </Space>
         );
       }
-      return <Tag color={color}>{text}</Tag>;
+      return (
+        <Space>
+          <Tag color={color}>{text}</Tag>
+          {extraTag}
+        </Space>
+      );
     },
   };
 
