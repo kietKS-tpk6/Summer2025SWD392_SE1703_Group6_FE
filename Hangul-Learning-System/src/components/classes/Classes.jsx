@@ -8,6 +8,8 @@ import CreateClassModal from './create/CreateClassModal';
 import DeleteConfirm from '../common/DeleteConfirm';
 import Notification from '../common/Notification';
 import { useNavigate } from 'react-router-dom';
+import './ClassesTableComponent.css';
+import dayjs from 'dayjs';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -186,6 +188,18 @@ const Classes = () => {
         }}
         rowKey="classID"
         scroll={{ x: 1200 }}
+        rowClassName={(record) => {
+          const now = dayjs();
+          const start = dayjs(record.teachingStartTime);
+          if (record.status === 1 && now.isAfter(start, 'minute')) {
+            return 'row-expired';
+          }
+          const diffDays = start.diff(now, 'day');
+          if (record.status === 1 && diffDays >= 0 && diffDays <= 5) {
+            return 'row-warning';
+          }
+          return '';
+        }}
       />
       <CreateClassModal
         open={openCreateModal}
