@@ -50,11 +50,23 @@ const LoginPage = () => {
       }
     } catch (error) {
       console.error("Lỗi khi đăng nhập:", error);
+      let errorMsg = "Lỗi khi đăng nhập. Vui lòng thử lại sau.";
       if (error.response && error.response.data) {
-        setError(error.response.data);
-      } else {
-        setError("Lỗi khi đăng nhập. Vui lòng thử lại sau.");
+        // Xử lý các trường hợp trả về từ backend
+        const backendMsg = typeof error.response.data === 'string' ? error.response.data : error.response.data.errorMessage;
+        if (
+          backendMsg && (
+            backendMsg.toLowerCase().includes("invalid") ||
+            backendMsg.toLowerCase().includes("sai mật khẩu") ||
+            backendMsg.toLowerCase().includes("không đúng")
+          )
+        ) {
+          errorMsg = "Email hoặc mật khẩu không đúng.";
+        } else if (backendMsg) {
+          errorMsg = backendMsg;
+        }
       }
+      setError(errorMsg);
     }
   };
 
