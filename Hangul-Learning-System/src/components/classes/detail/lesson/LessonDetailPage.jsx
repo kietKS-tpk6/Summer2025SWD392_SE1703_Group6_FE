@@ -3,17 +3,26 @@ import { Card, Descriptions, Tag, Button, Typography, Image, Spin, Row, Col, Div
 import dayjs from 'dayjs';
 import axios from 'axios';
 import { API_URL } from '../../../../config/api';
-import { useLocation } from 'react-router-dom';
-import { BookOutlined, LinkOutlined, VideoCameraOutlined, CheckCircleTwoTone } from '@ant-design/icons';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { BookOutlined, LinkOutlined, VideoCameraOutlined, CheckCircleTwoTone, UserOutlined } from '@ant-design/icons';
 
 const { Title, Paragraph, Link: AntLink } = Typography;
 
 const LessonDetailPage = (props) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const lessonId = props.lessonId || location.state?.lessonId;
   const [lesson, setLesson] = useState(null);
   const [classInfo, setClassInfo] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  let userRole = null;
+  try {
+    const user = JSON.parse(localStorage.getItem('user'));
+    userRole = user && user.role;
+  } catch (e) {
+    userRole = null;
+  }
 
   useEffect(() => {
     if (!lessonId) return;
@@ -38,6 +47,14 @@ const LessonDetailPage = (props) => {
     return () => { isMounted = false; };
   }, [lessonId]);
 
+  const handleAttendanceClick = () => {
+    if (userRole === 'Manager') {
+      navigate('/dashboard/check-attendance', { state: { lessonId: lessonId } });
+    } else if (userRole === 'Lecture') {
+      navigate('/lecturer/check-attendance', { state: { lessonId: lessonId } });
+    }
+  };
+
   if (!lessonId) return <div style={{ textAlign: 'center', marginTop: 60, color: 'red' }}>Không tìm thấy lessonId!</div>;
   if (loading) return <div style={{ textAlign: 'center', marginTop: 60 }}><Spin size="large" /></div>;
   if (!lesson) return <div style={{ textAlign: 'center', marginTop: 60 }}>Không tìm thấy tiết học.</div>;
@@ -57,18 +74,34 @@ const LessonDetailPage = (props) => {
               </Title>
             </Col>
             <Col>
-              {lesson.linkMeetURL && (
-                <Button
-                  type="primary"
-                  href={lesson.linkMeetURL}
-                  target="_blank"
-                  size="large"
-                  icon={<VideoCameraOutlined />}
-                  style={{ fontWeight: 600, boxShadow: '0 2px 8px #1677ff22' }}
-                >
-                  Vào lớp học
-                </Button>
-              )}
+              <Row gutter={12}>
+                <Col>
+                  {(userRole === 'Manager' || userRole === 'Lecture') && (
+                    <Button
+                      onClick={handleAttendanceClick}
+                      size="large"
+                      icon={<UserOutlined />}
+                      style={{ fontWeight: 600 }}
+                    >
+                      Điểm danh
+                    </Button>
+                  )}
+                </Col>
+                <Col>
+                  {lesson.linkMeetURL && (
+                    <Button
+                      type="primary"
+                      href={lesson.linkMeetURL}
+                      target="_blank"
+                      size="large"
+                      icon={<VideoCameraOutlined />}
+                      style={{ fontWeight: 600, boxShadow: '0 2px 8px #1677ff22' }}
+                    >
+                      Vào lớp học
+                    </Button>
+                  )}
+                </Col>
+              </Row>
             </Col>
           </Row>
         }
