@@ -10,6 +10,8 @@ import Notification from '../common/Notification';
 import { useNavigate } from 'react-router-dom';
 import './ClassesTableComponent.css';
 import dayjs from 'dayjs';
+import ActionConfirm from '../common/ActionConfirm';
+import InfoModal from '../common/InfoModal';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -41,6 +43,8 @@ const Classes = () => {
     message: '',
     description: ''
   });
+  const [finalizeModal, setFinalizeModal] = useState({ open: false, record: null, content: '', allowConfirm: true });
+  const [infoModal, setInfoModal] = useState({ open: false, content: '' });
 
   const navigate = useNavigate();
 
@@ -144,6 +148,64 @@ const Classes = () => {
     }
   };
 
+  const handleFinalize = (record) => {
+    const numberStudentEnroll = record.numberStudentEnroll;
+    const minStudent = record.minStudentAcp;
+    const maxStudent = record.maxStudentAcp;
+    if (numberStudentEnroll === 0) {
+      setInfoModal({ open: true, content: 'Sĩ số hiện tại là 0. Không được phép chốt danh sách lớp!' });
+      return;
+    }
+    let content = '';
+    let allowConfirm = true;
+    if (numberStudentEnroll < minStudent || numberStudentEnroll > maxStudent) {
+      content = `Lớp hiện tại có ${numberStudentEnroll} học viên, không nằm trong sĩ số đề ra ban đầu (${minStudent} - ${maxStudent}). Bạn có chắc chắn muốn mở lớp không?`;
+    } else {
+      content = 'Bạn có chắc chắn muốn chốt danh sách và bắt đầu lớp học này?';
+    }
+    setFinalizeModal({ open: true, record, content, allowConfirm });
+  };
+
+  const handleFinalizeConfirm = async () => {
+    const record = finalizeModal.record;
+    if (!record || finalizeModal.allowConfirm === false) return;
+    try {
+      await axios.put(`${API_URL}api/Class/update-status`, {
+        classId: record.classID,
+        classStatus: 2
+      });
+      showNotify({
+        type: 'success',
+        message: 'Cập nhật thành công',
+        description: 'Trạng thái lớp học đã được chuyển sang "Đang dạy".'
+      });
+      try {
+        await axios.post(`${API_URL}api/Email/classes/notify-students-start/${record.classID}`);
+        showNotify({
+          type: 'success',
+          message: 'Gửi email thành công',
+          description: 'Đã gửi thông báo bắt đầu lớp học đến các học viên.'
+        });
+      } catch (emailError) {
+        showNotify({
+          type: 'error',
+          message: 'Gửi email thất bại',
+          description: 'Không thể gửi thông báo đến học viên. Vui lòng kiểm tra lại cấu hình.'
+        });
+      }
+      fetchData();
+    } catch (err) {
+      showNotify({
+        type: 'error',
+        message: 'Cập nhật thất bại',
+        description: 'Không thể thay đổi trạng thái lớp học. Vui lòng thử lại.'
+      });
+      fetchData();
+    } finally {
+      setFinalizeModal({ open: false, record: null, content: '', allowConfirm: true });
+    }
+  };
+
   return (
     <div>
       <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
@@ -177,6 +239,7 @@ const Classes = () => {
           onEdit: handleEdit,
           onDelete: handleDelete,
           onOpenRecruit: handleOpenRecruit,
+          onFinalize: handleFinalize,
         })}
         dataSource={data}
         loading={loading}
@@ -195,7 +258,7 @@ const Classes = () => {
             return 'row-expired';
           }
           const diffDays = start.diff(now, 'day');
-          if (record.status === 1 && diffDays >= 0 && diffDays <= 5) {
+          if (record.status === 1 && diffDays >= 0 && diffDays <= 10) {
             return 'row-warning';
           }
           return '';
@@ -225,8 +288,23 @@ const Classes = () => {
         duration={notify.duration}
         notifKey={notify.notifKey}
       />
+      <ActionConfirm
+        open={finalizeModal.open}
+        onCancel={() => setFinalizeModal({ open: false, record: null, content: '', allowConfirm: true })}
+        onOk={finalizeModal.allowConfirm === false ? undefined : handleFinalizeConfirm}
+        okText={finalizeModal.allowConfirm === false ? undefined : 'Xác nhận'}
+        cancelText="Đóng"
+        title="Xác nhận chốt danh sách"
+        content={finalizeModal.content}
+      />
+      <InfoModal
+        open={infoModal.open}
+        onClose={() => setInfoModal({ open: false, content: '' })}
+        title="Không thể chốt danh sách"
+        content={infoModal.content}
+      />
     </div>
   );
 };
 
-export default Classes; 
+export default Classes;  

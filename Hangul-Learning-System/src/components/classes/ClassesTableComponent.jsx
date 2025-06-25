@@ -11,10 +11,11 @@ const classStatusMap = {
   2: { text: 'Đang dạy', color: 'green' },
   3: { text: 'Hoàn thành', color: 'gold' },
   4: { text: 'Không hoạt động', color: 'red' },
+  5: { text: 'Lớp bị hủy vì không đủ sĩ số', color: 'red'},
 };
 
 export function getClassesTableColumns(statusFilter, handlers) {
-  const { onView, onEdit, onDelete, onOpenRecruit } = handlers;
+  const { onView, onEdit, onDelete, onOpenRecruit, onFinalize } = handlers;
   const baseColumns = [
     {
       title: 'Mã lớp',
@@ -69,7 +70,7 @@ export function getClassesTableColumns(statusFilter, handlers) {
       if (status === 1 && teachingStartTime) {
         const start = dayjs(teachingStartTime);
         const diffDays = start.diff(now, 'day');
-        if (diffDays >= 0 && diffDays <= 5) {
+        if (diffDays >= 0 && diffDays <= 10) {
           extraTag = <Tag color="gold">Lớp sắp bắt đầu khai giảng</Tag>;
         } else if (now.isAfter(start, 'minute')) {
           extraTag = <Tag color="red">Lớp đã qua ngày khai giảng dự tính</Tag>;
@@ -152,6 +153,19 @@ export function getClassesTableColumns(statusFilter, handlers) {
             style={{ padding: '0 8px' }}
           >
             Bật tuyển sinh
+          </Button>
+        );
+      }
+      if (status === 1 && typeof onFinalize === 'function') {
+        actions.push(
+          <Button
+            type="primary"
+            size="small"
+            key="finalize"
+            style={{ background: '#faad14', borderColor: '#faad14', color: '#fff' }}
+            onClick={() => onFinalize(record)}
+          >
+            Chốt danh sách
           </Button>
         );
       }

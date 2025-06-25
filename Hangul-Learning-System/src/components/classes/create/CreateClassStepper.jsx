@@ -193,30 +193,25 @@ const CreateClassStepper = ({
             classId: classId,
             classStatus: 1
           });
+          const descriptionString = [
+            lessonResponse.data.message,
+            testEventResponse.data.message,
+            'Lớp đã được mở tuyển sinh!'
+          ].join('\n');
           showNotify({
             type: 'success',
             message: classResponse.data.message,
-            description: (
-              <>
-                {lessonResponse.data.message}
-                <br />
-                {testEventResponse.data.message}
-                <br />
-                Lớp đã được mở tuyển sinh!
-              </>
-            )
+            description: descriptionString
           });
         } else {
+          const descriptionString = [
+            lessonResponse.data.message,
+            testEventResponse.data.message
+          ].join('\n');
           showNotify({
             type: 'success',
             message: classResponse.data.message,
-            description: (
-              <>
-                {lessonResponse.data.message}
-                <br />
-                {testEventResponse.data.message}
-              </>
-            )
+            description: descriptionString
           });
         }
       } else {
