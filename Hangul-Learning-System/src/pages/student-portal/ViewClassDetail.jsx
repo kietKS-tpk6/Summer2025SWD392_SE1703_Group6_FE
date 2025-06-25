@@ -202,15 +202,6 @@ const ViewClassDetail = () => {
                   </Button>
                 )}
 
-                {/* Rating */}
-                <div className="class-detail-rating-block">
-                  <Rate disabled defaultValue={4.7} allowHalf className="class-detail-rating" />
-                  <div>
-                    <span className="class-detail-rating-score">4.7/5</span>
-                    <span className="class-detail-rating-reviews"> — 4 đánh giá</span>
-                  </div>
-                </div>
-
                 {/* Thông tin meta */}
                 <div className="class-detail-meta-table">
                   <div className="class-detail-meta-row">

@@ -21,7 +21,6 @@ import ViewClassDetail from './pages/student-portal/ViewClassDetail';
 import WeeklyTimeTable from './pages/student-portal/WeeklyTimeTable';
 import StudentDetail from './pages/student-portal/StudentDetail';
 import AssessmentManagement from './components/assessments/Assessments'; // hoặc tên file bạn muốn
-import ProtectedRoute from './components/common/ProtectedRoute';
 
 // import About from './pages/viewer-portal/About';
 // import Courses from './pages/viewer-portal/Courses';
@@ -35,6 +34,10 @@ import PaymentFailed from './components/payment/PaymentFailed';
 import PaymentForm from './components/payment/PaymentForm';
 import LecturerDashboard from './components/dashboard/pages/LecturerDashboard';
 import ClassDetail from './components/classes/detail/ClassDetail';
+import LessonDetailPage from './components/classes/detail/lesson/LessonDetailPage';
+import AttendancePage from './components/classes/attendance/AttendancePage';
+import CheckAttendancePage from './components/classes/attendance/CheckAttendancePage';
+import TeachingSchedule from './components/dashboard/pages/TeachingSchedule';
 import './App.css';
 import 'antd/dist/reset.css';
 
@@ -57,18 +60,24 @@ const dashboardRoutes = [
   { path: '/profile', element: <Profile /> },
   { path: '/settings', element: <Settings /> },
   { path: '/assessment', element: <AssessmentManagement /> },
+  { path: '/lesson-detail' , element: <LessonDetailPage/>},
+  { path: '/attendance', element: <AttendancePage/>},
+  { path: '/check-attendance', element: <CheckAttendancePage /> },
 ];
 
 // Lecturer routes configuration
 const lecturerRoutes = [
   { path: '/', element: <LecturerDashboard /> },
   { path: '/courses', element: <div>Courses Page</div> },
-  { path: '/schedule', element: <div>Schedule Page</div> },
+  { path: '/schedule', element: <TeachingSchedule /> },
   { path: '/assignments', element: <div>Assignments Page</div> },
   { path: '/students', element: <div>Students Page</div> },
   { path: '/messages', element: <div>Messages Page</div> },
   { path: '/profile', element: <div>Profile Page</div> },
   { path: '/settings', element: <div>Settings Page</div> },
+  { path: '/lesson-detail' , element: <LessonDetailPage/>},
+  { path: '/attendance', element: <AttendancePage/>},
+  { path: '/check-attendance', element: <CheckAttendancePage /> },
 ];
 
 // Public routes configuration
@@ -81,8 +90,7 @@ const publicRoutes = [
       { path: '', element: <HomeContent /> },
       { path: '/payment-success', element: <PaymentSuccess/>},
       { path: '/payment-failed', element: <PaymentFailed/>},
-      { path: '/payment/:classId', element: <PaymentForm /> }
-      
+      { path: '/payment/:classId', element: <PaymentForm /> },
       // { path: 'about', element: <About /> },
       // { path: 'courses', element: <Courses /> },
       // { path: 'contact', element: <Contact /> },
@@ -94,13 +102,15 @@ const publicRoutes = [
 
 // Student routes configuration
 const studentRoutes = [
-  { path: '/student', element: <StudentPage /> },
-  { path: '/student/profile', element: <StudentDetail/> },
-  { path: '/student/schedule', element: <WeeklyTimeTable/> }, 
+  { path: '/', element: <StudentPage /> },
+  { path: '/profile', element: <StudentDetail/> },
+  { path: '/schedule', element: <WeeklyTimeTable/> }, 
   { path: '/payment-success', element: <PaymentSuccess/>},
   { path: '/payment-failed', element: <PaymentFailed/>},
   { path: '/payment/:classId', element: <PaymentForm /> },
   { path: '/class-detail/:id', element: <ViewClassDetail/>},
+  { path: '/lesson-detail' , element: <LessonDetailPage/>}
+
   //{ path: '/weekly-time-table', element: <WeeklyTimeTable/>},
 ];
 
@@ -159,17 +169,9 @@ const App = () => {
           </Route>
         ))}
 
-        {/* Student Routes - Only for Students */}
+        {/* Student Routes */}
         {studentRoutes.map((route) => (
-          <Route 
-            key={route.path} 
-            path={route.path} 
-            element={
-              <ProtectedRoute allowedRoles={['Student']} redirectTo="/">
-                {route.element}
-              </ProtectedRoute>
-            } 
-          />
+          <Route key={route.path} path={route.path} element={route.element} />
         ))}
 
         {/* 404 - Catch all */}

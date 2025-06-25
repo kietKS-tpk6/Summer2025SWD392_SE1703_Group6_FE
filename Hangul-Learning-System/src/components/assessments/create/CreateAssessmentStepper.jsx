@@ -2,8 +2,8 @@ import React, { useState, useRef } from 'react';
 import { Steps, Button, message } from 'antd';
 import AssessmentBasicForm from './AssessmentBasicForm';
 import CreateAssessmentSection from './CreateAssessmentSection';
-// import SectionQuestionsForm from './SectionQuestionsForm';
-// import ConfirmCreateAssessment from './ConfirmCreateAssessment';
+import CreateAssessmentConfirm from './CreateAssessmentConfirm';
+
 
 // TODO: tạo SectionQuestionsForm đúng logic mới
 const SectionQuestionsForm = () => <div>SectionQuestionsForm (TODO)</div>;
@@ -39,8 +39,10 @@ const CreateAssessmentStepper = ({ formData, setFormData, onFinish, showNotify, 
     {
       title: 'Xác nhận',
       content: (
-        <div>ConfirmCreateAssessment (TODO)</div>
-        // <ConfirmCreateAssessment ... />
+        <CreateAssessmentConfirm
+          basicInfo={formData.basicInfo}
+          sections={formData.sections}
+        />
       ),
     },
   ];
