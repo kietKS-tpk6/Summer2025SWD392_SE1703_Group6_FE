@@ -21,7 +21,6 @@ import ViewClassDetail from './pages/student-portal/ViewClassDetail';
 import WeeklyTimeTable from './pages/student-portal/WeeklyTimeTable';
 import StudentDetail from './pages/student-portal/StudentDetail';
 import AssessmentManagement from './components/assessments/Assessments'; // hoặc tên file bạn muốn
-
 // import About from './pages/viewer-portal/About';
 // import Courses from './pages/viewer-portal/Courses';
 // import Contact from './pages/viewer-portal/Contact';
@@ -34,6 +33,9 @@ import PaymentFailed from './components/payment/PaymentFailed';
 import PaymentForm from './components/payment/PaymentForm';
 import LecturerDashboard from './components/dashboard/pages/LecturerDashboard';
 import ClassDetail from './components/classes/detail/ClassDetail';
+import LessonDetailPage from './components/classes/detail/lesson/LessonDetailPage';
+import AttendancePage from './components/classes/attendance/AttendancePage';
+import CheckAttendancePage from './components/classes/attendance/CheckAttendancePage';
 import './App.css';
 import 'antd/dist/reset.css';
 
@@ -55,6 +57,9 @@ const dashboardRoutes = [
   { path: '/profile', element: <Profile /> },
   { path: '/settings', element: <Settings /> },
   { path: '/assessment', element: <AssessmentManagement /> },
+  { path: '/lesson-detail' , element: <LessonDetailPage/>},
+  { path: '/attendance', element: <AttendancePage/>},
+  { path: '/check-attendance', element: <CheckAttendancePage /> },
 ];
 
 // Lecturer routes configuration
@@ -67,6 +72,9 @@ const lecturerRoutes = [
   { path: '/messages', element: <div>Messages Page</div> },
   { path: '/profile', element: <div>Profile Page</div> },
   { path: '/settings', element: <div>Settings Page</div> },
+  { path: '/lesson-detail' , element: <LessonDetailPage/>},
+  { path: '/attendance', element: <AttendancePage/>},
+  { path: '/check-attendance', element: <CheckAttendancePage /> },
 ];
 
 // Public routes configuration
@@ -79,8 +87,7 @@ const publicRoutes = [
       { path: '', element: <HomeContent /> },
       { path: '/payment-success', element: <PaymentSuccess/>},
       { path: '/payment-failed', element: <PaymentFailed/>},
-      { path: '/payment/:classId', element: <PaymentForm /> }
-      
+      { path: '/payment/:classId', element: <PaymentForm /> },
       // { path: 'about', element: <About /> },
       // { path: 'courses', element: <Courses /> },
       // { path: 'contact', element: <Contact /> },
@@ -99,6 +106,8 @@ const studentRoutes = [
   { path: '/payment-failed', element: <PaymentFailed/>},
   { path: '/payment/:classId', element: <PaymentForm /> },
   { path: '/class-detail/:id', element: <ViewClassDetail/>},
+  { path: '/lesson-detail' , element: <LessonDetailPage/>}
+
   //{ path: '/weekly-time-table', element: <WeeklyTimeTable/>},
 ];
 
