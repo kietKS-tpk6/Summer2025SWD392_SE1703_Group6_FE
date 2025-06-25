@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Spin, Alert, Card, Avatar } from 'antd';
+import { Table, Spin, Alert, Card, Avatar, Button } from 'antd';
 import axios from 'axios';
 import { API_URL } from '../../../config/api';
 import dayjs from 'dayjs';
+import { useNavigate } from 'react-router-dom';
 
 const fetchStudentList = async (classId) => {
   const res = await axios.get(`${API_URL}api/Class/get-student-by-class/${classId}`);
@@ -67,6 +68,16 @@ const StudentListSection = ({ classId }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [collapsed, setCollapsed] = useState(false);
+  const navigate = useNavigate();
+
+  const handleAttendanceClick = () => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    let prefix = '';
+    if (user?.role === 'Manager') prefix = '/dashboard';
+    else if (user?.role === 'Lecturer') prefix = '/lecturer';
+    else prefix = '';
+    navigate(`${prefix}/attendance`, { state: { classId } });
+  };
 
   useEffect(() => {
     if (!classId) return;
@@ -87,11 +98,20 @@ const StudentListSection = ({ classId }) => {
       bodyStyle={{ padding: collapsed ? 0 : 24 }}
       title={
         <div
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }}
-          onClick={() => setCollapsed((prev) => !prev)}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}
         >
-          <span>Danh sách học sinh</span>
-          <span>{collapsed ? '▼' : '▲'}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+            <span>Danh sách học sinh</span>
+            <Button type="primary" onClick={handleAttendanceClick} disabled={!classId} size="small">
+              Tình trạng điểm danh
+            </Button>
+          </div>
+          <span
+            style={{ cursor: 'pointer', fontSize: 18, marginLeft: 16 }}
+            onClick={() => setCollapsed((prev) => !prev)}
+          >
+            {collapsed ? '▼' : '▲'}
+          </span>
         </div>
       }
     >
