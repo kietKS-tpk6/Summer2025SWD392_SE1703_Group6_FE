@@ -8,13 +8,24 @@ const LessonDetailModal = ({ open, lesson, onClose, onUpdate }) => {
   const [showUpdate, setShowUpdate] = useState(false);
   const navigate = useNavigate();
 
-  let isManager = false;
+  let userRole = null;
   try {
     const user = JSON.parse(localStorage.getItem('user'));
-    isManager = user && user.role === 'Manager';
+    userRole = user && user.role;
   } catch (e) {
-    isManager = false;
+    userRole = null;
   }
+
+  const isManager = userRole === 'Manager';
+  const isLecturer = userRole === 'Lecture';
+  const isStudent = userRole === 'Student';
+
+  const getLessonDetailPath = () => {
+    if (isManager) return '/dashboard/lesson-detail';
+    if (isLecturer) return '/lecturer/lesson-detail';
+    if (isStudent) return '/student/lesson-detail';
+    return '/dashboard/lesson-detail'; // default fallback
+  };
 
   if (!lesson) return null;
   return (
@@ -38,7 +49,7 @@ const LessonDetailModal = ({ open, lesson, onClose, onUpdate }) => {
           <Button
             type="primary"
             style={{ marginRight: 8 }}
-            onClick={() => navigate('/dashboard/lesson-detail', { state: { lessonId: lesson.classLessonID } })}
+            onClick={() => navigate(getLessonDetailPath(), { state: { lessonId: lesson.classLessonID } })}
           >
             Xem chi tiết tiết học
           </Button>

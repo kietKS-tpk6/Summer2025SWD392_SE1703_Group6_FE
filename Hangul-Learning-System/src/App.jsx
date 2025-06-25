@@ -36,6 +36,7 @@ import ClassDetail from './components/classes/detail/ClassDetail';
 import LessonDetailPage from './components/classes/detail/lesson/LessonDetailPage';
 import AttendancePage from './components/classes/attendance/AttendancePage';
 import CheckAttendancePage from './components/classes/attendance/CheckAttendancePage';
+import TeachingSchedule from './components/dashboard/pages/TeachingSchedule';
 import './App.css';
 import 'antd/dist/reset.css';
 
@@ -66,7 +67,7 @@ const dashboardRoutes = [
 const lecturerRoutes = [
   { path: '/', element: <LecturerDashboard /> },
   { path: '/courses', element: <div>Courses Page</div> },
-  { path: '/schedule', element: <div>Schedule Page</div> },
+  { path: '/schedule', element: <TeachingSchedule /> },
   { path: '/assignments', element: <div>Assignments Page</div> },
   { path: '/students', element: <div>Students Page</div> },
   { path: '/messages', element: <div>Messages Page</div> },
@@ -99,9 +100,9 @@ const publicRoutes = [
 
 // Student routes configuration
 const studentRoutes = [
-  { path: '/student', element: <StudentPage /> },
-  { path: '/student/profile', element: <StudentDetail/> },
-  { path: '/student/schedule', element: <WeeklyTimeTable/> }, 
+  { path: '/', element: <StudentPage /> },
+  { path: '/profile', element: <StudentDetail/> },
+  { path: '/schedule', element: <WeeklyTimeTable/> }, 
   { path: '/payment-success', element: <PaymentSuccess/>},
   { path: '/payment-failed', element: <PaymentFailed/>},
   { path: '/payment/:classId', element: <PaymentForm /> },
@@ -163,9 +164,23 @@ const App = () => {
         ))}
 
         {/* Student Routes */}
-        {studentRoutes.map((route) => (
-          <Route key={route.path} path={route.path} element={route.element} />
-        ))}
+        <Route
+          path="/student/*"
+          element={
+            <Layout style={{ minHeight: '100vh' }}>
+              <Sidebar />
+              <Layout>
+                <Content style={{ margin: '16px', padding: '24px', background: '#fff', borderRadius: '30px' }}>
+                  <Routes>
+                    {studentRoutes.map((route) => (
+                      <Route key={route.path} path={route.path} element={route.element} />
+                    ))}
+                  </Routes>
+                </Content>
+              </Layout>
+            </Layout>
+          } 
+        />
 
         {/* 404 - Catch all */}
         <Route path="*" element={<NotFoundPage />} />
