@@ -6,6 +6,7 @@ import {motion} from 'framer-motion';
 import '../../styles/Header.css';
 import Logo from '../../assets/Logo.svg';
 import { UserOutlined, LogoutOutlined } from '@ant-design/icons'; // Thêm icon
+import { getUser, logout } from '../../utils/auth';
 
 const { Header } = Layout;
 
@@ -24,12 +25,10 @@ const HeaderBar = () => {
     navigate('/login');
   };
 
-  const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null;
+  const user = getUser();
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('role');
-    localStorage.removeItem('user');
+    logout();
     navigate('/login');
   };
 

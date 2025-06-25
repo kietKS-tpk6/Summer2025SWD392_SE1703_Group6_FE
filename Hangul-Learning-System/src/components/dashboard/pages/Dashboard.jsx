@@ -1,19 +1,8 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Row, Col, Card, Statistic } from 'antd';
 import { UserOutlined, TeamOutlined, BookOutlined, MessageOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const role = localStorage.getItem('role');
-    if (!token || role !== 'Manager') {
-      navigate('/');
-    }
-  }, [navigate]);
-
   return (
     <div>
       <h1>Dashboard</h1>

@@ -12,12 +12,14 @@ import {
 } from '@ant-design/icons';
 import logo from '../../../public/images/logoB.png'
 import { useNavigate, useLocation } from 'react-router-dom';
+import { getUser } from '../../utils/auth';
 
 const { Sider } = Layout;
 
 const LecturerSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const user = getUser();
 
   const menuItems = [
     {
@@ -97,7 +99,7 @@ const LecturerSidebar = () => {
           style={{ width: 100, height: 100, margin: '0 auto' }}
         />
         <div style={{ fontWeight: 700, fontSize: 20, color: '#000', marginTop: 10 }}>
-          Manager
+          Lecturer
         </div>
         <div style={{ fontSize: 12, color: '#b0b7c3' }}>Learn From Home</div>
       </div>

@@ -21,6 +21,7 @@ import ViewClassDetail from './pages/student-portal/ViewClassDetail';
 import WeeklyTimeTable from './pages/student-portal/WeeklyTimeTable';
 import StudentDetail from './pages/student-portal/StudentDetail';
 import AssessmentManagement from './components/assessments/Assessments'; // hoặc tên file bạn muốn
+import ProtectedRoute from './components/common/ProtectedRoute';
 
 // import About from './pages/viewer-portal/About';
 // import Courses from './pages/viewer-portal/Courses';
@@ -38,6 +39,7 @@ import './App.css';
 import 'antd/dist/reset.css';
 
 const { Content } = Layout;
+
 
 // Dashboard routes configuration
 const dashboardRoutes = [
@@ -106,41 +108,45 @@ const App = () => {
   return (
     <Router>
       <Routes>
-        {/* Dashboard Layout */}
+        {/* Dashboard Layout - Only for Managers */}
         <Route
           path="/dashboard/*"
           element={
-            <Layout style={{ minHeight: '100vh' }}>
-              <Sidebar />
-              <Layout>
-                <Content style={{ margin: '16px', padding: '24px', background: '#fff', borderRadius: '30px' }}>
-                  <Routes>
-                    {dashboardRoutes.map((route) => (
-                      <Route key={route.path} path={route.path} element={route.element} />
-                    ))}
-                  </Routes>
-                </Content>
+            <ProtectedRoute allowedRoles={['Manager']} redirectTo="/">
+              <Layout style={{ minHeight: '100vh' }}>
+                <Sidebar />
+                <Layout>
+                  <Content style={{ margin: '16px', padding: '24px', background: '#fff', borderRadius: '30px' }}>
+                    <Routes>
+                      {dashboardRoutes.map((route) => (
+                        <Route key={route.path} path={route.path} element={route.element} />
+                      ))}
+                    </Routes>
+                  </Content>
+                </Layout>
               </Layout>
-            </Layout>
+            </ProtectedRoute>
           }
         />
 
-        {/* Lecturer Layout */}
+        {/* Lecturer Layout - Only for Teachers */}
         <Route
           path="/lecturer/*"
           element={
-            <Layout style={{ minHeight: '100vh' }}>
-              <LecturerSidebar />
-              <Layout>
-                <Content style={{ margin: '16px', padding: '24px', background: '#fff', borderRadius: '30px' }}>
-                  <Routes>
-                    {lecturerRoutes.map((route) => (
-                      <Route key={route.path} path={route.path} element={route.element} />
-                    ))}
-                  </Routes>
-                </Content>
+            <ProtectedRoute allowedRoles={['Teacher']} redirectTo="/">
+              <Layout style={{ minHeight: '100vh' }}>
+                <LecturerSidebar />
+                <Layout>
+                  <Content style={{ margin: '16px', padding: '24px', background: '#fff', borderRadius: '30px' }}>
+                    <Routes>
+                      {lecturerRoutes.map((route) => (
+                        <Route key={route.path} path={route.path} element={route.element} />
+                      ))}
+                    </Routes>
+                  </Content>
+                </Layout>
               </Layout>
-            </Layout>
+            </ProtectedRoute>
           }
         />
 
@@ -153,9 +159,17 @@ const App = () => {
           </Route>
         ))}
 
-        {/* Student Routes */}
+        {/* Student Routes - Only for Students */}
         {studentRoutes.map((route) => (
-          <Route key={route.path} path={route.path} element={route.element} />
+          <Route 
+            key={route.path} 
+            path={route.path} 
+            element={
+              <ProtectedRoute allowedRoles={['Student']} redirectTo="/">
+                {route.element}
+              </ProtectedRoute>
+            } 
+          />
         ))}
 
         {/* 404 - Catch all */}
