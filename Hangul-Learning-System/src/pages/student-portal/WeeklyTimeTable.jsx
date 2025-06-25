@@ -9,7 +9,7 @@ import HeaderBar from '../../components/header/Header';
 import FooterBar from '../../components/footer/Footer';
 import { useLocation } from 'react-router-dom';
 import Sidebar from '../../components/dashboard/Sidebar';
-
+import LessonDetailModal from '../../components/classes/detail/lesson/LessonDetailModal';
 dayjs.locale('vi');
 const { Title } = Typography;
 const { Sider, Content } = Layout;
@@ -45,6 +45,8 @@ const WeeklyTimeTable = () => {
   const [lessons, setLessons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [weekIndex, setWeekIndex] = useState(0); // 0: tuần hiện tại, -1: tuần trước, +1: tuần sau
+  const [selectedLesson, setSelectedLesson] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const simple = params.get('simple') === 'true';
@@ -66,6 +68,22 @@ const WeeklyTimeTable = () => {
     };
     fetchLessons();
   }, []);
+
+  const handleLessonClick = (lesson) => {
+    setSelectedLesson(lesson);
+    setModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setModalOpen(false);
+    setSelectedLesson(null);
+  };
+
+  const handleLessonUpdate = () => {
+    // Reload data if needed
+    setModalOpen(false);
+    setSelectedLesson(null);
+  };
 
   // Tính tuần đang chọn
   const currentMonday = useMemo(() => {
@@ -125,9 +143,13 @@ const WeeklyTimeTable = () => {
                               {dayjs(lesson.startTime).format('HH:mm')} - {dayjs(lesson.endTime).format('HH:mm')}
                             </div>
                             <div>
-                              <a href={lesson.linkMeetURL} target="_blank" rel="noopener noreferrer">
-                                <Tag color="blue" style={{ marginTop: 4 }}>Vào lớp</Tag>
-                              </a>
+                              <Tag 
+                                color="blue" 
+                                style={{ marginTop: 4, cursor: 'pointer' }}
+                                onClick={() => handleLessonClick(lesson)}
+                              >
+                                Vào lớp
+                              </Tag>
                             </div>
                           </Card>
                         ))
@@ -142,6 +164,12 @@ const WeeklyTimeTable = () => {
           </Card>
         </div>
         <FooterBar />
+        <LessonDetailModal
+          open={modalOpen}
+          lesson={selectedLesson}
+          onClose={handleModalClose}
+          onUpdate={handleLessonUpdate}
+        />
       </>
     );
   }
@@ -149,7 +177,7 @@ const WeeklyTimeTable = () => {
   // Layout với Sidebar bên trái, nội dung bên phải
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Sidebar />
+      {/* <Sidebar /> */}
       <Layout>
         <Content style={{ background: '#fff', minHeight: '100vh' }}>
           <div style={{ maxWidth: 1100, margin: '0 auto', padding: 32 }}>
@@ -178,9 +206,13 @@ const WeeklyTimeTable = () => {
                                 {dayjs(lesson.startTime).format('HH:mm')} - {dayjs(lesson.endTime).format('HH:mm')}
                               </div>
                               <div>
-                                <a href={lesson.linkMeetURL} target="_blank" rel="noopener noreferrer">
-                                  <Tag color="blue" style={{ marginTop: 4 }}>Vào lớp</Tag>
-                                </a>
+                                <Tag 
+                                  color="blue" 
+                                  style={{ marginTop: 4, cursor: 'pointer' }}
+                                  onClick={() => handleLessonClick(lesson)}
+                                >
+                                  Vào lớp
+                                </Tag>
                               </div>
                             </Card>
                           ))
@@ -196,6 +228,12 @@ const WeeklyTimeTable = () => {
           </div>
         </Content>
       </Layout>
+      <LessonDetailModal
+        open={modalOpen}
+        lesson={selectedLesson}
+        onClose={handleModalClose}
+        onUpdate={handleLessonUpdate}
+      />
     </Layout>
   );
 };
