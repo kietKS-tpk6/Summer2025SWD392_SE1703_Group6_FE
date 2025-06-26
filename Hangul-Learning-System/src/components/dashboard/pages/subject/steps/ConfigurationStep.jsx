@@ -1,53 +1,106 @@
-import React from 'react';
-import { Form, InputNumber, Card } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Form, InputNumber, Card, message } from 'antd';
+import axios from 'axios';
+import { API_URL, endpoints } from '../../../../../config/api';
 
 const ConfigurationStep = ({ onGenerateClassSlots }) => {
+  const [maxWeeks, setMaxWeeks] = useState(null);
+  const [maxSlotsPerWeek, setMaxSlotsPerWeek] = useState(null);
+  const [maxTotalMinutes, setMaxTotalMinutes] = useState(null);
+
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const [weeksRes, slotsRes, minutesRes] = await Promise.all([
+          axios.get(`${API_URL}${endpoints.systemConfig.getConfigByKey}max_total_weeks_allowed`),
+          axios.get(`${API_URL}${endpoints.systemConfig.getConfigByKey}max_weekly_slots_allowed`),
+          axios.get(`${API_URL}${endpoints.systemConfig.getConfigByKey}max_total_minutes_allowed`),
+        ]);
+        setMaxWeeks(weeksRes.data.data.value);
+        setMaxSlotsPerWeek(slotsRes.data.data.value);
+        setMaxTotalMinutes(minutesRes.data.data.value);
+        // console.log(weeksRes,slotsRes,minutesRes)
+      } catch (err) {
+        message.error('Không thể tải cấu hình hệ thống');
+      }
+    };
+
+    fetchConfig();
+  }, []);
+
   return (
     <Card>
       <Form.Item
         name="totalWeeks"
-        label="Tổng số tuần"
-        rules={[{ required: true, message: 'Vui lòng nhập tổng số tuần' }]}
+        label={
+          maxWeeks !== null
+            ? `Tổng số tuần (Tối đa: ${maxWeeks} tuần)`
+            : 'Tổng số tuần'
+        }
+        rules={[
+          { required: true, message: 'Vui lòng nhập tổng số tuần' },
+          ({ getFieldValue }) => ({
+            validator(_, value) {
+              if (maxWeeks !== null && value > maxWeeks) {
+                return Promise.reject(new Error(`Tối đa ${maxWeeks} tuần`));
+              }
+              return Promise.resolve();
+            },
+          }),
+        ]}
       >
-        <InputNumber
-          min={1}
-          placeholder="VD: 10"
-          style={{ width: '100%' }}
-        />
+        <InputNumber min={1} placeholder="VD: 10" style={{ width: '100%' }} />
       </Form.Item>
 
       <Form.Item
         name="slotsPerWeek"
-        label="Số slot mỗi tuần (Tối đa 5 slot/tuần)"
+        label={
+          maxSlotsPerWeek !== null
+            ? `Số slot mỗi tuần (Tối đa: ${maxSlotsPerWeek} slot/tuần)`
+            : 'Số slot mỗi tuần'
+        }
         rules={[
           { required: true, message: 'Vui lòng nhập số slot mỗi tuần' },
-          {
-            validator: (_, value) => {
-              if (value > 5) {
-                return Promise.reject(new Error('Tối đa chỉ được 5 slot mỗi tuần'));
+          ({ getFieldValue }) => ({
+            validator(_, value) {
+              if (maxSlotsPerWeek !== null && value > maxSlotsPerWeek) {
+                return Promise.reject(new Error(`Tối đa ${maxSlotsPerWeek} slot mỗi tuần`));
               }
               return Promise.resolve();
-            }
-          }
+            },
+          }),
         ]}
       >
-        <InputNumber
-          min={1}
-          // max={5}
-          placeholder="VD: 3"
-          style={{ width: '100%' }}
-        />
+        <InputNumber min={1} placeholder="VD: 3" style={{ width: '100%' }} />
       </Form.Item>
 
       <Form.Item
         name="defaultDuration"
-        label="Thời lượng mặc định mỗi tiết (phút)"
-        rules={[{ required: true, message: 'Vui lòng nhập thời lượng mặc định cho mỗi tiết' }]}
-        
+        label={
+          maxTotalMinutes !== null
+            ? `Thời lượng mặc định mỗi tiết (Tổng tối đa: ${maxTotalMinutes} phút/slot)`
+            : 'Thời lượng mặc định mỗi tiết'
+        }
+        rules={[
+          { required: true, message: 'Vui lòng nhập thời lượng mặc định cho mỗi tiết' },
+          ({ getFieldValue }) => ({
+            validator(_, value) {
+              const slots = getFieldValue('slotsPerWeek');
+              if (
+                maxTotalMinutes !== null &&
+                slots &&
+                value * slots > maxTotalMinutes
+              ) {
+                return Promise.reject(
+                  new Error(`Tổng thời lượng không vượt quá ${maxTotalMinutes} phút`)
+                );
+              }
+              return Promise.resolve();
+            },
+          }),
+        ]}
       >
-        <InputNumber min={1} style={{ width: '100%' }} 
-        placeholder="VD: 45"/>
-        
+        <InputNumber min={1} placeholder="VD: 45" style={{ width: '100%' }} />
       </Form.Item>
     </Card>
   );

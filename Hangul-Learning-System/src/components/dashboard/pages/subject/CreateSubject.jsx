@@ -76,9 +76,37 @@ const CreateSubject = () => {
     return null;
   };
 
+  const validateTestSlotDurations = () => {
+    const testSlots = form.getFieldValue('testSlots') || [];
+    const errors = [];
+    (testSlots || []).forEach((testSlot, idx) => {
+      if (testSlot && testSlot.duration !== undefined && classSlots[idx]) {
+        const lessonDuration = classSlots[idx].durationMinutes || 0;
+        if (testSlot.duration > lessonDuration) {
+          errors.push(`Slot kiểm tra ở tiết ${classSlots[idx].title} có thời gian kiểm tra (${testSlot.duration} phút) lớn hơn thời lượng buổi học (${lessonDuration} phút)`);
+        }
+      }
+    });
+    if (errors.length > 0) return errors.join('; ');
+    return null;
+  };
+
   const handleSubmit = async () => {
     setLoading(true);
     try {
+      // Kiểm tra duration test slot trước khi submit
+      const durationError = validateTestSlotDurations();
+      if (durationError) {
+        setNotificationConfig({
+          visible: true,
+          type: 'error',
+          message: 'Lỗi thời lượng kiểm tra',
+          description: durationError,
+        });
+        setLoading(false);
+        return;
+      }
+
       // Lấy dữ liệu mới nhất từ form
       const values = await form.validateFields();
 
@@ -151,7 +179,7 @@ const CreateSubject = () => {
         category: item.category,
         requiredTestCount: item.requiredTestCount,
         note: item.note,
-        minPassingScore: item.minPassingScore,
+        minPassingScore: 0,
       }));
       await subjectService.updateAssessmentCriteriaList({ items: updateCriteriaItems });
 
@@ -271,6 +299,15 @@ const CreateSubject = () => {
         const totalWeight = criteria.reduce((sum, item) => sum + (item.weightPercent || 0), 0);
         if (totalWeight !== 100) {
           message.error('Tổng trọng số phải bằng 100%');
+          return;
+        }
+      }
+
+      // Kiểm tra duration test slot ở bước chọn slot kiểm tra
+      if (current === 3) {
+        const durationError = validateTestSlotDurations();
+        if (durationError) {
+          message.error(durationError);
           return;
         }
       }

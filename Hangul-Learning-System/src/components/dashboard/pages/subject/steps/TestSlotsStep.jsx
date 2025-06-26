@@ -98,10 +98,29 @@ const TestSlotsStep = ({ classSlots, form, assessmentInfo }) => {
       key: 'duration',
       width: '15%',
       render: (_, record) => {
-        const criteriaId = testSlots[record.slot - 1]?.criteriaId;
+        const slotIndex = record.slot - 1;
+        const criteriaId = testSlots[slotIndex]?.criteriaId;
         const isDisabled = criteriaId === undefined || criteriaId === null;
+        const lessonDuration = classSlots[slotIndex]?.durationMinutes || 0;
         return (
-          <Form.Item name={['testSlots', record.slot - 1, 'duration']} style={{ margin: 0 }}>
+          <Form.Item
+            name={['testSlots', slotIndex, 'duration']}
+            style={{ margin: 0 }}
+            rules={[
+              {
+                validator: (_, value) => {
+                  if (isDisabled) return Promise.resolve();
+                  if (value === undefined || value === null) {
+                    return Promise.reject(new Error('Vui lòng nhập thời lượng kiểm tra'));
+                  }
+                  if (value > lessonDuration) {
+                    return Promise.reject(new Error(`Thời lượng kiểm tra không được lớn hơn thời lượng buổi học (${lessonDuration} phút)`));
+                  }
+                  return Promise.resolve();
+                }
+              }
+            ]}
+          >
             <InputNumber
               min={1}
               style={{ width: '100%' }}
