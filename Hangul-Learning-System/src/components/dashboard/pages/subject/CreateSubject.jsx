@@ -358,6 +358,7 @@ const CreateSubject = () => {
     setEditingSlot(slot);
     editForm.setFieldsValue({
       title: slot.title,
+      content: slot.content,
       durationMinutes: slot.durationMinutes,
       resources: slot.resources,
     });
