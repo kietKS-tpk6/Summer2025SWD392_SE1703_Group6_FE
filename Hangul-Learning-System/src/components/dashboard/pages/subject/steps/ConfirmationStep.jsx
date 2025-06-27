@@ -108,17 +108,17 @@ const ConfirmationStep = ({ form, classSlots = [], assessmentInfo = [] }) => {
       dataIndex: 'requiredTestCount',
       key: 'requiredTestCount',
     },
-    {
-      title: 'Điểm đạt',
-      dataIndex: 'minPassingScore',
-      key: 'minPassingScore',
-    },
     // {
-    //   title: 'Ghi chú',
-    //   dataIndex: 'note',
-    //   key: 'note',
-    //   render: (val) => val || '-',
+    //   title: 'Điểm đạt',
+    //   dataIndex: 'minPassingScore',
+    //   key: 'minPassingScore',
     // },
+    {
+      title: 'Ghi chú',
+      dataIndex: 'note',
+      key: 'note',
+      render: (val) => val || '-',
+    },
   ];
 
   // Merge testSlots with classSlots for week/slot info

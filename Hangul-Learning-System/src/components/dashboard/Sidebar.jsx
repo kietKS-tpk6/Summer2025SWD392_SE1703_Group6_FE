@@ -14,6 +14,7 @@ import {
 } from '@ant-design/icons';
 import logo from '../../../public/images/logoB.png'
 import { useNavigate, useLocation } from 'react-router-dom';
+import { getUser, logout } from '../../utils/auth';
 //
 
 const { Sider } = Layout;
@@ -23,7 +24,7 @@ const Sidebar = () => {
   const location = useLocation();
 
   // Lấy role từ localStorage
-  const user = JSON.parse(localStorage.getItem('user'));
+  const user = getUser();
   const role = user?.role;
 
   const menuItems = [
@@ -130,7 +131,7 @@ const Sidebar = () => {
 
   const handleMenuClick = ({ key }) => {
     if (key === '/logout') {
-      localStorage.removeItem('user');
+      logout();
       navigate('/login');
       return;
     }

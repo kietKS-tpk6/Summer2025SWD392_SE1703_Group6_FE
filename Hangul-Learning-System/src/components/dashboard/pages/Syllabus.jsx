@@ -90,6 +90,31 @@ const Syllabus = () => {
   // Help modal state
   const [helpVisible, setHelpVisible] = useState(false);
 
+  // Map category enum sang tên tiếng Việt/Anh
+  const categoryMap = {
+    0: 'Quiz',
+    1: 'Presentation',
+    2: 'Midterm',
+    3: 'Final',
+    4: 'Attendance',
+    5: 'Assignment',
+    6: 'Class Participation'
+  };
+  const testTypeOptions = [
+    { value: 0, label: 'None' },
+    { value: 1, label: 'Vocabulary' },
+    { value: 2, label: 'Grammar' },
+    { value: 3, label: 'Listening' },
+    { value: 4, label: 'Reading' },
+    { value: 5, label: 'Writing' },
+    { value: 6, label: 'Mix' },
+    { value: 7, label: 'Other' }
+  ];
+  const assessmentCriteriaOptions = assessmentCriteria.map(item => ({
+    value: String(item.assessmentCriteriaID),
+    label: categoryMap[item.category] || item.category
+  }));
+
   useEffect(() => {
     if (subjectId) {
       fetchSubject();
@@ -164,11 +189,13 @@ const Syllabus = () => {
       return;
     }
     const tests = syllabusSchedules
-      .map((sch, idx) => ({ ...sch, displaySlot: idx + 1 }))
+      .map((sch, idx) => ({ ...sch, slotIndex: idx + 1 })) // slotIndex là thứ tự thực tế trong lịch trình
       .filter(sch => sch.hasTest && sch.testData)
       .map(sch => ({
         syllabusScheduleID: sch.syllabusScheduleID,
-        displaySlot: sch.displaySlot, // use displaySlot from original schedule index
+        slotIndex: sch.slotIndex, // slot thực tế
+        week: sch.week,
+        lessonTitle: sch.lessonTitle,
         subjectID: sch.subjectID,
         testType: sch.testData.testType,
         testDurationMinutes: sch.testData.testDurationMinutes,
@@ -466,7 +493,24 @@ const Syllabus = () => {
       return;
     }
     setEditingSchedule(record);
-    scheduleForm.setFieldsValue(record);
+    let initialValues = { ...record };
+    const criteriaData = record.testData || record.itemsAssessmentCriteria;
+    if (criteriaData) {
+      initialValues.assessmentCriteriaID = criteriaData.assessmentCriteriaID
+        ? String(criteriaData.assessmentCriteriaID)
+        : undefined;
+      initialValues.testDurationMinutes = criteriaData.duration ?? criteriaData.testDurationMinutes ?? '';
+      initialValues.testType = (criteriaData.testType !== undefined && criteriaData.testType !== null && !isNaN(Number(criteriaData.testType)))
+        ? Number(criteriaData.testType)
+        : undefined;
+      initialValues.hasTest = true;
+    } else {
+      initialValues.assessmentCriteriaID = undefined;
+      initialValues.testDurationMinutes = '';
+      initialValues.testType = undefined;
+      initialValues.hasTest = false;
+    }
+    scheduleForm.setFieldsValue(initialValues);
     setIsScheduleModalVisible(true);
   };
 
@@ -499,7 +543,7 @@ const Syllabus = () => {
         scheduleItem.itemsAssessmentCriteria = {
           assessmentCriteriaID: values.assessmentCriteriaID,
           duration: values.testDurationMinutes,
-          testType: values.testType
+          testType: Number(values.testType)
         };
       }
 
@@ -566,11 +610,13 @@ const Syllabus = () => {
           hasTest: isTestSchedule
         };
 
-        if (isTestSchedule && schedule.testData) {
+        // Ưu tiên lấy từ testData, fallback sang itemsAssessmentCriteria nếu có
+        const criteriaData = schedule.testData || schedule.itemsAssessmentCriteria;
+        if (criteriaData) {
           item.itemsAssessmentCriteria = {
-            assessmentCriteriaID: schedule.testData.assessmentCriteriaID,
-            duration: schedule.testData.testDurationMinutes,
-            testType: schedule.testData.testType
+            assessmentCriteriaID: criteriaData.assessmentCriteriaID,
+            duration: criteriaData.duration ?? criteriaData.testDurationMinutes ?? 0,
+            testType: criteriaData.testType ?? 0
           };
         }
 
@@ -702,6 +748,7 @@ const Syllabus = () => {
             <SubjectClasses classes={classes} />
           )}
           <Divider />
+          
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Title level={3}>Lịch trình giảng dạy</Title>
@@ -715,21 +762,6 @@ const Syllabus = () => {
             canEdit={canEdit}
           />
           <Divider />
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Title level={3}>Lịch kiểm tra</Title>
-          </div>
-          <SyllabusSchedule
-            schedules={syllabusScheduleTests}
-            onEdit={canEdit ? handleScheduleEdit : undefined}
-            onDelete={undefined}
-            onAdd={undefined}
-            subject={subject}
-            canEdit={canEdit}
-            testMode={true}
-          />
-          <Divider />
-
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Title level={3}>Tiêu chí đánh giá</Title>
             <Button
@@ -746,6 +778,23 @@ const Syllabus = () => {
               canEdit={canEdit}
             />
           )}
+          <Divider/>  
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Title level={3}>Lịch kiểm tra</Title>
+          </div>
+          <SyllabusSchedule
+            schedules={syllabusScheduleTests}
+            onEdit={canEdit ? handleScheduleEdit : undefined}
+            onDelete={undefined}
+            onAdd={undefined}
+            subject={subject}
+            canEdit={canEdit}
+            testMode={true}
+          />
+          <Divider />
+
+          
         </div>
       </Card>
 
@@ -772,6 +821,8 @@ const Syllabus = () => {
         onCancel={() => setIsScheduleModalVisible(false)}
         form={scheduleForm}
         initialValues={editingSchedule}
+        assessmentCriteriaOptions={assessmentCriteriaOptions}
+        testTypeOptions={testTypeOptions}
       />
 
       <DeleteConfirmModal

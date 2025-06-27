@@ -37,8 +37,8 @@ const SyllabusSchedule = ({
   const testColumns = [
     {
       title: 'Slot',
-      dataIndex: 'displaySlot',
-      key: 'displaySlot',
+      dataIndex: 'slotIndex',
+      key: 'slotIndex',
       width: 80,
     },
     {
@@ -66,12 +66,12 @@ const SyllabusSchedule = ({
       width: 120,
       render: (val) => val ? 'Có' : 'Không',
     },
-    {
-      title: 'Điểm đạt tối thiểu',
-      dataIndex: 'minPassingScore',
-      key: 'minPassingScore',
-      width: 120,
-    },
+    // {
+    //   title: 'Điểm đạt tối thiểu',
+    //   dataIndex: 'minPassingScore',
+    //   key: 'minPassingScore',
+    //   width: 120,
+    // },
   ];
 
   const columns = [
@@ -90,6 +90,12 @@ const SyllabusSchedule = ({
       }
     },
     {
+      title: 'Slot',
+      dataIndex: 'displaySlot',
+      key: 'displaySlot',
+      width: 100,
+    },
+    {
       title: 'Tiêu đề bài học',
       dataIndex: 'lessonTitle',
       key: 'LessonTitle',
@@ -101,12 +107,7 @@ const SyllabusSchedule = ({
       key: 'Content',
       width: 300,
     },
-    {
-      title: 'Slot',
-      dataIndex: 'displaySlot',
-      key: 'displaySlot',
-      width: 100,
-    },
+    
     {
       title: 'Thời lượng',
       dataIndex: 'durationMinutes',
