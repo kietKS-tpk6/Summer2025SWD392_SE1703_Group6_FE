@@ -94,6 +94,7 @@ const publicRoutes = [
       { path: '/payment-success', element: <PaymentSuccess/>},
       { path: '/payment-failed', element: <PaymentFailed/>},
       { path: '/payment/:classId', element: <PaymentForm /> },
+      { path: '/class-detail/:id', element: <ViewClassDetail/>},
       // { path: 'about', element: <About /> },
       // { path: 'courses', element: <Courses /> },
       // { path: 'contact', element: <Contact /> },
@@ -117,6 +118,10 @@ const studentRoutes = [
   { path: '/view-test/:testId', element: <ViewTest /> },
   { path: '/take-test/:testId', element: <TakeTest /> },
   { path: '/test-result/:testId', element: <TestResult /> },
+  { path: '/lesson-detail' , element: <LessonDetailPage/>},
+ 
+
+
   //{ path: '/weekly-time-table', element: <WeeklyTimeTable/>},
 ];
 

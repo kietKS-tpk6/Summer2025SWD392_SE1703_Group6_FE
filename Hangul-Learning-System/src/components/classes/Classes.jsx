@@ -20,9 +20,10 @@ const statusOptions = [
   { value: 'all', label: 'Tất cả' },
   { value: 0, label: 'Chưa công khai' },
   { value: 1, label: 'Đang tuyển sinh' },
-  { value: 2, label: 'Đang dạy' },
+  { value: 2, label: 'Đang hoạt động' },
   { value: 3, label: 'Hoàn thành' },
   { value: 4, label: 'Không hoạt động' },
+  { value: 5, label: 'Đã hủy' },
 ];
 
 const Classes = () => {
@@ -101,10 +102,10 @@ const Classes = () => {
   const handleDeleteConfirm = async () => {
     const record = deleteModal.record;
     try {
-      await axios.delete(`${API_URL}api/Class/delete/${record.classID}`);
+      var noti = await axios.delete(`${API_URL}api/Class/delete/${record.classID}`);
       showNotify({
         type: 'success',
-        message: 'Xoá lớp học thành công!',
+        message: noti.data.message,
         description: ''
       });
       fetchData();
@@ -112,7 +113,7 @@ const Classes = () => {
       showNotify({
         type: 'error',
         message: 'Xoá lớp học thất bại!',
-        description: error?.message || ''
+        description: noti.data.message || '',
       });
     } finally {
       setDeleteModal({ open: false, record: null });
@@ -177,20 +178,21 @@ const Classes = () => {
       showNotify({
         type: 'success',
         message: 'Cập nhật thành công',
-        description: 'Trạng thái lớp học đã được chuyển sang "Đang dạy".'
+        description: 'Trạng thái lớp học đã được chuyển sang "Đang hoạt động".'
       });
       try {
-        await axios.post(`${API_URL}api/Email/classes/notify-students-start/${record.classID}`);
+        var notiEmail = await axios.post(`${API_URL}api/Email/classes/notify-students-start/${record.classID}`);
         showNotify({
           type: 'success',
           message: 'Gửi email thành công',
-          description: 'Đã gửi thông báo bắt đầu lớp học đến các học viên.'
+          description: notiEmail.data.message || 'Đã gửi thông báo bắt đầu lớp học đến các học viên.'
         });
+        await axios.post(`${API_URL}api/Attendance/setup-attendace-by-class-id/${record.classID}`);
       } catch (emailError) {
         showNotify({
           type: 'error',
           message: 'Gửi email thất bại',
-          description: 'Không thể gửi thông báo đến học viên. Vui lòng kiểm tra lại cấu hình.'
+          description: notiEmail.data?.message || 'Không thể gửi thông báo đến học viên. Vui lòng kiểm tra lại cấu hình.'
         });
       }
       fetchData();

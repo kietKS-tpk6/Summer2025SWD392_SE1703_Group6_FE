@@ -80,7 +80,6 @@ const ViewClassDetail = () => {
 
   return (
     <>
-      <HeaderBar />
       <div className="class-detail-bg">
         <div className="class-detail-main">
         <Title level={2} 
@@ -231,7 +230,6 @@ const ViewClassDetail = () => {
         </div>
       </div>
       
-      <FooterBar />
     </>
   );
 };
