@@ -11,6 +11,7 @@ import {
   CalendarOutlined,
   IdcardOutlined,
   SettingOutlined,
+  LogoutOutlined,
 } from '@ant-design/icons';
 import logo from '../../../public/images/logoB.png'
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -44,45 +45,50 @@ const Sidebar = () => {
       label: 'Quản lí môn học',
     },
     {
-      key: '/dashboard/assessment',
-      icon: <BarChartOutlined />, // icon bài kiểm tra
-      label: 'Quản lí bài kiểm tra',
-    },
-    {
       key: '/dashboard/class',
       icon: <ApartmentOutlined />, // icon sơ đồ lớp/phòng
       label: 'Quản lí lớp học',
     },
     {
-      key: '/dashboard/blog',
-      icon: <ReadOutlined />, // icon đọc bài viết
-      label: 'Quản lí Blog',
+      key: '/dashboard/assessment',
+      icon: <BarChartOutlined />, // icon bài kiểm tra
+      label: 'Quản lí bài kiểm tra',
     },
+    // {
+    //   key: '/dashboard/blog',
+    //   icon: <ReadOutlined />, // icon đọc bài viết
+    //   label: 'Quản lí Blog',
+    // },
     {
       key: '/dashboard/analytics',
       icon: <BarChartOutlined />,
       label: 'Phân tích & Đánh giá',
     },
-    {
-      key: '/dashboard/chat',
-      icon: <CommentOutlined />, // icon tin nhắn
-      label: 'Chat',
-    },
-    {
-      key: '/dashboard/schedule',
-      icon: <CalendarOutlined />,
-      label: 'Lịch học',
-    },
-    {
-      key: '/dashboard/profile',
-      icon: <IdcardOutlined />, // icon thẻ ID
-      label: 'Hồ sơ',
-    },
+    // {
+    //   key: '/dashboard/chat',
+    //   icon: <CommentOutlined />, // icon tin nhắn
+    //   label: 'Chat',
+    // },
+    // {
+    //   key: '/dashboard/schedule',
+    //   icon: <CalendarOutlined />,
+    //   label: 'Lịch học',
+    // },
+    // {
+    //   key: '/dashboard/profile',
+    //   icon: <IdcardOutlined />, // icon thẻ ID
+    //   label: 'Hồ sơ',
+    // },
     {
       key: '/dashboard/settings',
       icon: <SettingOutlined />,
       label: 'Cài đặt',
     },
+    {
+      key: '/logout',
+      icon: <LogoutOutlined />, // icon logout
+      label: 'Đăng xuất ',
+    }
     
   ];
 
@@ -124,7 +130,7 @@ const Sidebar = () => {
     },
     {
       key: '/logout',
-      icon: <SettingOutlined />, // icon logout tạm thời
+      icon: <LogoutOutlined />, // icon logout
       label: 'Đăng xuất ',
     },
   ];
