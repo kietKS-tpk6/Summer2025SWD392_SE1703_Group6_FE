@@ -88,17 +88,12 @@ const Sidebar = () => {
 
   const menuItemsStudent = [
     {
-      key: '/student',
-      icon: <DashboardOutlined />, // icon dashboard
-      label: 'Về Trang Chủ',
-    },
-    {
       key: '/student/profile',
       icon: <IdcardOutlined />, // icon thẻ ID
       label: 'Thông tin cá nhân',
     },
     {
-      key: '/student/test-event',
+      key: '/student/test-schedule',
       icon: <BarChartOutlined />, // icon sự kiện
       label: 'Lịch kiểm tra',
     },
@@ -121,6 +116,11 @@ const Sidebar = () => {
       key: '/student/studying-class',
       icon: <ApartmentOutlined />, // icon lớp học
       label: 'Lớp đang học',
+    },
+    {
+      key: '/',
+      icon: <DashboardOutlined />, // icon dashboard
+      label: 'Về Trang Chủ',
     },
     {
       key: '/logout',
