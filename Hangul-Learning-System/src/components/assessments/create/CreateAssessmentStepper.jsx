@@ -5,6 +5,7 @@ import CreateAssessmentSection from './CreateAssessmentSection';
 import CreateAssessmentConfirm from './CreateAssessmentConfirm';
 
 
+
 // TODO: tạo SectionQuestionsForm đúng logic mới
 const SectionQuestionsForm = () => <div>SectionQuestionsForm (TODO)</div>;
 
@@ -27,7 +28,7 @@ const CreateAssessmentStepper = ({ formData, setFormData, onFinish, showNotify, 
       ),
     },
     {
-      title: 'Tạo section & nhập câu hỏi',
+      title: 'Tạo Trang & nhập câu hỏi',
       content: (
         <CreateAssessmentSection
           testType={formData.basicInfo?.testType}
@@ -59,7 +60,7 @@ const CreateAssessmentStepper = ({ formData, setFormData, onFinish, showNotify, 
       // Kiểm tra tổng điểm các section phải = 10
       const totalScore = (formData.sections || []).reduce((sum, sec) => sum + (Number(sec?.score) || 0), 0);
       if (totalScore !== 10) {
-        message.error('Tổng điểm các section phải đúng bằng 10!');
+        message.error('Tổng điểm các trang phải đúng bằng 10!');
         return;
       }
       setCurrent(2);

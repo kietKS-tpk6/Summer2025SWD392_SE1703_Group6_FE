@@ -1,22 +1,132 @@
-import React from 'react';
-import { Input, Button, Card, Upload, Radio, Space } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Input, Button, Card, Upload, Radio, Space, message } from 'antd';
 import { PlusOutlined, DeleteOutlined, UploadOutlined } from '@ant-design/icons';
 
-const DEFAULT_ANSWERS = [
-  { text: '', key: 'A' },
-  { text: '', key: 'B' },
-  { text: '', key: 'C' },
-  { text: '', key: 'D' },
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
+const TRUE_FALSE_OPTIONS = [
+  { text: 'True', key: 'A' },
+  { text: 'False', key: 'B' },
 ];
 
 const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score }) => {
+  const [minOptions, setMinOptions] = useState(2);
+  const [maxOptions, setMaxOptions] = useState(10);
+
+  // Lấy min/max từ API khi type là MCQ
+  useEffect(() => {
+    if (type === 'MCQ') {
+      fetch('https://localhost:7201/api/SystemConfig/get-config-by-key/min_mcq_option_per_question')
+        .then(res => res.json())
+        .then(data => {
+          if (data?.data?.value) setMinOptions(Number(data.data.value));
+        });
+      fetch('https://localhost:7201/api/SystemConfig/get-config-by-key/max_mcq_option_per_question')
+        .then(res => res.json())
+        .then(data => {
+          if (data?.data?.value) setMaxOptions(Number(data.data.value));
+        });
+    }
+  }, [type]);
+
+  // Đáp án mặc định khi tạo mới MCQ
+  useEffect(() => {
+    if (type === 'MCQ' && (!questions || questions.length < minOptions)) {
+      const newAnswers = Array.from({ length: minOptions }, (_, i) => ({
+        text: '',
+        key: ALPHABET[i],
+        imageURL: undefined,
+        audioURL: undefined,
+      }));
+      if (!questions || questions.length === 0) {
+        onChange && onChange([
+          {
+            content: '',
+            answers: newAnswers,
+            correct: 0,
+          },
+        ]);
+      } else {
+        // Nếu đã có câu hỏi, cập nhật số đáp án cho từng câu hỏi
+        const newQuestions = questions.map(q => ({
+          ...q,
+          answers:
+            q.answers && q.answers.length >= minOptions
+              ? q.answers
+              : [
+                  ...q.answers,
+                  ...Array.from({ length: minOptions - (q.answers?.length || 0) }, (_, i) => ({
+                    text: '',
+                    key: ALPHABET[(q.answers?.length || 0) + i],
+                    imageURL: undefined,
+                    audioURL: undefined,
+                  })),
+                ],
+        }));
+        onChange && onChange(newQuestions);
+      }
+    }
+  }, [type, minOptions]);
+
+  // Thêm đáp án cho câu hỏi idx
+  const handleAddOption = (qIdx) => {
+    const newQuestions = questions.map((q, i) => {
+      if (i !== qIdx) return q;
+      if (q.answers.length >= maxOptions) {
+        message.warning(`Không được vượt quá ${maxOptions} đáp án!`);
+        return q;
+      }
+      return {
+        ...q,
+        answers: [
+          ...q.answers,
+          {
+            text: '',
+            key: ALPHABET[q.answers.length],
+            imageURL: undefined,
+            audioURL: undefined,
+          },
+        ],
+      };
+    });
+    onChange && onChange(newQuestions);
+  };
+
+  // Xóa đáp án cho câu hỏi idx, đáp án aIdx
+  const handleRemoveOption = (qIdx, aIdx) => {
+    const newQuestions = questions.map((q, i) => {
+      if (i !== qIdx) return q;
+      if (q.answers.length <= minOptions) {
+        message.warning(`Phải có ít nhất ${minOptions} đáp án!`);
+        return q;
+      }
+      let newAnswers = q.answers.filter((_, j) => j !== aIdx);
+      // Cập nhật lại key cho các đáp án còn lại
+      newAnswers = newAnswers.map((a, idx) => ({
+        ...a,
+        key: ALPHABET[idx],
+      }));
+      // Nếu đáp án đúng bị xóa, reset correct về 0
+      let newCorrect = q.correct;
+      if (q.correct === aIdx) newCorrect = 0;
+      else if (q.correct > aIdx) newCorrect = q.correct - 1;
+      return { ...q, answers: newAnswers, correct: newCorrect };
+    });
+    onChange && onChange(newQuestions);
+  };
+
   // Thêm câu hỏi mới
   const handleAddQuestion = () => {
     const newQuestions = [
       type === 'MCQ'
         ? {
             content: '',
-            answers: DEFAULT_ANSWERS.map(a => ({ ...a })),
+            answers: Array.from({ length: minOptions }, (_, i) => ({
+              text: '',
+              key: ALPHABET[i],
+              imageURL: undefined,
+              audioURL: undefined,
+            })),
             correct: 0,
           }
         : { content: '' },
@@ -73,6 +183,42 @@ const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score }) => {
     onChange && onChange(newQuestions);
   };
 
+  // Upload ảnh/audio cho từng đáp án (MCQ)
+  const handleAnswerUpload = (qIdx, aIdx, file, type) => {
+    const newQuestions = questions.map((q, i) => {
+      if (i !== qIdx) return q;
+      const newAnswers = q.answers.map((a, j) => {
+        if (j !== aIdx) return a;
+        if (type === 'image') {
+          return { ...a, imageURL: file.name, audioURL: undefined };
+        } else if (type === 'audio') {
+          return { ...a, audioURL: file.name, imageURL: undefined };
+        }
+        return a;
+      });
+      return { ...q, answers: newAnswers };
+    });
+    onChange && onChange(newQuestions);
+  };
+
+  // Xóa file ảnh/audio của đáp án
+  const handleRemoveAnswerFile = (qIdx, aIdx, type) => {
+    const newQuestions = questions.map((q, i) => {
+      if (i !== qIdx) return q;
+      const newAnswers = q.answers.map((a, j) => {
+        if (j !== aIdx) return a;
+        if (type === 'image') {
+          return { ...a, imageURL: undefined };
+        } else if (type === 'audio') {
+          return { ...a, audioURL: undefined };
+        }
+        return a;
+      });
+      return { ...q, answers: newAnswers };
+    });
+    onChange && onChange(newQuestions);
+  };
+
   // Tính điểm mỗi câu
   const perQuestionScore =
     questions.length > 0 && score
@@ -81,13 +227,21 @@ const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score }) => {
 
   return (
     <div>
+      <Button
+        type="dashed"
+        icon={<PlusOutlined />} 
+        onClick={handleAddQuestion}
+        style={{ width: '100%', marginBottom: 24, height: 48, fontSize: 18 }}
+      >
+        Thêm câu hỏi
+      </Button>
       {questions.map((q, idx) => (
         <Card
           key={idx}
           style={{ marginBottom: 24 }}
           title={
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span>{`Câu ${idx + 1}:`}</span>
+              <span>{`Câu ${questions.length - idx}:`}</span>
               <span style={{ color: '#888', fontSize: 14 }}>
                 Điểm: {perQuestionScore || '0'}
               </span>
@@ -141,11 +295,7 @@ const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score }) => {
             <>
               <div style={{ marginBottom: 8, fontWeight: 500 }}>
                 Đáp án (chọn đáp án đúng):
-                {perQuestionScore && (
-                  <span style={{ float: 'right', color: '#888' }}>
-                    Điểm mỗi câu: {perQuestionScore}
-                  </span>
-                )}
+
               </div>
               <Radio.Group
                 value={q.correct}
@@ -162,6 +312,75 @@ const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score }) => {
                         onChange={e => handleAnswerChange(idx, aIdx, e.target.value)}
                         style={{ flex: 1 }}
                       />
+                      {/* Upload ảnh/audio cho đáp án */}
+                      <Upload
+                        customRequest={e => handleAnswerUpload(idx, aIdx, e.file, 'image')}
+                        showUploadList={false}
+                        accept="image/*"
+                        disabled={!!a.audioURL}
+                      >
+                        <Button icon={<UploadOutlined />} disabled={!!a.audioURL} size="small">
+                          {a.imageURL ? 'Đổi ảnh' : 'Ảnh'}
+                        </Button>
+                      </Upload>
+                      {a.imageURL && (
+                        <>
+                          <span style={{ color: '#1890ff', fontSize: 12 }}>{a.imageURL}</span>
+                          <Button type="link" size="small" onClick={() => handleRemoveAnswerFile(idx, aIdx, 'image')}>X</Button>
+                        </>
+                      )}
+                      <Upload
+                        customRequest={e => handleAnswerUpload(idx, aIdx, e.file, 'audio')}
+                        showUploadList={false}
+                        accept="audio/*"
+                        disabled={!!a.imageURL}
+                      >
+                        <Button icon={<UploadOutlined />} disabled={!!a.imageURL} size="small">
+                          {a.audioURL ? 'Đổi audio' : 'Audio'}
+                        </Button>
+                      </Upload>
+                      {a.audioURL && (
+                        <>
+                          <span style={{ color: '#1890ff', fontSize: 12 }}>{a.audioURL}</span>
+                          <Button type="link" size="small" onClick={() => handleRemoveAnswerFile(idx, aIdx, 'audio')}>X</Button>
+                        </>
+                      )}
+                      {/* Nút xóa đáp án */}
+                      {q.answers.length > minOptions && (
+                        <Button danger size="small" icon={<DeleteOutlined />} onClick={() => handleRemoveOption(idx, aIdx)} />
+                      )}
+                    </div>
+                  ))}
+                  {/* Nút thêm đáp án */}
+                  {q.answers.length < maxOptions && (
+                    <Button type="dashed" icon={<PlusOutlined />} size="small" onClick={() => handleAddOption(idx)}>
+                      Thêm đáp án
+                    </Button>
+                  )}
+                </Space>
+              </Radio.Group>
+            </>
+          )}
+          {type === 'TrueFalse' && (
+            <>
+              <div style={{ marginBottom: 8, fontWeight: 500 }}>
+                Đáp án (chọn đáp án đúng):
+                {perQuestionScore && (
+                  <span style={{ float: 'right', color: '#888' }}>
+                    Điểm mỗi câu: {perQuestionScore}
+                  </span>
+                )}
+              </div>
+              <Radio.Group
+                value={q.correct}
+                onChange={e => handleCorrectChange(idx, e.target.value)}
+                style={{ width: '100%' }}
+              >
+                <Space direction="vertical" style={{ width: '100%' }}>
+                  {TRUE_FALSE_OPTIONS.map((a, aIdx) => (
+                    <div key={a.key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Radio value={aIdx} />
+                      <Input value={a.text} disabled style={{ flex: 1 }} />
                     </div>
                   ))}
                 </Space>
@@ -175,15 +394,6 @@ const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score }) => {
           Chưa có câu hỏi nào. Nhấn <b>Thêm câu hỏi</b> để bắt đầu.
         </div>
       )}
-      {/* Nút + lớn để thêm câu hỏi (đưa xuống dưới) */}
-      <Button
-        type="dashed"
-        icon={<PlusOutlined />}
-        onClick={handleAddQuestion}
-        style={{ width: '100%', marginTop: 24, height: 48, fontSize: 18 }}
-      >
-        Thêm câu hỏi
-      </Button>
     </div>
   );
 };

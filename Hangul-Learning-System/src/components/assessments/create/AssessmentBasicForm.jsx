@@ -3,17 +3,23 @@ import { Form, Input, Select } from 'antd';
 
 const { Option } = Select;
 
-const TEST_TYPE_OPTIONS = [
-  { value: 'MCQ', label: 'MCQs' },
-  { value: 'Writing', label: 'Writing' },
-  { value: 'Mix', label: 'Mix' },
+// Enum cho nội dung kiểm tra
+const TEST_CONTENT_OPTIONS = [
+  { value: 'Vocabulary', label: 'Từ vựng' }, // 1
+  { value: 'Grammar', label: 'Ngữ pháp' },   // 2
+  { value: 'Listening', label: 'Nghe hiểu' }, // 3
+  { value: 'Reading', label: 'Đọc hiểu' },   // 4
+  { value: 'Writing', label: 'Viết' },       // 5
+  { value: 'Mix', label: 'Tổng hợp' },       // 6
+  { value: 'MCQ', label: 'Trắc nghiệm' },    // 7
+  { value: 'Other', label: 'Khác' },         // 8
 ];
 
 // Mapping enum value to label
 const CATEGORY_LABELS = {
-  Quiz: 'Kiểm tra 15 phút',
-  Midterm: 'Thi giữa kì',
-  Final: 'Thi cuối kì',
+  Quiz: 'Đề kiểm tra đánh giá',
+  Midterm: 'Đề thi giữa kì',
+  Final: 'Đề thi cuối kì',
 };
 
 const ALLOWED_CATEGORIES = ['Quiz', 'Midterm', 'Final'];
@@ -70,14 +76,14 @@ const AssessmentBasicForm = React.forwardRef(({ subjects = [], formData = {}, on
       >
         <Input placeholder="Nhập tên bài kiểm tra" />
       </Form.Item>
-      {/* Loại bài kiểm tra */}
+      {/* Nội dung kiểm tra */}
       <Form.Item
-        label="Loại bài kiểm tra"
+        label="Nội dung kiểm tra"
         name="testType"
-        rules={[{ required: true, message: 'Vui lòng chọn loại bài kiểm tra' }]}
+        rules={[{ required: true, message: 'Vui lòng chọn nội dung kiểm tra' }]}
       >
-        <Select placeholder="Chọn loại bài kiểm tra">
-          {TEST_TYPE_OPTIONS.map(opt => (
+        <Select placeholder="Chọn nội dung kiểm tra">
+          {TEST_CONTENT_OPTIONS.map(opt => (
             <Option key={opt.value} value={opt.value}>{opt.label}</Option>
           ))}
         </Select>
