@@ -4,6 +4,7 @@ import StudentListSection from './StudentListSection';
 import MonthlyTimetableSection from './MonthlyTimetableSection';
 import { useLocation } from 'react-router-dom';
 import LessonDetailModal from './lesson/LessonDetailModal';
+import PendingAssessmentCardList from './PendingAssessmentCardList';
 
 const ClassDetail = (props) => {
   const location = useLocation();
@@ -30,6 +31,9 @@ const ClassDetail = (props) => {
       </div>
       <div style={{ marginBottom: 24 }}>
         <StudentListSection classId={classId} />
+      </div>
+      <div style={{ marginBottom: 24 }}>
+        <PendingAssessmentCardList />
       </div>
       <div>
         <MonthlyTimetableSection classId={classId} reload={reloadTimetable} onLessonClick={handleOpenLessonDetail} />
