@@ -75,12 +75,12 @@ const AssessmentCriteria = ({
     //   width: 150,
     //   render: (testType) => TestTypeEnum[testType] || testType
     // },
-    {
-      title: 'Điểm đạt tối thiểu',
-      dataIndex: 'minPassingScore',
-      key: 'minPassingScore',
-      width: 150,
-    },
+    // {
+    //   title: 'Điểm đạt tối thiểu',
+    //   dataIndex: 'minPassingScore',
+    //   key: 'minPassingScore',
+    //   width: 150,
+    // },
     {
       title: 'Thao tác',
       key: 'action',

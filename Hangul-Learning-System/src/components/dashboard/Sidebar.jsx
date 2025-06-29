@@ -11,6 +11,7 @@ import {
   CalendarOutlined,
   IdcardOutlined,
   SettingOutlined,
+  LogoutOutlined,
 } from '@ant-design/icons';
 import logo from '../../../public/images/logoB.png'
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -55,51 +56,56 @@ const Sidebar = () => {
       label: 'Quản lí lớp học',
     },
     {
-      key: '/dashboard/blog',
-      icon: <ReadOutlined />, // icon đọc bài viết
-      label: 'Quản lí Blog',
+      key: '/dashboard/assessment',
+      icon: <BarChartOutlined />, // icon bài kiểm tra
+      label: 'Quản lí bài kiểm tra',
     },
+    // {
+    //   key: '/dashboard/blog',
+    //   icon: <ReadOutlined />, // icon đọc bài viết
+    //   label: 'Quản lí Blog',
+    // },
     {
       key: '/dashboard/analytics',
       icon: <BarChartOutlined />,
       label: 'Phân tích & Đánh giá',
     },
-    {
-      key: '/dashboard/chat',
-      icon: <CommentOutlined />, // icon tin nhắn
-      label: 'Chat',
-    },
-    {
-      key: '/dashboard/schedule',
-      icon: <CalendarOutlined />,
-      label: 'Lịch học',
-    },
-    {
-      key: '/dashboard/profile',
-      icon: <IdcardOutlined />, // icon thẻ ID
-      label: 'Hồ sơ',
-    },
+    // {
+    //   key: '/dashboard/chat',
+    //   icon: <CommentOutlined />, // icon tin nhắn
+    //   label: 'Chat',
+    // },
+    // {
+    //   key: '/dashboard/schedule',
+    //   icon: <CalendarOutlined />,
+    //   label: 'Lịch học',
+    // },
+    // {
+    //   key: '/dashboard/profile',
+    //   icon: <IdcardOutlined />, // icon thẻ ID
+    //   label: 'Hồ sơ',
+    // },
     {
       key: '/dashboard/settings',
       icon: <SettingOutlined />,
       label: 'Cài đặt',
     },
+    {
+      key: '/logout',
+      icon: <LogoutOutlined />, // icon logout
+      label: 'Đăng xuất ',
+    }
     
   ];
 
   const menuItemsStudent = [
-    {
-      key: '/student',
-      icon: <DashboardOutlined />, // icon dashboard
-      label: 'Về Trang Chủ',
-    },
     {
       key: '/student/profile',
       icon: <IdcardOutlined />, // icon thẻ ID
       label: 'Thông tin cá nhân',
     },
     {
-      key: '/student/test-event',
+      key: '/student/test-schedule',
       icon: <BarChartOutlined />, // icon sự kiện
       label: 'Lịch kiểm tra',
     },
@@ -124,8 +130,13 @@ const Sidebar = () => {
       label: 'Lớp đang học',
     },
     {
+      key: '/',
+      icon: <DashboardOutlined />, // icon dashboard
+      label: 'Về Trang Chủ',
+    },
+    {
       key: '/logout',
-      icon: <SettingOutlined />, // icon logout tạm thời
+      icon: <LogoutOutlined />, // icon logout
       label: 'Đăng xuất ',
     },
   ];

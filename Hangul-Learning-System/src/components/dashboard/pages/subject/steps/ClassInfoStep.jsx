@@ -74,6 +74,25 @@ const ClassInfoStep = ({ classSlots, editingSlot, setEditingSlot, handleEditSlot
         ),
     },
     {
+      title: 'Nội dung',
+      dataIndex: 'content',
+      key: 'content',
+      render: (text, record) =>
+        editingSlot?.slot === record.slot ? (
+          <Form form={editForm} component={false}>
+            <Form.Item
+              name="content"
+              style={{ margin: 0 }}
+              rules={[{ required: true, message: 'Vui lòng nhập nội dung' }]}
+            >
+              <Input />
+            </Form.Item>
+          </Form>
+        ) : (
+          text
+        ),
+    },
+    {
       title: 'Thời lượng (phút)',
       dataIndex: 'durationMinutes',
       key: 'durationMinutes',

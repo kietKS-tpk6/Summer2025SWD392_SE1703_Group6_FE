@@ -8,7 +8,7 @@ import dayjs from 'dayjs';
 const classStatusMap = {
   0: { text: 'Chưa công khai', color: 'default' },
   1: { text: 'Đang tuyển sinh', color: 'blue' },
-  2: { text: 'Đang dạy', color: 'green' },
+  2: { text: 'Đang hoạt động', color: 'green' },
   3: { text: 'Hoàn thành', color: 'gold' },
   4: { text: 'Không hoạt động', color: 'red' },
   5: { text: 'Lớp bị hủy vì không đủ sĩ số', color: 'red'},
@@ -105,7 +105,7 @@ export function getClassesTableColumns(statusFilter, handlers) {
     render: (_, record) => {
       const { status } = record;
       const actions = [];
-      if (statusFilter === 'all' || status === 0 || status === 1) {
+      if (statusFilter === 'all' || status === 0 || status === 1 || status === 5) {
         actions.push(
           <Button
             type="primary"
@@ -118,7 +118,7 @@ export function getClassesTableColumns(statusFilter, handlers) {
           </Button>
         );
       }
-      if ((statusFilter === 'all' || status === 0 || status === 1) && status !== 2 && status !== 3 && status !== 4) {
+      if ((statusFilter === 'all' || status === 0 || status === 1 || status === 5) && status !== 2 && status !== 3 && status !== 4) {
         actions.push(
           <Button
             type="primary"
@@ -169,7 +169,7 @@ export function getClassesTableColumns(statusFilter, handlers) {
           </Button>
         );
       }
-      if ((status === 2 || status === 3 || status === 4) && statusFilter !== 'all') {
+      if ((status === 2 || status === 3 || status === 4 || status === 5) && statusFilter !== 'all') {
         actions.length = 0;
         actions.push(
           <Button

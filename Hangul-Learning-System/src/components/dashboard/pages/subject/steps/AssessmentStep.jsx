@@ -132,19 +132,6 @@ const AssessmentStep = ({ form, configuration }) => {
                     </Form.Item>
                   </Col>
 
-                  <Col xs={24} sm={4} md={3}>
-                    <Form.Item
-                      {...restField}
-                      name={[name, 'minPassingScore']}
-                      rules={[
-                        { required: true, message: 'Nhập điểm đạt tối thiểu' },
-                        { type: 'number', min: 0, max: 10, message: 'Điểm từ 0 đến 10' }
-                      ]}
-                    >
-                      <InputNumber min={0} max={10} step={0.1} style={{ width: '100%' }} placeholder="Điểm đạt" />
-                    </Form.Item>
-                  </Col>
-
                   <Col>
                     <Button type="link" danger onClick={() => remove(name)}>
                       Xóa

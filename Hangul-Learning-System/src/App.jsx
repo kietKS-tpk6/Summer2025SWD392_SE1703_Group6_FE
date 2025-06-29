@@ -39,8 +39,13 @@ import LessonDetailPage from './components/classes/detail/lesson/LessonDetailPag
 import AttendancePage from './components/classes/attendance/AttendancePage';
 import CheckAttendancePage from './components/classes/attendance/CheckAttendancePage';
 import TeachingSchedule from './components/dashboard/pages/TeachingSchedule';
+import StudentTestSchedule from './pages/student-portal/StudentTestSchedule';
+import ViewTest from './pages/student-portal/ViewTest';
+import TakeTest from './pages/student-portal/TakeTest';
+import TestResult from './pages/student-portal/TestResult';
 import './App.css';
 import 'antd/dist/reset.css';
+import ProtectedRoute from './components/common/ProtectedRoute';
 
 const { Content } = Layout;
 
@@ -92,6 +97,7 @@ const publicRoutes = [
       { path: '/payment-success', element: <PaymentSuccess/>},
       { path: '/payment-failed', element: <PaymentFailed/>},
       { path: '/payment/:classId', element: <PaymentForm /> },
+      { path: '/class-detail/:id', element: <ViewClassDetail/>},
       // { path: 'about', element: <About /> },
       // { path: 'courses', element: <Courses /> },
       // { path: 'contact', element: <Contact /> },
@@ -103,14 +109,21 @@ const publicRoutes = [
 
 // Student routes configuration
 const studentRoutes = [
-  { path: '/', element: <StudentPage /> },
+  { path: '/  ', element: <StudentPage /> },
   { path: '/profile', element: <StudentDetail/> },
   { path: '/schedule', element: <WeeklyTimeTable/> }, 
   { path: '/payment-success', element: <PaymentSuccess/>},
   { path: '/payment-failed', element: <PaymentFailed/>},
   { path: '/payment/:classId', element: <PaymentForm /> },
   { path: '/class-detail/:id', element: <ViewClassDetail/>},
-  { path: '/lesson-detail' , element: <LessonDetailPage/>}
+  { path: '/lesson-detail' , element: <LessonDetailPage/>},
+  { path: '/test-schedule', element: <StudentTestSchedule /> },
+  { path: '/view-test/:testId', element: <ViewTest /> },
+  { path: '/take-test/:testId', element: <TakeTest /> },
+  { path: '/test-result/:testId', element: <TestResult /> },
+  { path: '/lesson-detail' , element: <LessonDetailPage/>},
+ 
+
 
   //{ path: '/weekly-time-table', element: <WeeklyTimeTable/>},
 ];
@@ -123,18 +136,20 @@ const App = () => {
         <Route
           path="/dashboard/*"
           element={
-            <Layout style={{ minHeight: '100vh' }}>
-              <Sidebar />
-              <Layout>
-                <Content style={{ margin: '16px', padding: '24px', background: '#fff', borderRadius: '30px' }}>
-                  <Routes>
-                    {dashboardRoutes.map((route) => (
-                      <Route key={route.path} path={route.path} element={route.element} />
-                    ))}
-                  </Routes>
-                </Content>
+            <ProtectedRoute allowedRoles={['Manager']}>
+              <Layout style={{ minHeight: '100vh' }}>
+                <Sidebar />
+                <Layout>
+                  <Content style={{ margin: '16px', padding: '24px', background: '#fff', borderRadius: '30px' }}>
+                    <Routes>
+                      {dashboardRoutes.map((route) => (
+                        <Route key={route.path} path={route.path} element={route.element} />
+                      ))}
+                    </Routes>
+                  </Content>
+                </Layout>
               </Layout>
-            </Layout>
+            </ProtectedRoute>
           }
         />
 
@@ -142,18 +157,20 @@ const App = () => {
         <Route
           path="/lecturer/*"
           element={
-            <Layout style={{ minHeight: '100vh' }}>
-              <LecturerSidebar />
-              <Layout>
-                <Content style={{ margin: '16px', padding: '24px', background: '#fff', borderRadius: '30px' }}>
-                  <Routes>
-                    {lecturerRoutes.map((route) => (
-                      <Route key={route.path} path={route.path} element={route.element} />
-                    ))}
-                  </Routes>
-                </Content>
+            <ProtectedRoute allowedRoles={['Lecture']}>
+              <Layout style={{ minHeight: '100vh' }}>
+                <LecturerSidebar />
+                <Layout>
+                  <Content style={{ margin: '16px', padding: '24px', background: '#fff', borderRadius: '30px' }}>
+                    <Routes>
+                      {lecturerRoutes.map((route) => (
+                        <Route key={route.path} path={route.path} element={route.element} />
+                      ))}
+                    </Routes>
+                  </Content>
+                </Layout>
               </Layout>
-            </Layout>
+            </ProtectedRoute>
           }
         />
 
@@ -170,18 +187,20 @@ const App = () => {
         <Route
           path="/student/*"
           element={
-            <Layout style={{ minHeight: '100vh' }}>
-              <Sidebar />
-              <Layout>
-                <Content style={{ margin: '16px', padding: '24px', background: '#fff', borderRadius: '30px' }}>
-                  <Routes>
-                    {studentRoutes.map((route) => (
-                      <Route key={route.path} path={route.path} element={route.element} />
-                    ))}
-                  </Routes>
-                </Content>
+            <ProtectedRoute allowedRoles={['Student']}>
+              <Layout style={{ minHeight: '100vh' }}>
+                <Sidebar />
+                <Layout>
+                  <Content style={{ margin: '16px', padding: '24px', background: '#fff', borderRadius: '30px' }}>
+                    <Routes>
+                      {studentRoutes.map((route) => (
+                        <Route key={route.path} path={route.path} element={route.element} />
+                      ))}
+                    </Routes>
+                  </Content>
+                </Layout>
               </Layout>
-            </Layout>
+            </ProtectedRoute>
           } 
         />
 

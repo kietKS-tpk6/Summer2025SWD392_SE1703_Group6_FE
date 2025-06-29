@@ -9,10 +9,11 @@ import {
   CommentOutlined,
   IdcardOutlined,
   SettingOutlined,
+  LogoutOutlined,
 } from '@ant-design/icons';
 import logo from '../../../public/images/logoB.png'
 import { useNavigate, useLocation } from 'react-router-dom';
-import { getUser } from '../../utils/auth';
+import { getUser, logout } from '../../utils/auth';
 
 const { Sider } = Layout;
 
@@ -27,31 +28,31 @@ const LecturerSidebar = () => {
       icon: <DashboardOutlined />,
       label: 'Bảng điều khiển',
     },
-    {
-      key: '/lecturer/courses',
-      icon: <BookOutlined />,
-      label: 'Khóa học của tôi',
-    },
+    // {
+    //   key: '/lecturer/courses',
+    //   icon: <BookOutlined />,
+    //   label: 'Khóa học của tôi',
+    // },
     {
       key: '/lecturer/schedule',
       icon: <CalendarOutlined />,
       label: 'Lịch giảng dạy',
     },
-    {
-      key: '/lecturer/assignments',
-      icon: <FileTextOutlined />,
-      label: 'Bài tập',
-    },
+    // {
+    //   key: '/lecturer/assignments',
+    //   icon: <FileTextOutlined />,
+    //   label: 'Bài tập',
+    // },
     {
       key: '/lecturer/students',
       icon: <TeamOutlined />,
       label: 'Học viên',
     },
-    {
-      key: '/lecturer/messages',
-      icon: <CommentOutlined />,
-      label: 'Tin nhắn',
-    },
+    // {
+    //   key: '/lecturer/messages',
+    //   icon: <CommentOutlined />,
+    //   label: 'Tin nhắn',
+    // },
     {
       key: '/lecturer/profile',
       icon: <IdcardOutlined />,
@@ -62,11 +63,24 @@ const LecturerSidebar = () => {
       icon: <SettingOutlined />,
       label: 'Cài đặt',
     },
+    {
+      key: '/logout',
+      icon: <LogoutOutlined />, // icon logout
+      label: 'Đăng xuất ',
+    }
   ];
 
   const handleMenuClick = ({ key }) => {
+    if (key === '/logout') {
+      logout();
+      navigate('/login');
+      return;
+    }
     navigate(key);
   };
+  
+
+  
 
   return (
     <Sider
