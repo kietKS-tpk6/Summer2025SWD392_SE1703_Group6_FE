@@ -106,6 +106,8 @@ export const endpoints = {
 
   systemConfig: {
     getConfigByKey: 'api/SystemConfig/get-config-by-key/',
+    update: 'api/SystemConfig/update-config',
+    getAll: 'api/SystemConfig/get-all-config',
   },
 
   payment: {
