@@ -116,8 +116,8 @@ const studentRoutes = [
   { path: '/class-detail/:id', element: <ViewClassDetail/>},
   { path: '/lesson-detail' , element: <LessonDetailPage/>},
   { path: '/test-schedule', element: <StudentTestSchedule /> },
-  { path: '/view-test/:testId', element: <ViewTest /> },
-  { path: '/take-test/:testId', element: <TakeTest /> },
+  { path: '/view-test/:testEventID', element: <ViewTest /> },
+  { path: '/take-test/:testEventID', element: <TakeTest /> },
   { path: '/test-result/:testId', element: <TestResult /> },
   //{ path: '/weekly-time-table', element: <WeeklyTimeTable/>},
 ];

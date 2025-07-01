@@ -174,6 +174,7 @@ export const endpoints = {
     configure: 'api/TestEvent/configure',
     updateStatus: 'api/TestEvent/update-status',
     deleteByClassId: 'api/TestEvent/delete-by-class-id/{classId}',
+    getById: 'api/TestEvent/get-by-id/{testEventID}',
     getByClassId: 'api/TestEvent/get-by-class-id/{classId}',
     getByStudentId: 'api/TestEvent/get-by-student-id/{studentId}',
     getAssignment: 'api/TestEvent/{testEventID}/assignment/',

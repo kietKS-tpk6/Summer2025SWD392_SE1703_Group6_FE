@@ -66,8 +66,11 @@ const StudentTestSchedule = () => {
     fetchData();
   }, []);
 
-  const handleViewTest = (testId) => {
-    navigate(`/student/view-test/${testId}`);
+  const handleViewTest = (testEventID, testId) => {
+    if (testId) {
+      localStorage.setItem('currentTestId', testId);
+    }
+    navigate(`/student/view-test/${testEventID}`);
   };
 
   const columns = [
@@ -77,8 +80,8 @@ const StudentTestSchedule = () => {
       key: 'testName',
       render: (text, record) => (
         <Button 
-          type="link" 
-          onClick={() => handleViewTest(record.testId)}
+          type="link"
+          onClick={() => handleViewTest(record.testEventID, record.testId)}
           style={{ padding: 0, height: 'auto', fontWeight: 500 }}
         >
           {text}
@@ -125,7 +128,7 @@ const StudentTestSchedule = () => {
           type="primary" 
           size="small" 
           icon={<EyeOutlined />}
-          onClick={() => handleViewTest(record.testId)}
+          onClick={() => handleViewTest(record.testEventID, record.testId)}
         >
           Xem chi tiết
         </Button>
