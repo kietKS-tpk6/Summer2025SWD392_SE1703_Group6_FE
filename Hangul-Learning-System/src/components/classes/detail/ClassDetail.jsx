@@ -24,19 +24,23 @@ const ClassDetail = (props) => {
   };
 
   return (
-    <div style={{ padding: 24 }}>
-      <h1>Chi tiết lớp học</h1>
-      <div style={{ marginBottom: 24 }}>
-        <BasicInfoSection classId={classId} />
+    <div style={{ display: 'flex', padding: 24, gap: 24, alignItems: 'flex-start' }}>
+      {/* Main content */}
+      <div style={{ flex: 1 }}>
+        <h1>Chi tiết lớp học</h1>
+        <div style={{ marginBottom: 24 }}>
+          <BasicInfoSection classId={classId} />
+        </div>
+        <div style={{ marginBottom: 24 }}>
+          <StudentListSection classId={classId} />
+        </div>
+        <div>
+          <MonthlyTimetableSection classId={classId} reload={reloadTimetable} onLessonClick={handleOpenLessonDetail} />
+        </div>
       </div>
-      <div style={{ marginBottom: 24 }}>
-        <StudentListSection classId={classId} />
-      </div>
-      <div style={{ marginBottom: 24 }}>
+      {/* Sidebar */}
+      <div style={{ width: 340, minWidth: 260 }}>
         <PendingAssessmentCardList />
-      </div>
-      <div>
-        <MonthlyTimetableSection classId={classId} reload={reloadTimetable} onLessonClick={handleOpenLessonDetail} />
       </div>
       <LessonDetailModal
         open={modalOpen}

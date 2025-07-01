@@ -1,6 +1,7 @@
 import React from 'react';
 import { Row, Col, Card, Statistic } from 'antd';
 import { UserOutlined, TeamOutlined, BookOutlined, MessageOutlined } from '@ant-design/icons';
+import SystemConfig from './SystemConfig';
 
 const Dashboard = () => {
   return (
