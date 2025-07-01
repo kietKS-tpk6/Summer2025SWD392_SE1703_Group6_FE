@@ -31,12 +31,12 @@ export function getAssessmentsTableColumns(handlers) {
   };
   return [
     {
-      title: 'Mã bài kiểm tra',
+      title: 'Mã đề kiểm tra',
       dataIndex: 'TestID',
       key: 'TestID',
     },
     {
-      title: 'Tên bài kiểm tra',
+      title: 'Tên đề kiểm tra',
       dataIndex: 'TestName',
       key: 'TestName',
     },
@@ -62,7 +62,7 @@ export function getAssessmentsTableColumns(handlers) {
       },
     },
     {
-      title: 'Loại bài kiểm tra',
+      title: 'Loại đề kiểm tra',
       dataIndex: 'TestType',
       key: 'TestType',
       render: (type) => testTypeMap[type] || type,
@@ -92,42 +92,6 @@ export function getAssessmentsTableColumns(handlers) {
   ];
 }
 
-// Dữ liệu mẫu
-const sampleAssessments = [
-  {
-    TestID: 'T0001',
-    TestName: 'Kiểm tra cuối kỳ',
-    SubjectID: 'SJ0001',
-    CreateBy: 'A00000',
-    CreateAt: '2025-06-20T00:53:26.283Z',
-    UpdateAt: null,
-    Status: 'Drafted',
-    TestType: 'Mix',
-    Category: 'Final',
-  },
-  {
-    TestID: 'T0002',
-    TestName: 'Bài kiểm tra giữa kỳ',
-    SubjectID: 'SJ0002',
-    CreateBy: 'A00001',
-    CreateAt: '2025-06-10T10:00:00.000Z',
-    UpdateAt: '2025-06-15T12:00:00.000Z',
-    Status: 'Actived',
-    TestType: 'MCQ',
-    Category: 'Midterm',
-  },
-  {
-    TestID: 'T0003',
-    TestName: 'Bài kiểm tra viết',
-    SubjectID: 'SJ0003',
-    CreateBy: 'A00002',
-    CreateAt: '2025-05-01T08:30:00.000Z',
-    UpdateAt: null,
-    Status: 'Pending',
-    TestType: 'Writing',
-    Category: 'Other',
-  },
-];
 
 // Component Table hiển thị dữ liệu mẫu
 export default function AssessmentsTable() {

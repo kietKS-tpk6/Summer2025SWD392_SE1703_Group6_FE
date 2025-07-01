@@ -45,6 +45,12 @@ const Sidebar = () => {
       label: 'Quản lí môn học',
     },
     {
+      key: '/dashboard/assessment',
+      icon: <BarChartOutlined />, // icon bài kiểm tra
+      label: 'Quản lí đề kiểm tra',
+    },
+
+    {
       key: '/dashboard/class',
       icon: <ApartmentOutlined />, // icon sơ đồ lớp/phòng
       label: 'Quản lí lớp học',
