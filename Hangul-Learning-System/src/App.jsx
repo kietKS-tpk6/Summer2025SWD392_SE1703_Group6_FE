@@ -20,7 +20,7 @@ import HomeContent from './components/Homepage/Content';
 import ViewClassDetail from './pages/student-portal/ViewClassDetail';
 import WeeklyTimeTable from './pages/student-portal/WeeklyTimeTable';
 import StudentDetail from './pages/student-portal/StudentDetail';
-import AssessmentManagement from './components/assessments/Assessments'; 
+import AssessmentManagement from './components/assessments/Assessments';
 import ViewDetailAssessment from './components/assessments/ViewDetailAssessment';
 
 // import About from './pages/viewer-portal/About';
@@ -84,6 +84,7 @@ const lecturerRoutes = [
   { path: '/lesson-detail' , element: <LessonDetailPage/>},
   { path: '/attendance', element: <AttendancePage/>},
   { path: '/check-attendance', element: <CheckAttendancePage /> },
+  { path: '/assessment', element: <AssessmentManagement /> },
 ];
 
 // Public routes configuration

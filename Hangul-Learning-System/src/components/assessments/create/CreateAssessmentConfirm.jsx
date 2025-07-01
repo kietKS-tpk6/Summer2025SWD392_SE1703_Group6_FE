@@ -36,7 +36,14 @@ const CreateAssessmentConfirm = ({ basicInfo, sections }) => {
                     style={{ width: '100%' }}
                     size="small"
                   >
-                    <div><b>Nội dung:</b> {q.content}</div>
+                    <div><b>Nội dung:</b> {q.content}
+                      {(q.previewImage || q.imageURL) && (
+                        <img src={q.previewImage || q.imageURL} alt="img" style={{ maxWidth: 120, marginLeft: 8, verticalAlign: 'middle' }} />
+                      )}
+                      {(q.previewAudio || q.audioURL) && (
+                        <audio src={q.previewAudio || q.audioURL} controls style={{ marginLeft: 8, verticalAlign: 'middle' }} />
+                      )}
+                    </div>
                     {section.type === 'MCQ' && (
                       <>
                         <div>
@@ -45,6 +52,12 @@ const CreateAssessmentConfirm = ({ basicInfo, sections }) => {
                             {q.answers?.map((a, aIdx) => (
                               <li key={a.key}>
                                 {String.fromCharCode(65 + aIdx)}. {a.text}
+                                {(a.previewImage || a.imageURL) && (
+                                  <img src={a.previewImage || a.imageURL} alt="img" style={{ maxWidth: 80, marginLeft: 8, verticalAlign: 'middle' }} />
+                                )}
+                                {(a.previewAudio || a.audioURL) && (
+                                  <audio src={a.previewAudio || a.audioURL} controls style={{ marginLeft: 8, verticalAlign: 'middle' }} />
+                                )}
                                 {q.correct === aIdx && <b style={{ color: 'green' }}> (Đúng)</b>}
                               </li>
                             ))}

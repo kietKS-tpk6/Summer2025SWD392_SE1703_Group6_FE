@@ -21,6 +21,17 @@ const ViewDetailAssessment = ({ testID: propTestID }) => {
   const [sections, setSections] = useState([]);
   const navigate = useNavigate();
   const [approving, setApproving] = useState(false);
+  const [testStatus, setTestStatus] = useState();
+  let userRole = null;
+  try {
+    const user = JSON.parse(localStorage.getItem('user'));
+    userRole = user && user.role;
+  } catch (e) {
+    userRole = null;
+  }
+  const isManager = userRole === 'Manager';
+  const isLecturer = userRole === 'Lecture';
+  const isStudent = userRole === 'Student';
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -29,6 +40,13 @@ const ViewDetailAssessment = ({ testID: propTestID }) => {
       try {
         const res = await axios.get(`${API_URL}api/Questions/by-test/${testID}`);
         setSections(res.data || []);
+        console.log(res.data);
+        // Lấy status từ section đầu tiên (giả sử backend trả về status ở đây)
+        if (res.data && res.data[0] && res.data[0].testStatus !== undefined) {
+          setTestStatus(res.data[0].testStatus);
+        } else if (res.data && res.data[0] && res.data[0].status !== undefined) {
+          setTestStatus(res.data[0].status);
+        }
       } catch (e) {
         setError('Không thể tải chi tiết bài kiểm tra');
       } finally {
@@ -44,26 +62,35 @@ const ViewDetailAssessment = ({ testID: propTestID }) => {
   // Hàm duyệt bài kiểm tra (API sẽ gắn sau)
   const handleApprove = async () => {
     setApproving(true);
-    // TODO: Gọi API chuyển trạng thái sang Actived ở đây
-    setTimeout(() => {
+    try {
+      // Không cần truyền accountID nữa
+      await axios.put(`${API_URL}api/Test/update-status-fix`, { testID, testStatus: 3 });
+      setTestStatus(3);
+      // Reload lại chi tiết
+      const res = await axios.get(`${API_URL}api/Questions/by-test/${testID}`);
+      setSections(res.data || []);
+    } catch (e) {
+      // message.error('Lỗi khi duyệt bài kiểm tra!');
+    } finally {
       setApproving(false);
-      // message.success('Đã duyệt bài kiểm tra!');
-    }, 1000);
+    }
   };
 
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div></div>
-        <Button
-          type="primary"
-          onClick={handleApprove}
-          loading={approving}
-          disabled={loading || approving || (sections[0]?.status === 'Actived')}
-          style={{ marginBottom: 16 }}
-        >
-          Duyệt bài kiểm tra
-        </Button>
+        {/* {isManager && testStatus == 1 && ( */}
+          <Button
+            type="primary"
+            onClick={handleApprove}
+            loading={approving}
+            disabled={loading || approving || testStatus === 3}
+            style={{ marginBottom: 16 }}
+          >
+            Duyệt bài kiểm tra
+          </Button>
+        {/* )} */}
       </div>
       <h2>Chi tiết bài kiểm tra</h2>
       {loading ? (
@@ -92,7 +119,14 @@ const ViewDetailAssessment = ({ testID: propTestID }) => {
                         style={{ width: '100%' }}
                         size="small"
                       >
-                        <div><b>Nội dung:</b> {q.context}</div>
+                        <div><b>Nội dung:</b> {q.context}
+                          {q.imageURL && (
+                            <img src={q.imageURL} alt="img" style={{ maxWidth: 120, marginLeft: 8, verticalAlign: 'middle' }} />
+                          )}
+                          {q.audioURL && (
+                            <audio src={q.audioURL} controls style={{ marginLeft: 8, verticalAlign: 'middle' }} />
+                          )}
+                        </div>
                         {Array.isArray(q.options) && q.options.length > 0 && (
                           <div>
                             <b>Đáp án:</b>
@@ -100,6 +134,12 @@ const ViewDetailAssessment = ({ testID: propTestID }) => {
                               {q.options.map((a, aIdx) => (
                                 <li key={aIdx}>
                                   {String.fromCharCode(65 + aIdx)}. {a.context}
+                                  {a.imageURL && (
+                                    <img src={a.imageURL} alt="img" style={{ maxWidth: 80, marginLeft: 8, verticalAlign: 'middle' }} />
+                                  )}
+                                  {a.audioURL && (
+                                    <audio src={a.audioURL} controls style={{ marginLeft: 8, verticalAlign: 'middle' }} />
+                                  )}
                                   {a.isCorrect && <b style={{ color: 'green' }}> (Đúng)</b>}
                                 </li>
                               ))}

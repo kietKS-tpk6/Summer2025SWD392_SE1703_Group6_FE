@@ -64,6 +64,11 @@ const LecturerSidebar = () => {
       label: 'Cài đặt',
     },
     {
+      key: '/lecturer/assessment',
+      icon: <FileTextOutlined />,
+      label: 'Quản lí đề kiểm tra',
+    },
+    {
       key: '/logout',
       icon: <LogoutOutlined />, // icon logout
       label: 'Đăng xuất ',

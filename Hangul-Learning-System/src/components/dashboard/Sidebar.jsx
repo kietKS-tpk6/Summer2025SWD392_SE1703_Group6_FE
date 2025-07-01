@@ -55,11 +55,6 @@ const Sidebar = () => {
       icon: <ApartmentOutlined />, // icon sơ đồ lớp/phòng
       label: 'Quản lí lớp học',
     },
-    {
-      key: '/dashboard/assessment',
-      icon: <BarChartOutlined />, // icon bài kiểm tra
-      label: 'Quản lí bài kiểm tra',
-    },
     // {
     //   key: '/dashboard/blog',
     //   icon: <ReadOutlined />, // icon đọc bài viết

@@ -17,7 +17,7 @@ const statusOptions = [
   { value: 'Drafted', label: 'Nháp' },
   { value: 'Pending', label: 'Chờ duyệt' },
   { value: 'Rejected', label: 'Từ chối' },
-  { value: 'Actived', label: 'Đã duyệt' },
+  { value: 'Actived', label: 'Đang hoạt động' },
   { value: 'Deleted', label: 'Đã xóa' },
 ];
 
@@ -67,6 +67,20 @@ const Assessments = () => {
   });
   const [categoryOptions, setCategoryOptions] = useState([]);
   const navigate = useNavigate();
+  const [openModal, setOpenModal] = useState(false);
+  const [modalLoading, setModalLoading] = useState(false);
+
+  // Thêm state cho popup gửi duyệt
+  const [sendApproveModal, setSendApproveModal] = useState(false);
+  const [sendApproveLoading, setSendApproveLoading] = useState(false);
+  const [selectedTest, setSelectedTest] = useState(null);
+
+
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    console.log('user from localStorage:', user);
+    setUserRole(user.role);
+  }, []);
 
   // Fetch subjects từ API khi vào trang
   useEffect(() => {
@@ -85,12 +99,21 @@ const Assessments = () => {
   useEffect(() => {
     const fetchTests = async () => {
       try {
-        // Chỉ lấy bài test Drafted
-        const res = await axios.get(`${API_URL}api/Test/all-with-sections?status=Drafted`);
+        // Lấy cả bài test Drafted, Pending, Actived
+        const statuses = ['Drafted', 'Pending', 'Actived'];
         let allTests = [];
-        if (res.data?.data) {
-          allTests = res.data.data.map(test => ({ ...test, Status: 'Drafted' }));
+        for (const status of statuses) {
+          const res = await axios.get(`${API_URL}api/Test/all-with-sections?status=${status}`);
+          if (res.data?.data) {
+            allTests = allTests.concat(res.data.data.map(test => ({ ...test, Status: status })));
+          }
         }
+        // Sắp xếp theo updateAt giảm dần (mới nhất lên đầu)
+        allTests.sort((a, b) => {
+          const dateA = a.updateAt ? new Date(a.updateAt).getTime() : 0;
+          const dateB = b.updateAt ? new Date(b.updateAt).getTime() : 0;
+          return dateB - dateA;
+        });
         setData(allTests);
       } catch (e) {
         setData([]);
@@ -149,40 +172,40 @@ const Assessments = () => {
   };
 
   // Handler khi hoàn thành stepper
-  const handleStepperFinish = async () => {
-    const basic = formData.basicInfo;
+  const handleStepperFinish = () => {
+    console.log('Bấm hoàn thành!');
+    if (userRole === 'Lecture') {
+      console.log('Set lecturerModal true');
+      setLecturerModal(true);
+    } else if (userRole === 'Manager') {
+      setOpenModal(true);
+    }
+  };
+
+  // Hàm tạo test với status
+  const createTestWithStatus = async (statusType) => {
+    setModalLoading(true);
+    const basicInfo = formData.basicInfo;
     const sections = formData.sections;
-  
     try {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       const accountID = user.accountId;
       // 1. Tạo bài kiểm tra
       const payload = {
         accountID,
-        subjectID: basic.subjectID,
-        testType: TEST_TYPE_ENUM_MAP[basic.testType],
-        category: CATEGORY_ENUM_REVERSE_MAP[basic.category],
-        testName: basic.testName,
+        subjectID: basicInfo.SubjectID,
+        testType: TEST_TYPE_ENUM_MAP[basicInfo.testType],
+        category: CATEGORY_ENUM_REVERSE_MAP[basicInfo.Category],
+        testName: basicInfo.TestName,
       };
-      console.log('Payload gửi lên:', payload);
-      console.log('accountID:', accountID);
-      console.log('subjectID:', basic.subjectID);
-      console.log('testType:', basic.testType, '->', TEST_TYPE_ENUM_MAP[basic.testType]);
-      console.log('category:', basic.category, '->', CATEGORY_ENUM_REVERSE_MAP[basic.category]);
-      console.log('testName:', basic.testName);
       const res = await axios.post(`${API_URL}api/Test/create`, payload);
-  
       const newTestID = res.data?.testId;
       if (!newTestID) throw new Error("Không lấy được testID từ response");
-  
       // 2. Tạo section cho từng section
-      // Lưu lại mapping testSectionId <-> danh sách questionID trả về
       const sectionQuestionIdMap = [];
+      const generatedQuestionsBySection = [];
       for (const section of sections) {
-        console.log('section.type:', section.type);
-        // Tạo TestSection
         const testSectionType = TEST_SECTION_TYPE_ENUM_MAP[section.type];
-        console.log('testSectionType:', testSectionType);
         const sectionRes = await axios.post(`${API_URL}api/TestSection`, {
           testID: newTestID,
           context: section.name,
@@ -194,32 +217,33 @@ const Assessments = () => {
         });
         const testSectionId = sectionRes.data?.testSectionId;
         if (!testSectionId) throw new Error("Không lấy được testSectionId từ response");
-
-        // Tạo câu hỏi trắng cho section này
-        console.log('Payload generate-empty:', {
-          testSectionID: testSectionId,
-          formatType: testSectionType,
-          numberOfQuestions: section.questions.length,
-        });
         const emptyQRes = await axios.post(`${API_URL}api/Questions/generate-empty`, {
           testSectionID: testSectionId,
           formatType: testSectionType,
           numberOfQuestions: section.questions.length,
         });
-        // Lưu lại danh sách questionID trả về cho section này
-        const questionIDs = (emptyQRes.data?.data || []).map(q => q.questionID);
+        const generatedQuestions = (emptyQRes.data?.data || []);
+        const questionIDs = generatedQuestions.map(q => q.questionID);
         sectionQuestionIdMap.push({ testSectionId, questionIDs });
+        generatedQuestionsBySection.push(generatedQuestions);
       }
-
       // 3. Cập nhật nội dung cho từng câu hỏi
       for (let sIdx = 0; sIdx < sections.length; ++sIdx) {
         const section = sections[sIdx];
         const questionIDs = sectionQuestionIdMap[sIdx].questionIDs;
+        const generatedQuestions = generatedQuestionsBySection[sIdx];
         for (let qIdx = 0; qIdx < section.questions.length; ++qIdx) {
           const question = section.questions[qIdx];
           const questionID = questionIDs[qIdx];
-          // Mapping đáp án
-          const options = (question.answers || []).map((ans, aIdx) => ({
+          let answersWithMcqID = (question.answers || []);
+          if (generatedQuestions && generatedQuestions[qIdx] && generatedQuestions[qIdx].options) {
+            answersWithMcqID = answersWithMcqID.map((a, aIdx) => ({
+              ...a,
+              mcqOptionID: generatedQuestions[qIdx].options[aIdx]?.mcqOptionID
+            }));
+          }
+          const options = (answersWithMcqID || []).map((ans, aIdx) => ({
+            mcqOptionID: ans.mcqOptionID,
             context: ans.text,
             imageURL: ans.imageURL || "",
             audioURL: ans.audioURL || "",
@@ -234,13 +258,29 @@ const Assessments = () => {
           });
         }
       }
-  
-      message.success('Tạo bài kiểm tra thành công!');
+      // Nếu chọn Actived thì gọi thêm API update status = 3
+      if (statusType === 'Actived') {
+        await axios.put(`${API_URL}api/Test/update-status-fix`, { testID: newTestID, testStatus: 3 });
+        message.success('Đã tạo và chuyển sang Actived!');
+      } else {
+        message.success('Đã tạo bài kiểm tra (Drafted)!');
+      }
       setShowCreate(false);
       setFormData({ basicInfo: {}, sections: [] });
+      setOpenModal(false);
+      setModalLoading(false);
+      // Điều hướng về đúng sidebar
+      if (userRole === 'Lecturer' || userRole === 'Lecture') {
+        navigate('/lecturer/assessment');
+      } else if (userRole === 'Manager') {
+        navigate('/dashboard/assessment');
+      } else {
+        navigate('/');
+      }
     } catch (error) {
       console.error(error);
       message.error('Lỗi khi tạo bài kiểm tra!');
+      setModalLoading(false);
     }
   };
 
@@ -274,6 +314,136 @@ const Assessments = () => {
     }
   };
 
+  // Modal cho Lecturer
+  const [lecturerModal, setLecturerModal] = useState(false);
+  const [lecturerLoading, setLecturerLoading] = useState(false);
+  const createLecturerTest = async (pending) => {
+    setLecturerLoading(true);
+    const basicInfo = formData.basicInfo;
+    const sections = formData.sections;
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const accountID = user.accountId;
+      // 1. Tạo bài kiểm tra
+      const payload = {
+        accountID,
+        subjectID: basicInfo.SubjectID,
+        testType: TEST_TYPE_ENUM_MAP[basicInfo.testType],
+        category: CATEGORY_ENUM_REVERSE_MAP[basicInfo.Category],
+        testName: basicInfo.TestName,
+      };
+      const res = await axios.post(`${API_URL}api/Test/create`, payload);
+      const newTestID = res.data?.testId;
+      if (!newTestID) throw new Error("Không lấy được testID từ response");
+      // 2. Tạo section cho từng section
+      const sectionQuestionIdMap = [];
+      const generatedQuestionsBySection = [];
+      for (const section of sections) {
+        const testSectionType = TEST_SECTION_TYPE_ENUM_MAP[section.type];
+        const sectionRes = await axios.post(`${API_URL}api/TestSection`, {
+          testID: newTestID,
+          context: section.name,
+          imageURL: null,
+          audioURL: null,
+          testSectionType,
+          score: section.score,
+          requestingAccountID: accountID,
+        });
+        const testSectionId = sectionRes.data?.testSectionId;
+        if (!testSectionId) throw new Error("Không lấy được testSectionId từ response");
+        const emptyQRes = await axios.post(`${API_URL}api/Questions/generate-empty`, {
+          testSectionID: testSectionId,
+          formatType: testSectionType,
+          numberOfQuestions: section.questions.length,
+        });
+        const generatedQuestions = (emptyQRes.data?.data || []);
+        const questionIDs = generatedQuestions.map(q => q.questionID);
+        sectionQuestionIdMap.push({ testSectionId, questionIDs });
+        generatedQuestionsBySection.push(generatedQuestions);
+      }
+      // 3. Cập nhật nội dung cho từng câu hỏi
+      for (let sIdx = 0; sIdx < sections.length; ++sIdx) {
+        const section = sections[sIdx];
+        const questionIDs = sectionQuestionIdMap[sIdx].questionIDs;
+        const generatedQuestions = generatedQuestionsBySection[sIdx];
+        for (let qIdx = 0; qIdx < section.questions.length; ++qIdx) {
+          const question = section.questions[qIdx];
+          const questionID = questionIDs[qIdx];
+          let answersWithMcqID = (question.answers || []);
+          if (generatedQuestions && generatedQuestions[qIdx] && generatedQuestions[qIdx].options) {
+            answersWithMcqID = answersWithMcqID.map((a, aIdx) => ({
+              ...a,
+              mcqOptionID: generatedQuestions[qIdx].options[aIdx]?.mcqOptionID
+            }));
+          }
+          const options = (answersWithMcqID || []).map((ans, aIdx) => ({
+            mcqOptionID: ans.mcqOptionID,
+            context: ans.text,
+            imageURL: ans.imageURL || "",
+            audioURL: ans.audioURL || "",
+            isCorrect: question.correct === aIdx,
+          }));
+          await axios.put(`${API_URL}api/Questions/questions/update`, {
+            questionID,
+            context: question.content,
+            imageURL: question.imageURL || "",
+            audioURL: question.audioURL || "",
+            options,
+          });
+        }
+      }
+      // Nếu pending = true thì gọi API update status = 2
+      if (pending) {
+        await axios.put(`${API_URL}api/Test/update-status-fix`, { testID: newTestID, testStatus: 1 });
+        message.success('Đã tạo và chuyển sang Pending!');
+      } else {
+        message.success('Đã tạo bài kiểm tra (Drafted)!');
+      }
+      setShowCreate(false);
+      setFormData({ basicInfo: {}, sections: [] });
+      setLecturerModal(false);
+      setLecturerLoading(false);
+      // Điều hướng về đúng sidebar
+      if (userRole === 'Lecturer' || userRole === 'Lecture') {
+        navigate('/lecturer/assessment');
+      } else if (userRole === 'Manager') {
+        navigate('/dashboard/assessment');
+      } else {
+        navigate('/');
+      }
+    } catch (error) {
+      console.error(error);
+      message.error('Lỗi khi tạo bài kiểm tra!');
+      setLecturerLoading(false);
+    }
+  };
+
+  // Hàm gửi duyệt test
+  const handleSendApprove = (test) => {
+    setSelectedTest(test);
+    setSendApproveModal(true);
+  };
+  const confirmSendApprove = async () => {
+    setSendApproveLoading(true);
+    try {
+      await axios.put(`${API_URL}api/Test/update-status-fix`, { testID: selectedTest.testID, testStatus: 2 });
+      message.success('Đã gửi bài kiểm tra cho quản lí duyệt!');
+      setSendApproveModal(false);
+      setSendApproveLoading(false);
+      setSelectedTest(null);
+      // Reload lại danh sách test
+      // (Có thể gọi lại fetchTests hoặc reload page tuỳ ý)
+      window.location.reload();
+    } catch (error) {
+      message.error('Lỗi khi gửi duyệt!');
+      setSendApproveLoading(false);
+    }
+  };
+
+  const [userRole, setUserRole] = useState(null);
+
+ 
+
   return (
     <div>
       {!showCreate ? (
@@ -288,7 +458,7 @@ const Assessments = () => {
               >
                 <Option value="Drafted">Nháp</Option>
                 <Option value="Pending">Chờ duyệt</Option>
-                <Option value="Actived">Đã duyệt</Option>
+                <Option value="Actived">Đang hoạt động</Option>
                 <Option value="all">Tất cả</Option>
               </Select>
               <Search
@@ -328,7 +498,7 @@ const Assessments = () => {
                 render: (status) => {
                   if (status === 'Drafted') return <Tag color="default">Nháp</Tag>;
                   if (status === 'Pending') return <Tag color="orange">Chờ duyệt</Tag>;
-                  if (status === 'Actived') return <Tag color="green">Đã duyệt</Tag>;
+                  if (status === 'Actived') return <Tag color="green">Đang hoạt động</Tag>;
                   return status;
                 },
               },
@@ -341,13 +511,34 @@ const Assessments = () => {
               {
                 title: 'Hành động',
                 key: 'actions',
-                render: (_, record) => (
-                  <Space>
-                    <Button onClick={() => handleView(record)}>Xem</Button>
-                    <Button onClick={() => handleEdit(record)} type="primary">Sửa</Button>
-                    <Button onClick={() => handleDelete(record)} danger icon={<DeleteOutlined />} />
-                  </Space>
-                ),
+                render: (_, record) => {
+                  let userRole = null;
+                  let user = {};
+                  try {
+                    user = JSON.parse(localStorage.getItem('user')) || {};
+                    userRole = user.role;
+                  } catch (e) {
+                    userRole = null;
+                  }
+                  const isLecturer = userRole === 'Lecturer';
+                  const isOwnDraft = isLecturer && record.Status === 'Drafted' && record.createdBy === user.accountId;
+                  return (
+                    <Space>
+                      <Button onClick={() => handleView(record)}>Xem</Button>
+                      {/* Chỉ cho phép sửa/gửi duyệt nếu là bài của mình và là Drafted */}
+                      {isOwnDraft && (
+                        <>
+                          <Button onClick={() => handleEdit(record)} type="primary">Sửa</Button>
+                          <Button onClick={() => handleSendApprove(record)} type="dashed" style={{ color: '#faad14', borderColor: '#faad14' }}>Gửi duyệt</Button>
+                        </>
+                      )}
+                      {/* Nếu không phải bài của mình hoặc không phải Drafted thì không cho sửa/gửi duyệt */}
+                      {(!isOwnDraft && isLecturer) ? null : (
+                        <Button onClick={() => handleDelete(record)} danger icon={<DeleteOutlined />} />
+                      )}
+                    </Space>
+                  );
+                },
               },
             ]}
             dataSource={filteredData}
@@ -370,6 +561,57 @@ const Assessments = () => {
           />
         </div>
       )}
+      <Modal
+        open={openModal}
+        title="Bạn muốn lưu bài kiểm tra ở trạng thái nào?"
+        onCancel={() => setOpenModal(false)}
+        footer={[
+          <Button key="back" onClick={() => setOpenModal(false)}>
+            Quay lại
+          </Button>,
+          <Button key="drafted" loading={modalLoading} onClick={async () => { await createTestWithStatus('Drafted'); }}>
+            Lưu dưới dạng bản nháp
+          </Button>,
+          <Button key="actived" type="primary" loading={modalLoading} onClick={async () => { await createTestWithStatus('Actived'); }}>
+            Lưu và kích hoạt
+          </Button>,
+        ]}
+      >
+        Chọn trạng thái cho bài kiểm tra sau khi tạo.
+      </Modal>
+      <Modal
+        open={lecturerModal}
+        title="Bạn có xác nhận tạo bài test này không?"
+        onCancel={() => setLecturerModal(false)}
+        footer={[
+          <Button key="back" onClick={() => setLecturerModal(false)}>
+            Quay lại
+          </Button>,
+          <Button key="drafted" loading={lecturerLoading} onClick={async () => { await createLecturerTest(false); }}>
+            Xác nhận tạo
+          </Button>,
+          <Button key="pending" type="primary" loading={lecturerLoading} onClick={async () => { await createLecturerTest(true); }}>
+            Hoàn tất và gửi duyệt
+          </Button>,
+        ]}
+      >
+        Chọn hành động cho bài kiểm tra sau khi tạo.
+      </Modal>
+      <Modal
+        open={sendApproveModal}
+        title="Bạn có muốn đưa lên cho manager duyệt không?"
+        onCancel={() => setSendApproveModal(false)}
+        footer={[
+          <Button key="back" onClick={() => setSendApproveModal(false)}>
+            Quay lại
+          </Button>,
+          <Button key="ok" type="primary" loading={sendApproveLoading} onClick={confirmSendApprove}>
+            Xác nhận
+          </Button>,
+        ]}
+      >
+        Bài kiểm tra sẽ được chuyển sang trạng thái chờ duyệt.
+      </Modal>
     </div>
   );
 };
