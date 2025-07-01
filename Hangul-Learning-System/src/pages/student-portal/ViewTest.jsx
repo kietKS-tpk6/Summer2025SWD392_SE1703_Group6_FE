@@ -1,23 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  Card, 
-  Typography, 
-  Descriptions, 
-  Button, 
-  Space, 
-  Tag, 
+import {
+  Card,
+  Typography,
+  Descriptions,
+  Button,
+  Space,
+  Tag,
   Divider,
   Alert,
   Spin,
   Row,
   Col,
   List,
-  Avatar
+  Avatar,
+  Modal,
+  Input,
+  Table
 } from 'antd';
-import { 
-  ClockCircleOutlined, 
-  FileTextOutlined, 
+import {
+  ClockCircleOutlined,
+  FileTextOutlined,
   CheckCircleOutlined,
   ArrowLeftOutlined,
   UserOutlined,
@@ -25,156 +28,105 @@ import {
   BookOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import axios from 'axios';
+import { API_URL, endpoints } from '../../config/api';
+import { message } from 'antd';
 
 const { Title, Text, Paragraph } = Typography;
 
+const statusMap = {
+  0: 'Sắp diễn ra',
+  1: 'Đang diễn ra',
+  2: 'Đã kết thúc',
+  3: 'Đã xóa'
+};
+
 const ViewTest = () => {
-  const { testId } = useParams();
+  const { testEventID } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [testData, setTestData] = useState(null);
+  const [passwordModalVisible, setPasswordModalVisible] = useState(false);
+  const [inputPassword, setInputPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [sections, setSections] = useState([]);
 
-  // Mock test data
   useEffect(() => {
-    setTimeout(() => {
-      const testDataMap = {
-        'T0004': {
-          testId: 'T0004',
-          testName: 'Bài kiểm tra 15 phút - Đại số',
-          subject: 'Toán',
-          className: 'Lớp 10A1',
-          date: dayjs().format('YYYY-MM-DD'),
-          startTime: '14:00',
-          endTime: '14:15',
-          duration: 15,
-          totalQuestions: 10,
-          maxScore: 10,
-          status: 'ongoing',
-          description: 'Kiểm tra kiến thức về phương trình bậc hai và đại số cơ bản',
-          room: 'Phòng 101',
-          lecturer: 'Nguyễn Văn A',
-          testType: 'Trắc nghiệm',
-          category: 'Kiểm tra 15 phút',
-          sections: [
-            {
-              name: 'Phần 1: Phương trình bậc hai',
-              questionCount: 4,
-              timeLimit: 8
-            },
-            {
-              name: 'Phần 2: Tính toán đại số',
-              questionCount: 6,
-              timeLimit: 7
-            }
-          ]
-        },
-        'T0005': {
-          testId: 'T0005',
-          testName: 'Kiểm tra từ vựng Unit 5',
-          subject: 'Tiếng Anh',
-          className: 'Lớp 10A2',
-          date: '2024-01-20',
-          startTime: '14:00',
-          endTime: '14:20',
-          duration: 20,
-          totalQuestions: 15,
-          maxScore: 15,
-          status: 'ongoing',
-          description: 'Kiểm tra từ vựng và ngữ pháp về chủ đề công nghệ',
-          room: 'Phòng 103',
-          lecturer: 'Lê Văn C',
-          testType: 'Trắc nghiệm',
-          category: 'Kiểm tra từ vựng',
-          sections: [
-            {
-              name: 'Phần 1: Từ vựng cơ bản',
-              questionCount: 5,
-              timeLimit: 10
-            },
-            {
-              name: 'Phần 2: Ngữ pháp và từ vựng nâng cao',
-              questionCount: 10,
-              timeLimit: 10
-            }
-          ]
-        },
-        'T0006': {
-          testId: 'T0006',
-          testName: 'Bài kiểm tra tiếng Anh tổng hợp',
-          subject: 'Tiếng Anh',
-          className: 'Lớp 10A2',
-          date: '2024-01-22',
-          startTime: '09:00',
-          endTime: '09:45',
-          duration: 45,
-          totalQuestions: 25,
-          maxScore: 25,
-          status: 'upcoming',
-          description: 'Bài kiểm tra tổng hợp các kỹ năng Reading, Listening và Writing',
-          room: 'Phòng Lab 2',
-          lecturer: 'Lê Văn C',
-          testType: 'Tổng hợp',
-          category: 'Kiểm tra kỹ năng',
-          sections: [
-            {
-              name: 'Reading: Đọc hiểu',
-              questionCount: 5,
-              timeLimit: 15
-            },
-            {
-              name: 'Listening: Nghe hiểu',
-              questionCount: 5,
-              timeLimit: 15
-            },
-            {
-              name: 'Writing: Viết luận',
-              questionCount: 5,
-              timeLimit: 15
-            }
-          ]
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const res = await axios.get(`${API_URL}${endpoints.testEvent.getById.replace('{testEventID}', testEventID)}`);
+        if (res.data && res.data.success && res.data.data) {
+          setTestData(res.data.data);
+        } else {
+          setTestData(null);
         }
-      };
+      } catch (err) {
+        setTestData(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [testEventID]);
 
-      const selectedTest = testDataMap[testId] || testDataMap['T0004'];
-      setTestData(selectedTest);
-      setLoading(false);
-    }, 1000);
-  }, [testId]);
+  useEffect(() => {
+    const fetchSections = async () => {
+      if (testData && testData.testID) {
+        try {
+          const res = await axios.get(`${API_URL}api/TestSection/by-test/${testData.testID}`);
+          if (Array.isArray(res.data)) {
+            setSections(res.data);
+          } else {
+            setSections([]);
+          }
+        } catch (err) {
+          setSections([]);
+        }
+      } else {
+        setSections([]);
+      }
+    };
+    fetchSections();
+  }, [testData]);
 
   const handleStartTest = () => {
-    // Navigate to test taking page
-    navigate(`/student/take-test/${testId}`);
+    if (testData && testData.password) {
+      setPasswordModalVisible(true);
+      setInputPassword('');
+      setPasswordError('');
+      return;
+    }
+    if (testData && testData.testID) {
+      navigate(`/student/take-test/${testData.testID}`);
+    }
+  };
+
+  const handlePasswordOk = () => {
+    if (inputPassword === testData.password) {
+      setPasswordModalVisible(false);
+      navigate(`/student/take-test/${testData.testID}`);
+    } else {
+      setPasswordError('Mật khẩu không đúng. Vui lòng thử lại.');
+    }
+  };
+
+  const handlePasswordCancel = () => {
+    setPasswordModalVisible(false);
+    setInputPassword('');
+    setPasswordError('');
   };
 
   const handleViewResult = () => {
-    // Navigate to test result page
-    navigate(`/student/test-result/${testId}`);
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Sắp diễn ra':
-        return 'blue';
-      case 'Đang diễn ra':
-        return 'orange';
-      case 'Đã hoàn thành':
-        return 'green';
-      default:
-        return 'default';
+    if (testData && testData.testID) {
+      navigate(`/student/test-result/${testData.testID}`);
     }
   };
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'Sắp diễn ra':
-        return <ClockCircleOutlined />;
-      case 'Đang diễn ra':
-        return <FileTextOutlined />;
-      case 'Đã hoàn thành':
-        return <CheckCircleOutlined />;
-      default:
-        return null;
-    }
+  const testSectionTypeMap = {
+    0: 'Trắc nghiệm',
+    1: 'Đúng/Sai',
+    2: 'Viết luận',
   };
 
   if (loading) {
@@ -185,19 +137,23 @@ const ViewTest = () => {
     );
   }
 
+  if (!testData) {
+    return <Alert message="Không tìm thấy thông tin bài kiểm tra" type="error" showIcon style={{ margin: 24 }} />;
+  }
+
   return (
     <div style={{ background: '#fff', borderRadius: 20, padding: 32, margin: 24 }}>
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
-        <Button 
-          icon={<ArrowLeftOutlined />} 
+        <Button
+          icon={<ArrowLeftOutlined />}
           onClick={() => navigate('/student/test-schedule')}
           style={{ marginBottom: 16 }}
         >
           Quay lại lịch kiểm tra
         </Button>
         <Title level={2} style={{ fontWeight: 700, margin: 0 }}>
-          {testData.testName}
+          {testData.lessonTitle || testData.description || 'Bài kiểm tra'}
         </Title>
       </div>
 
@@ -206,96 +162,88 @@ const ViewTest = () => {
         <Col xs={24} lg={16}>
           <Card>
             <Descriptions title="Thông tin bài kiểm tra" bordered column={1}>
-              <Descriptions.Item label="Môn học">
-                <Space>
-                  <BookOutlined />
-                  {testData.subject}
-                </Space>
+              {/* <Descriptions.Item label="Mã bài kiểm tra">
+                {testData.testID}
+              </Descriptions.Item> */}
+              <Descriptions.Item label="Tên bài kiểm tra">
+                {testData.description || 'Bài kiểm tra'}
               </Descriptions.Item>
-              <Descriptions.Item label="Lớp học">
-                {testData.className}
-              </Descriptions.Item>
-              <Descriptions.Item label="Ngày kiểm tra">
+              {/* <Descriptions.Item label="Mô tả">
+                {testData.description}
+              </Descriptions.Item> */}
+              <Descriptions.Item label="Thời gian kiểm tra">
                 <Space>
                   <CalendarOutlined />
-                  {dayjs(testData.date).format('DD/MM/YYYY')}
+                  {testData.startAt ? dayjs(testData.startAt).format('DD/MM/YYYY') : ''}
+                  {testData.startAt ? dayjs(testData.startAt).format('HH:mm') : ''}
+                  {testData.startAt && testData.endAt ? '-' : ''}
+                  {testData.endAt ? dayjs(testData.endAt).format('HH:mm') : ''}
                 </Space>
               </Descriptions.Item>
-              <Descriptions.Item label="Thời gian">
-                <Space>
-                  <ClockCircleOutlined />
-                  {testData.startTime} - {testData.endTime} ({testData.duration} phút)
-                </Space>
-              </Descriptions.Item>
-              <Descriptions.Item label="Phòng thi">
-                {testData.room}
-              </Descriptions.Item>
-              <Descriptions.Item label="Giảng viên">
-                <Space>
-                  <UserOutlined />
-                  {testData.lecturer}
-                </Space>
+              <Descriptions.Item label="Thời gian làm bài">
+                {testData.durationMinutes ? `${testData.durationMinutes} phút` : ''}
               </Descriptions.Item>
               <Descriptions.Item label="Loại bài kiểm tra">
                 {testData.testType}
               </Descriptions.Item>
-              <Descriptions.Item label="Phân loại">
-                {testData.category}
+              <Descriptions.Item label="Giới hạn lượt làm">
+                {testData.attemptLimit}
               </Descriptions.Item>
-              <Descriptions.Item label="Số câu hỏi">
-                {testData.totalQuestions} câu
-              </Descriptions.Item>
-              <Descriptions.Item label="Điểm tối đa">
-                {testData.maxScore} điểm
-              </Descriptions.Item>
-              <Descriptions.Item label="Trạng thái">
-                <Tag color={getStatusColor(testData.status)} icon={getStatusIcon(testData.status)}>
-                  {testData.status}
+              {/* <Descriptions.Item label="Trạng thái">
+                <Tag color={getStatusColor(statusMap[testData.status])} icon={getStatusIcon(statusMap[testData.status])}>
+                  {statusMap[testData.status] || 'Không xác định'}
                 </Tag>
-              </Descriptions.Item>
+              </Descriptions.Item> */}
             </Descriptions>
 
-            <Divider />
-
-            <Title level={4}>Mô tả bài kiểm tra</Title>
-            <Paragraph>{testData.description}</Paragraph>
-
-            {testData.sections && (
+            {/* Bảng thông tin các phần của bài kiểm tra */}
+            {sections.length > 0 && (
               <>
-                <Title level={4}>Cấu trúc bài kiểm tra</Title>
-                <List
-                  dataSource={testData.sections}
-                  renderItem={(section, index) => (
-                    <List.Item>
-                      <Card size="small" style={{ width: '100%', marginBottom: 8 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div>
-                            <Text strong>{section.name}</Text>
-                            <br />
-                            <Text type="secondary">{section.questionCount} câu hỏi</Text>
-                          </div>
-                          <Tag color="blue">{section.timeLimit} phút</Tag>
-                        </div>
-                      </Card>
-                    </List.Item>
+                <Divider />
+                <Table
+                  dataSource={sections.map((s, idx) => ({
+                    key: s.testSectionID || idx,
+                    context: s.context,
+                    testSectionType: testSectionTypeMap[s.testSectionType],
+                    score: s.score,
+                  }))}
+                  columns={[
+                    { title: 'Nội dung', dataIndex: 'context', key: 'context' },
+                    { title: 'Dạng', dataIndex: 'testSectionType', key: 'testSectionType' },
+                    { title: 'Điểm', dataIndex: 'score', key: 'score' },
+                  ]}
+                  pagination={false}
+                  bordered
+                  title={() => (
+                    <span style={{ fontWeight: 700, fontSize: 16 }}>
+                      Các phần của bài kiểm tra
+                    </span>
                   )}
                 />
               </>
             )}
 
-            {testData.instructions && (
+            {/* Bảng thông tin tiết học nếu có */}
+            {testData.classLessonID && (
               <>
-                <Title level={4}>Hướng dẫn làm bài</Title>
-                <List
-                  dataSource={testData.instructions}
-                  renderItem={(item, index) => (
-                    <List.Item>
-                      <Text>{index + 1}. {item}</Text>
-                    </List.Item>
-                  )}
-                />
+                <Divider />
+                <Descriptions title="Thông tin tiết học liên quan" bordered column={1}>
+                  {/* <Descriptions.Item label="Mã tiết học">
+                    {testData.classLessonID}
+                  </Descriptions.Item> */}
+                  <Descriptions.Item label="Tên tiết học">
+                    {testData.lessonTitle}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Thời gian bắt đầu">
+                    {testData.lessonStartTime ? dayjs(testData.lessonStartTime).format('DD/MM/YYYY HH:mm') : ''}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Thời gian kết thúc">
+                    {testData.lessonEndTime ? dayjs(testData.lessonEndTime).format('DD/MM/YYYY HH:mm') : ''}
+                  </Descriptions.Item>
+                </Descriptions>
               </>
             )}
+
           </Card>
         </Col>
 
@@ -303,7 +251,7 @@ const ViewTest = () => {
         <Col xs={24} lg={8}>
           <Card title="Thao tác">
             <Space direction="vertical" style={{ width: '100%' }}>
-              {testData.status === 'Sắp diễn ra' && (
+              {statusMap[testData.status] === 'Sắp diễn ra' && (
                 <Alert
                   message="Bài kiểm tra chưa bắt đầu"
                   description="Vui lòng đợi đến thời gian quy định để bắt đầu làm bài."
@@ -312,10 +260,10 @@ const ViewTest = () => {
                 />
               )}
 
-              {testData.status === 'Đang diễn ra' && !testData.studentScore && (
-                <Button 
-                  type="primary" 
-                  size="large" 
+              {statusMap[testData.status] === 'Đang diễn ra' && (
+                <Button
+                  type="primary"
+                  size="large"
                   block
                   onClick={handleStartTest}
                   icon={<FileTextOutlined />}
@@ -324,38 +272,39 @@ const ViewTest = () => {
                 </Button>
               )}
 
-              {testData.status === 'Đã hoàn thành' && testData.studentScore !== null && (
-                <>
-                  <Alert
-                    message="Đã hoàn thành bài kiểm tra"
-                    description={`Điểm của bạn: ${testData.studentScore}/${testData.maxScore}`}
-                    type="success"
-                    showIcon
-                  />
-                  <Button 
-                    type="default" 
-                    size="large" 
-                    block
-                    onClick={handleViewResult}
-                    icon={<CheckCircleOutlined />}
-                  >
-                    Xem kết quả chi tiết
-                  </Button>
-                </>
-              )}
-
-              {testData.status === 'Đã hoàn thành' && testData.studentScore === null && (
-                <Alert
-                  message="Chưa tham gia bài kiểm tra"
-                  description="Bạn chưa tham gia bài kiểm tra này."
-                  type="warning"
-                  showIcon
-                />
+              {statusMap[testData.status] === 'Đã hoàn thành' && (
+                <Button
+                  type="default"
+                  size="large"
+                  block
+                  onClick={handleViewResult}
+                  icon={<CheckCircleOutlined />}
+                >
+                  Xem kết quả chi tiết
+                </Button>
               )}
             </Space>
           </Card>
         </Col>
       </Row>
+
+      {/* Modal nhập mật khẩu */}
+      <Modal
+        title="Nhập mật khẩu để làm bài"
+        open={passwordModalVisible}
+        onOk={handlePasswordOk}
+        onCancel={handlePasswordCancel}
+        okText="Vào làm bài"
+        cancelText="Hủy"
+      >
+        <Input.Password
+          placeholder="Nhập mật khẩu"
+          value={inputPassword}
+          onChange={e => setInputPassword(e.target.value)}
+          onPressEnter={handlePasswordOk}
+        />
+        {passwordError && <div style={{ color: 'red', marginTop: 8 }}>{passwordError}</div>}
+      </Modal>
     </div>
   );
 };

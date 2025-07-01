@@ -86,6 +86,11 @@ const Sidebar = () => {
       label: 'Cài đặt',
     },
     {
+      key: '/dashboard/system-config',
+      icon: <SettingOutlined />, // icon cấu hình hệ thống
+      label: 'Cấu hình hệ thống',
+    },
+    {
       key: '/logout',
       icon: <LogoutOutlined />, // icon logout
       label: 'Đăng xuất ',

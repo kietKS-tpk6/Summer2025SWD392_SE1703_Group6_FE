@@ -1,102 +1,76 @@
-import React, { useState } from 'react';
-import { Table, Tag, Typography, Select, DatePicker, Row, Col, Button } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Table, Tag, Typography, Select, DatePicker, Row, Col, Button, Spin, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { EyeOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import axios from 'axios';
+import { API_URL, endpoints } from '../../config/api';
 
 const { Title } = Typography;
 const { Option } = Select;
 
-const testData = [
-  {
-    key: '1',
-    testId: 'T0001',
-    testName: 'Kiểm tra giữa kỳ',
-    className: 'Lớp 10A1',
-    subject: 'Toán',
-    date: '2024-06-10',
-    time: '08:00',
-    status: 'Đã hoàn thành',
-  },
-  {
-    key: '2',
-    testId: 'T0002',
-    testName: 'Kiểm tra cuối kỳ',
-    className: 'Lớp 10A2',
-    subject: 'Văn',
-    date: '2024-06-20',
-    time: '13:30',
-    status: 'Sắp diễn ra',
-  },
-  {
-    key: '3',
-    testId: 'T0003',
-    testName: 'Kiểm tra Listening',
-    className: 'Lớp 10A1',
-    subject: 'Tiếng Anh',
-    date: '2024-05-30',
-    time: '09:00',
-    status: 'Đã hoàn thành',
-  },
-  {
-    key: '4',
-    testId: 'T0004',
-    testName: 'Bài kiểm tra 15 phút - Đại số',
-    className: 'Lớp 10A1',
-    subject: 'Toán',
-    date: dayjs().format('YYYY-MM-DD'),
-    time: '14:00',
-    status: 'Đang diễn ra',
-  },
-  {
-    key: '5',
-    testId: 'T0005',
-    testName: 'Kiểm tra từ vựng Unit 5',
-    className: 'Lớp 10A2',
-    subject: 'Tiếng Anh',
-    date: '2024-01-20',
-    time: '14:00',
-    status: 'Đang diễn ra',
-  },
-  {
-    key: '6',
-    testId: 'T0006',
-    testName: 'Bài kiểm tra Văn học - Truyện Kiều',
-    className: 'Lớp 10A3',
-    subject: 'Văn',
-    date: dayjs().add(1, 'day').format('YYYY-MM-DD'),
-    time: '08:00',
-    status: 'Sắp diễn ra',
-  },
-  {
-    key: '7',
-    testId: 'T0007',
-    testName: 'Kiểm tra Lịch sử - Cách mạng tháng 8',
-    className: 'Lớp 10A1',
-    subject: 'Lịch sử',
-    date: dayjs().add(2, 'day').format('YYYY-MM-DD'),
-    time: '10:00',
-    status: 'Sắp diễn ra',
-  },
-  {
-    key: '8',
-    testId: 'T0008',
-    testName: 'Bài kiểm tra tiếng Anh tổng hợp',
-    className: 'Lớp 10A2',
-    subject: 'Tiếng Anh',
-    date: '2024-01-22',
-    time: '09:00',
-    status: 'Sắp diễn ra',
-  },
-];
+const statusMap = {
+  0: 'Sắp diễn ra',
+  1: 'Đang diễn ra',
+  2: 'Đã hoàn thành',
+};
 
 const StudentTestSchedule = () => {
   const navigate = useNavigate();
   const [classFilter, setClassFilter] = useState(undefined);
   const [dateFilter, setDateFilter] = useState(undefined);
+  const [loading, setLoading] = useState(false);
+  const [testData, setTestData] = useState([]);
 
-  const handleViewTest = (testId) => {
-    navigate(`/student/view-test/${testId}`);
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const userStr = localStorage.getItem('user');
+        if (!userStr) throw new Error('Không tìm thấy thông tin người dùng');
+        const user = JSON.parse(userStr);
+        const studentId = user.accountId;
+        const res = await axios.get(`${API_URL}${endpoints.testEvent.getByStudentId.replace('{studentId}', studentId)}`);
+        if (res.data && res.data.success && Array.isArray(res.data.data)) {
+          // Map dữ liệu về dạng table
+          const rows = [];
+          res.data.data.forEach(classItem => {
+            const { className, subjectName, classID, testEvents } = classItem;
+            if (Array.isArray(testEvents) && testEvents.length > 0) {
+              testEvents.forEach(event => {
+                rows.push({
+                  key: event.testEventID,
+                  testId: event.testID,
+                  testEventID: event.testEventID,
+                  testName: event.lessonTitle || event.description || 'Bài kiểm tra',
+                  className,
+                  subject: subjectName,
+                  date: event.startAt ? dayjs(event.startAt).format('YYYY-MM-DD') : '',
+                  time: event.startAt ? dayjs(event.startAt).format('HH:mm') : '',
+                  status: statusMap[event.status] || 'Không xác định',
+                });
+              });
+            }
+          });
+          setTestData(rows);
+        } else {
+          setTestData([]);
+        }
+      } catch (err) {
+        message.error('Lỗi khi tải lịch kiểm tra!');
+        setTestData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleViewTest = (testEventID, testId) => {
+    if (testId) {
+      localStorage.setItem('currentTestId', testId);
+    }
+    navigate(`/student/view-test/${testEventID}`);
   };
 
   const columns = [
@@ -106,8 +80,8 @@ const StudentTestSchedule = () => {
       key: 'testName',
       render: (text, record) => (
         <Button 
-          type="link" 
-          onClick={() => handleViewTest(record.testId)}
+          type="link"
+          onClick={() => handleViewTest(record.testEventID, record.testId)}
           style={{ padding: 0, height: 'auto', fontWeight: 500 }}
         >
           {text}
@@ -154,7 +128,7 @@ const StudentTestSchedule = () => {
           type="primary" 
           size="small" 
           icon={<EyeOutlined />}
-          onClick={() => handleViewTest(record.testId)}
+          onClick={() => handleViewTest(record.testEventID, record.testId)}
         >
           Xem chi tiết
         </Button>
@@ -178,7 +152,7 @@ const StudentTestSchedule = () => {
           <Select
             allowClear
             placeholder="Chọn lớp học"
-            style={{ minWidth: 160 }}
+            style={{ minWidth: 400, maxWidth:400 }}
             value={classFilter}
             onChange={setClassFilter}
           >
@@ -197,7 +171,9 @@ const StudentTestSchedule = () => {
           />
         </Col>
       </Row>
-      <Table columns={columns} dataSource={filteredData} pagination={false} />
+      <Spin spinning={loading} tip="Đang tải...">
+        <Table columns={columns} dataSource={filteredData} pagination={false} />
+      </Spin>
     </div>
   );
 };

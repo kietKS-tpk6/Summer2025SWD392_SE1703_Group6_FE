@@ -43,6 +43,7 @@ import StudentTestSchedule from './pages/student-portal/StudentTestSchedule';
 import ViewTest from './pages/student-portal/ViewTest';
 import TakeTest from './pages/student-portal/TakeTest';
 import TestResult from './pages/student-portal/TestResult';
+import SystemConfig from './components/dashboard/pages/SystemConfig';
 import './App.css';
 import 'antd/dist/reset.css';
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -69,6 +70,7 @@ const dashboardRoutes = [
   { path: '/lesson-detail' , element: <LessonDetailPage/>},
   { path: '/attendance', element: <AttendancePage/>},
   { path: '/check-attendance', element: <CheckAttendancePage /> },
+  { path: '/system-config', element: <SystemConfig /> },
 ];
 
 // Lecturer routes configuration
@@ -119,8 +121,8 @@ const studentRoutes = [
   { path: '/class-detail/:id', element: <ViewClassDetail/>},
   { path: '/lesson-detail' , element: <LessonDetailPage/>},
   { path: '/test-schedule', element: <StudentTestSchedule /> },
-  { path: '/view-test/:testId', element: <ViewTest /> },
-  { path: '/take-test/:testId', element: <TakeTest /> },
+  { path: '/view-test/:testEventID', element: <ViewTest /> },
+  { path: '/take-test/:testEventID', element: <TakeTest /> },
   { path: '/test-result/:testId', element: <TestResult /> },
   { path: '/lesson-detail' , element: <LessonDetailPage/>},
  
