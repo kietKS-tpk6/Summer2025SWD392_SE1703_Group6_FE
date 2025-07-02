@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Card,
@@ -41,6 +41,18 @@ const statusMap = {
   3: 'Đã xóa'
 };
 
+const testTypeMap = {
+  0: 'Không xác định',
+  1: 'Từ vựng',
+  2: 'Ngữ pháp',
+  3: 'Nghe hiểu',
+  4: 'Đọc hiểu',
+  5: 'Viết',
+  6: 'Tổng hợp',
+  7: 'Trắc nghiệm',
+  8: 'Khác',
+};
+
 const ViewTest = () => {
   const { testEventID } = useParams();
   const navigate = useNavigate();
@@ -50,6 +62,22 @@ const ViewTest = () => {
   const [inputPassword, setInputPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [sections, setSections] = useState([]);
+  const [history, setHistory] = useState([]);
+
+  // Lấy lịch sử làm bài
+  const fetchHistory = useCallback(async (testEventID) => {
+    try {
+      // Giả định API: /api/TestEvent/{testEventID}/history
+      const res = await axios.get(`${API_URL}api/TestEvent/${testEventID}/history`);
+      if (Array.isArray(res.data)) {
+        setHistory(res.data);
+      } else {
+        setHistory([]);
+      }
+    } catch (err) {
+      setHistory([]);
+    }
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -58,6 +86,7 @@ const ViewTest = () => {
         const res = await axios.get(`${API_URL}${endpoints.testEvent.getById.replace('{testEventID}', testEventID)}`);
         if (res.data && res.data.success && res.data.data) {
           setTestData(res.data.data);
+          fetchHistory(testEventID);
         } else {
           setTestData(null);
         }
@@ -68,7 +97,7 @@ const ViewTest = () => {
       }
     };
     fetchData();
-  }, [testEventID]);
+  }, [testEventID, fetchHistory]);
 
   useEffect(() => {
     const fetchSections = async () => {
@@ -98,14 +127,14 @@ const ViewTest = () => {
       return;
     }
     if (testData && testData.testID) {
-      navigate(`/student/take-test/${testData.testID}`);
+      navigate(`/student/take-test/${testEventID}`);
     }
   };
 
   const handlePasswordOk = () => {
     if (inputPassword === testData.password) {
       setPasswordModalVisible(false);
-      navigate(`/student/take-test/${testData.testID}`);
+      navigate(`/student/take-test/${testEventID}`);
     } else {
       setPasswordError('Mật khẩu không đúng. Vui lòng thử lại.');
     }
@@ -184,7 +213,7 @@ const ViewTest = () => {
                 {testData.durationMinutes ? `${testData.durationMinutes} phút` : ''}
               </Descriptions.Item>
               <Descriptions.Item label="Loại bài kiểm tra">
-                {testData.testType}
+                {testTypeMap[testData.testType] || 'Không xác định'}
               </Descriptions.Item>
               <Descriptions.Item label="Giới hạn lượt làm">
                 {testData.attemptLimit}
@@ -241,6 +270,54 @@ const ViewTest = () => {
                     {testData.lessonEndTime ? dayjs(testData.lessonEndTime).format('DD/MM/YYYY HH:mm') : ''}
                   </Descriptions.Item>
                 </Descriptions>
+              </>
+            )}
+
+            {/* Bảng lịch sử làm bài */}
+            {history.length > 0 && (
+              <>
+                <Divider />
+                <Table
+                  dataSource={history.map((h, idx) => ({
+                    key: h.attemptId || idx,
+                    startTime: h.startTime,
+                    submitTime: h.submitTime,
+                    status: h.status,
+                    sectionScores: h.sectionScores,
+                    attemptId: h.attemptId
+                  }))}
+                  columns={[
+                    { title: 'Bắt đầu', dataIndex: 'startTime', key: 'startTime', render: v => v ? dayjs(v).format('DD/MM/YYYY HH:mm') : '' },
+                    { title: 'Nộp bài', dataIndex: 'submitTime', key: 'submitTime', render: v => v ? dayjs(v).format('DD/MM/YYYY HH:mm') : '' },
+                    { title: 'Trạng thái', dataIndex: 'status', key: 'status' },
+                    // Section score columns
+                    ...((sections || []).map(section => ({
+                      title: section.context,
+                      dataIndex: ['sectionScores', section.testSectionID],
+                      key: `score_${section.testSectionID}`,
+                      render: (_, record) => {
+                        const found = (record.sectionScores || []).find(s => s.sectionId === section.testSectionID);
+                        return found ? `${found.studentGetScore}/${found.sectionScore}` : '';
+                      }
+                    }))),
+                    {
+                      title: 'Chi tiết',
+                      key: 'action',
+                      render: (_, record) => (
+                        <Button size="small" onClick={() => navigate(`/student/test-detail/${record.attemptId}`)}>
+                          Xem chi tiết
+                        </Button>
+                      )
+                    }
+                  ]}
+                  pagination={false}
+                  bordered
+                  title={() => (
+                    <span style={{ fontWeight: 700, fontSize: 16 }}>
+                      Lịch sử làm bài
+                    </span>
+                  )}
+                />
               </>
             )}
 
