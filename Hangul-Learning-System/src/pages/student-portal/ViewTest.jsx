@@ -53,6 +53,15 @@ const testTypeMap = {
   8: 'Khác',
 };
 
+const studentTestStatusMap = {
+  Pending: 'Chưa làm',
+  Submitted: 'Đã nộp bài',
+  AutoGradedWaitingForWritingGrading: 'Đã chấm tự động',
+  WaitingForWritingGrading: 'Chờ chấm tự luận',
+  Graded: 'Đã chấm',
+  Published: 'Đã công bố điểm',
+};
+
 const ViewTest = () => {
   const { testEventID } = useParams();
   const navigate = useNavigate();
@@ -67,15 +76,30 @@ const ViewTest = () => {
   // Lấy lịch sử làm bài
   const fetchHistory = useCallback(async (testEventID) => {
     try {
-      // Giả định API: /api/TestEvent/{testEventID}/history
-      const res = await axios.get(`${API_URL}api/TestEvent/${testEventID}/history`);
+      let accountId = '';
+      try {
+        const user = JSON.parse(localStorage.getItem('user'));
+        accountId = user?.accountId || '';
+      } catch {}
+      if (!accountId) {
+        setHistory([]);
+        localStorage.removeItem('studentTestHistory');
+        return;
+      }
+      // Gọi API trả về tất cả kết quả
+      const res = await axios.get(`${API_URL}api/Test/list-test-results/${testEventID}`);
       if (Array.isArray(res.data)) {
-        setHistory(res.data);
+        // Lọc lại chỉ lấy kết quả của accountId hiện tại
+        const filtered = res.data.filter(item => item.studentID === accountId);
+        setHistory(filtered);
+        localStorage.setItem('studentTestHistory', JSON.stringify(filtered));
       } else {
         setHistory([]);
+        localStorage.removeItem('studentTestHistory');
       }
     } catch (err) {
       setHistory([]);
+      localStorage.removeItem('studentTestHistory');
     }
   }, []);
 
@@ -127,14 +151,14 @@ const ViewTest = () => {
       return;
     }
     if (testData && testData.testID) {
-      navigate(`/student/take-test/${testEventID}`);
+      navigate(`/student/take-test/${testEventID}`, { state: { durationMinutes: testData.durationMinutes } });
     }
   };
 
   const handlePasswordOk = () => {
     if (inputPassword === testData.password) {
       setPasswordModalVisible(false);
-      navigate(`/student/take-test/${testEventID}`);
+      navigate(`/student/take-test/${testEventID}`, { state: { durationMinutes: testData.durationMinutes } });
     } else {
       setPasswordError('Mật khẩu không đúng. Vui lòng thử lại.');
     }
@@ -279,34 +303,45 @@ const ViewTest = () => {
                 <Divider />
                 <Table
                   dataSource={history.map((h, idx) => ({
-                    key: h.attemptId || idx,
+                    key: h.attemptId || h.studentTestID || idx,
                     startTime: h.startTime,
                     submitTime: h.submitTime,
                     status: h.status,
-                    sectionScores: h.sectionScores,
-                    attemptId: h.attemptId
+                    // Lấy điểm tổng từ originalSubmissionScore
+                    originalSubmissionScore: h.originalSubmissionScore,
+                    // Tính maxScore nếu có sections
+                    maxScore: Array.isArray(h.sections)
+                      ? h.sections.reduce((sum, s) => sum + (s.sectionScore || 0), 0)
+                      : '',
+                    attemptId: h.attemptId || h.studentTestID
                   }))}
                   columns={[
-                    { title: 'Bắt đầu', dataIndex: 'startTime', key: 'startTime', render: v => v ? dayjs(v).format('DD/MM/YYYY HH:mm') : '' },
-                    { title: 'Nộp bài', dataIndex: 'submitTime', key: 'submitTime', render: v => v ? dayjs(v).format('DD/MM/YYYY HH:mm') : '' },
-                    { title: 'Trạng thái', dataIndex: 'status', key: 'status' },
-                    // Section score columns
-                    ...((sections || []).map(section => ({
-                      title: section.context,
-                      dataIndex: ['sectionScores', section.testSectionID],
-                      key: `score_${section.testSectionID}`,
-                      render: (_, record) => {
-                        const found = (record.sectionScores || []).find(s => s.sectionId === section.testSectionID);
-                        return found ? `${found.studentGetScore}/${found.sectionScore}` : '';
-                      }
-                    }))),
+                    { title: 'Bắt đầu', dataIndex: 'startTime', key: 'startTime', render: v => v ? dayjs(v).format('DD/MM/YYYY HH:mm') : '', align: 'center' },
+                    { title: 'Nộp bài', dataIndex: 'submitTime', key: 'submitTime', render: v => v ? dayjs(v).format('DD/MM/YYYY HH:mm') : '', align: 'center' },
+                    { title: 'Trạng thái', dataIndex: 'status', key: 'status', render: v => studentTestStatusMap[v] || v, align: 'center' },
+                    { 
+                      title: 'Điểm', 
+                      dataIndex: 'originalSubmissionScore', 
+                      key: 'originalSubmissionScore',
+                      render: (v, record) =>
+                        (record.status === 'Published' || record.status === 'Graded') && v !== undefined
+                          ? (record.maxScore ? `${v}/${record.maxScore}` : v)
+                          : '',
+                      align: 'center' 
+                    },
                     {
                       title: 'Chi tiết',
                       key: 'action',
+                      align: 'center',
                       render: (_, record) => (
-                        <Button size="small" onClick={() => navigate(`/student/test-detail/${record.attemptId}`)}>
-                          Xem chi tiết
-                        </Button>
+                        (record.status === 'Published' || record.status === 'Graded') ? (
+                          <Button 
+                            size="small" 
+                            onClick={() => navigate(`/student/test-detail/${record.attemptId}`)}
+                          >
+                            Xem chi tiết
+                          </Button>
+                        ) : null
                       )
                     }
                   ]}

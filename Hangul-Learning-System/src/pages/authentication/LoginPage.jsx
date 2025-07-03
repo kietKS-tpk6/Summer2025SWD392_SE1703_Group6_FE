@@ -39,7 +39,7 @@ const LoginPage = () => {
             navigate("/lecturer");
             break;
           case "Student":
-            navigate("/student");
+            navigate("/student/enrollment-history");
             break;
           default:
             navigate("/");

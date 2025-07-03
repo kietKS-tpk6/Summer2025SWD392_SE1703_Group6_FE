@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Card, 
   Typography, 
@@ -42,6 +42,8 @@ const { TabPane } = Tabs;
 const TakeTest = () => {
   const { testEventID } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const durationFromViewTest = location.state?.durationMinutes;
   const [loading, setLoading] = useState(true);
   const [testData, setTestData] = useState(null);
   const [currentSection, setCurrentSection] = useState(0);
@@ -56,37 +58,93 @@ const TakeTest = () => {
     const fetchAssignment = async () => {
       setLoading(true);
       try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          message.error('Bạn không được phép truy cập vào kiểm tra này');
+          navigate(`/student/view-test/${testEventID}`);
+          return;
+        }
         const url = `${API_URL}${endpoints.testEvent.getAssignment.replace('{testEventID}', testEventID)}`;
-        const res = await axios.get(url);
+        const res = await axios.get(url, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
         if (res.data) {
           setTestData(res.data);
-          setTimeLeft((res.data.durationMinutes || 0) * 60);
+          // Timer logic with localStorage
+          const attemptKey = `testAttempt_${testEventID}`;
+          let attempt = null;
+          try {
+            attempt = JSON.parse(localStorage.getItem(attemptKey));
+          } catch {}
+          const now = Date.now();
+          let expireTime;
+          if (!attempt) {
+            // Lần đầu vào làm bài
+            const duration = (durationFromViewTest !== undefined ? durationFromViewTest : res.data.durationMinutes) || 0;
+            const startTime = now;
+            expireTime = startTime + duration * 60 * 1000;
+            localStorage.setItem(attemptKey, JSON.stringify({ startTime, expireTime }));
+          } else {
+            expireTime = attempt.expireTime;
+          }
+          const timeLeftCalc = Math.floor((expireTime - now) / 1000);
+          if (timeLeftCalc <= 0) {
+            // Hết giờ
+            localStorage.removeItem(attemptKey);
+            message.warning('Đã hết giờ! Bài làm sẽ được tự động nộp.');
+            setTimeout(() => handleSubmitTest(), 500);
+            setTimeLeft(0);
+          } else {
+            setTimeLeft(timeLeftCalc);
+          }
         }
       } catch (err) {
-        setTestData(null);
+        if (err.response && err.response.status === 401) {
+          message.error('Bạn không được phép truy cập vào kiểm tra này');
+          navigate(`/student/view-test/${testEventID}`);
+        } else {
+          setTestData(null);
+        }
       } finally {
         setLoading(false);
       }
     };
     fetchAssignment();
-  }, [testEventID]);
+  }, [testEventID, durationFromViewTest]);
 
   // Timer countdown
   useEffect(() => {
-    if (timeLeft > 0 && !loading) {
+    if (loading) return;
+    const attemptKey = `testAttempt_${testEventID}`;
+    if (timeLeft > 0) {
       const timer = setInterval(() => {
-        setTimeLeft(prev => {
-          if (prev <= 1) {
-            handleSubmitTest();
-            return 0;
-          }
-          return prev - 1;
-        });
+        const now = Date.now();
+        let attempt = null;
+        try {
+          attempt = JSON.parse(localStorage.getItem(attemptKey));
+        } catch {}
+        if (!attempt) {
+          message.error('Không tìm thấy phiên làm bài.');
+          navigate(`/student/view-test/${testEventID}`);
+          clearInterval(timer);
+          return;
+        }
+        const remaining = Math.floor((attempt.expireTime - now) / 1000);
+        if (remaining <= 0) {
+          clearInterval(timer);
+          localStorage.removeItem(attemptKey);
+          message.warning('Đã hết giờ! Bài làm sẽ được tự động nộp.');
+          setTimeout(() => handleSubmitTest(), 500);
+          setTimeLeft(0);
+        } else {
+          setTimeLeft(remaining);
+        }
       }, 1000);
-
       return () => clearInterval(timer);
     }
-  }, [timeLeft, loading]);
+  }, [timeLeft, loading, testEventID, navigate]);
 
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600);
@@ -118,10 +176,54 @@ const TakeTest = () => {
     setShowConfirmSubmit(true);
   };
 
-  const confirmSubmit = () => {
+  // Hàm build payload submit
+  const buildSubmitPayload = () => {
+    let studentId = '';
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      studentId = user?.accountId || '';
+    } catch {}
+    return {
+      studentId: studentId,
+      testEventID: testEventID,
+      sectionAnswers: (testData.sections || []).map(section => ({
+        sectionID: section.testSectionID,
+        formatType: section.formatType,
+        answers: (section.questions || []).map(q => ({
+          questionID: q.questionID,
+          answers: answers[q.questionID]
+            ? Array.isArray(answers[q.questionID])
+              ? answers[q.questionID]
+              : [answers[q.questionID]]
+            : []
+        }))
+      }))
+    };
+  };
+
+  // Hàm submit bài làm
+  const submitTest = async (payload) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(
+        `${API_URL}api/StudentTests/submit`,
+        payload,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      message.success('Nộp bài thành công!');
+      navigate(`/student/test-result/${testEventID}`);
+    } catch (error) {
+      console.error('Lỗi khi nộp bài:', error);
+      message.error('Có lỗi xảy ra khi nộp bài.');
+    }
+  };
+
+  const confirmSubmit = async () => {
     setShowConfirmSubmit(false);
-    message.success('Đã nộp bài kiểm tra thành công!');
-    navigate(`/student/test-result/${testEventID}`);
+    const attemptKey = `testAttempt_${testEventID}`;
+    localStorage.removeItem(attemptKey);
+    const payload = buildSubmitPayload();
+    await submitTest(payload);
   };
 
   const renderQuestion = (question) => {
@@ -281,9 +383,9 @@ const TakeTest = () => {
                 {currentSectionData?.description}
               </Paragraph>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text type="secondary">
+                {/* <Text type="secondary">
                   Thời gian cho phần này: {currentSectionData?.timeLimit || ''} phút
-                </Text>
+                </Text> */}
                 <Text type="secondary">
                   {(currentSectionData?.questions?.length || 0)} câu hỏi
                 </Text>
