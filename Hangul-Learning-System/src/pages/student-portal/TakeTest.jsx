@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Card, 
   Typography, 
@@ -28,60 +28,123 @@ import {
   ReadOutlined,
   CustomerServiceOutlined,
   EditOutlined,
-  FileTextOutlined
+  FileTextOutlined,
+  FlagOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import axios from 'axios';
+import { API_URL, endpoints } from '../../config/api';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
 const { TabPane } = Tabs;
 
 const TakeTest = () => {
-  const { testId } = useParams();
+  const { testEventID } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const durationFromViewTest = location.state?.durationMinutes;
   const [loading, setLoading] = useState(true);
   const [testData, setTestData] = useState(null);
   const [currentSection, setCurrentSection] = useState(0);
   const [answers, setAnswers] = useState({});
   const [timeLeft, setTimeLeft] = useState(0);
   const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
+  const [flaggedQuestions, setFlaggedQuestions] = useState([]);
+  const [questionFontSize, setQuestionFontSize] = useState(16);
 
   // Lấy dữ liệu bài test từ API thật
   useEffect(() => {
     const fetchAssignment = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`/api/TestEvent/${testId}/assignment`);
+        const token = localStorage.getItem('token');
+        if (!token) {
+          message.error('Bạn không được phép truy cập vào kiểm tra này');
+          navigate(`/student/view-test/${testEventID}`);
+          return;
+        }
+        const url = `${API_URL}${endpoints.testEvent.getAssignment.replace('{testEventID}', testEventID)}`;
+        const res = await axios.get(url, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
         if (res.data) {
           setTestData(res.data);
-          setTimeLeft((res.data.durationMinutes || 0) * 60);
+          // Timer logic with localStorage
+          const attemptKey = `testAttempt_${testEventID}`;
+          let attempt = null;
+          try {
+            attempt = JSON.parse(localStorage.getItem(attemptKey));
+          } catch {}
+          const now = Date.now();
+          let expireTime;
+          if (!attempt) {
+            // Lần đầu vào làm bài
+            const duration = (durationFromViewTest !== undefined ? durationFromViewTest : res.data.durationMinutes) || 0;
+            const startTime = now;
+            expireTime = startTime + duration * 60 * 1000;
+            localStorage.setItem(attemptKey, JSON.stringify({ startTime, expireTime }));
+          } else {
+            expireTime = attempt.expireTime;
+          }
+          const timeLeftCalc = Math.floor((expireTime - now) / 1000);
+          if (timeLeftCalc <= 0) {
+            // Hết giờ
+            localStorage.removeItem(attemptKey);
+            message.warning('Đã hết giờ! Bài làm sẽ được tự động nộp.');
+            setTimeout(() => handleSubmitTest(), 500);
+            setTimeLeft(0);
+          } else {
+            setTimeLeft(timeLeftCalc);
+          }
         }
       } catch (err) {
-        setTestData(null);
+        if (err.response && err.response.status === 401) {
+          message.error('Bạn không được phép truy cập vào kiểm tra này');
+          navigate(`/student/view-test/${testEventID}`);
+        } else {
+          setTestData(null);
+        }
       } finally {
         setLoading(false);
       }
     };
     fetchAssignment();
-  }, [testId]);
+  }, [testEventID, durationFromViewTest]);
 
   // Timer countdown
   useEffect(() => {
-    if (timeLeft > 0 && !loading) {
+    if (loading) return;
+    const attemptKey = `testAttempt_${testEventID}`;
+    if (timeLeft > 0) {
       const timer = setInterval(() => {
-        setTimeLeft(prev => {
-          if (prev <= 1) {
-            handleSubmitTest();
-            return 0;
-          }
-          return prev - 1;
-        });
+        const now = Date.now();
+        let attempt = null;
+        try {
+          attempt = JSON.parse(localStorage.getItem(attemptKey));
+        } catch {}
+        if (!attempt) {
+          message.error('Không tìm thấy phiên làm bài.');
+          navigate(`/student/view-test/${testEventID}`);
+          clearInterval(timer);
+          return;
+        }
+        const remaining = Math.floor((attempt.expireTime - now) / 1000);
+        if (remaining <= 0) {
+          clearInterval(timer);
+          localStorage.removeItem(attemptKey);
+          message.warning('Đã hết giờ! Bài làm sẽ được tự động nộp.');
+          setTimeout(() => handleSubmitTest(), 500);
+          setTimeLeft(0);
+        } else {
+          setTimeLeft(remaining);
+        }
       }, 1000);
-
       return () => clearInterval(timer);
     }
-  }, [timeLeft, loading]);
+  }, [timeLeft, loading, testEventID, navigate]);
 
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600);
@@ -113,10 +176,54 @@ const TakeTest = () => {
     setShowConfirmSubmit(true);
   };
 
-  const confirmSubmit = () => {
+  // Hàm build payload submit
+  const buildSubmitPayload = () => {
+    let studentId = '';
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      studentId = user?.accountId || '';
+    } catch {}
+    return {
+      studentId: studentId,
+      testEventID: testEventID,
+      sectionAnswers: (testData.sections || []).map(section => ({
+        sectionID: section.testSectionID,
+        formatType: section.formatType,
+        answers: (section.questions || []).map(q => ({
+          questionID: q.questionID,
+          answers: answers[q.questionID]
+            ? Array.isArray(answers[q.questionID])
+              ? answers[q.questionID]
+              : [answers[q.questionID]]
+            : []
+        }))
+      }))
+    };
+  };
+
+  // Hàm submit bài làm
+  const submitTest = async (payload) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(
+        `${API_URL}api/StudentTests/submit`,
+        payload,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      message.success('Nộp bài thành công!');
+      navigate(`/student/test-result/${testEventID}`);
+    } catch (error) {
+      console.error('Lỗi khi nộp bài:', error);
+      message.error('Có lỗi xảy ra khi nộp bài.');
+    }
+  };
+
+  const confirmSubmit = async () => {
     setShowConfirmSubmit(false);
-    message.success('Đã nộp bài kiểm tra thành công!');
-    navigate(`/student/test-result/${testId}`);
+    const attemptKey = `testAttempt_${testEventID}`;
+    localStorage.removeItem(attemptKey);
+    const payload = buildSubmitPayload();
+    await submitTest(payload);
   };
 
   const renderQuestion = (question) => {
@@ -126,10 +233,11 @@ const TakeTest = () => {
         <Radio.Group
           value={answers[question.questionID]}
           onChange={(e) => handleAnswerChange(question.questionID, e.target.value)}
+          style={{ fontSize: questionFontSize }}
         >
           <Space direction="vertical" style={{ width: '100%' }}>
             {question.options.map((option) => (
-              <Radio key={option.optionID} value={option.optionID}>
+              <Radio key={option.optionID} value={option.optionID} style={{ fontSize: questionFontSize }}>
                 {option.context}
               </Radio>
             ))}
@@ -144,6 +252,7 @@ const TakeTest = () => {
           placeholder="Nhập câu trả lời"
           value={answers[question.questionID] || ''}
           onChange={(e) => handleAnswerChange(question.questionID, e.target.value)}
+          style={{ fontSize: questionFontSize }}
         />
       );
     }
@@ -154,6 +263,23 @@ const TakeTest = () => {
     if (sectionName.toLowerCase().includes('listening')) return <CustomerServiceOutlined />;
     if (sectionName.toLowerCase().includes('writing')) return <EditOutlined />;
     return <FileTextOutlined />;
+  };
+
+  // Scroll đến câu hỏi theo id
+  const scrollToQuestion = (questionID) => {
+    const el = document.getElementById(`question-${questionID}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
+  // Gắn/bỏ cờ câu hỏi
+  const toggleFlag = (questionID) => {
+    setFlaggedQuestions((prev) =>
+      prev.includes(questionID)
+        ? prev.filter((id) => id !== questionID)
+        : [...prev, questionID]
+    );
   };
 
   if (loading) {
@@ -180,7 +306,7 @@ const TakeTest = () => {
       <div style={{ marginBottom: 24 }}>
         <Button
           icon={<ArrowLeftOutlined />}
-          onClick={() => navigate(`/student/view-test/${testId}`)}
+          onClick={() => navigate(`/student/view-test/${testEventID}`)}
           style={{ marginBottom: 16 }}
         >
           Quay lại
@@ -208,121 +334,176 @@ const TakeTest = () => {
         </Col>
       </Row>
 
-      {/* Section Navigation */}
-      <Card style={{ marginBottom: 24 }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-          {sections.map((section, index) => {
-            const sectionAnsweredCount = (section.questions || []).filter(q => answers[q.questionID] !== undefined).length;
-            const isCompleted = sectionAnsweredCount === (section.questions?.length || 0);
-            return (
-              <Button
-                key={section.testSectionID}
-                type={currentSection === index ? 'primary' : 'default'}
-                size="small"
-                onClick={() => setCurrentSection(index)}
-                style={{
-                  minWidth: 140,
-                  height: 'auto',
-                  padding: '8px 12px',
-                  backgroundColor: isCompleted ? '#52c41a' : undefined,
-                  borderColor: isCompleted ? '#52c41a' : undefined,
-                  color: isCompleted ? 'white' : undefined
-                }}
-              >
-                <div style={{ textAlign: 'left', lineHeight: 1.2 }}>
-                  <div style={{ fontWeight: 500 }}>{section.context || `Phần ${index + 1}`}</div>
-                  <div style={{ fontSize: '10px', opacity: 0.8, marginTop: 2 }}>
-                    {sectionAnsweredCount}/{section.questions?.length || 0} câu
-                  </div>
-                </div>
-              </Button>
-            );
-          })}
-        </div>
-        <div style={{ marginTop: 16 }}>
-          <Text type="secondary">
-            Đã trả lời: {answeredCount}/{totalQuestions} câu hỏi
-          </Text>
-        </div>
-      </Card>
-
-      {/* Current Section */}
-      <Card>
-        <div style={{ marginBottom: 24 }}>
-          <Title level={3}>{currentSectionData?.context || `Phần ${currentSection + 1}`}</Title>
-          <Paragraph style={{ fontSize: 16, marginBottom: 16 }}>
-            {currentSectionData?.description}
-          </Paragraph>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text type="secondary">
-              Thời gian cho phần này: {currentSectionData?.timeLimit || ''} phút
-            </Text>
-            <Text type="secondary">
-              {(currentSectionData?.questions?.length || 0)} câu hỏi
-            </Text>
+      <Row gutter={24}>
+        {/* Main content */}
+        <Col xs={24} md={18} lg={19}>
+          {/* Điều chỉnh cỡ chữ */}
+          <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span>Điều chỉnh cỡ chữ:</span>
+            <Button size="small" onClick={() => setQuestionFontSize(f => Math.max(12, f - 2))}>A-</Button>
+            <Button size="small" onClick={() => setQuestionFontSize(f => Math.min(32, f + 2))}>A+</Button>
+            <span style={{ fontSize: 12, color: '#888' }}>{questionFontSize}px</span>
           </div>
-        </div>
-
-        <Divider />
-
-        {/* Questions in current section */}
-        <div style={{ marginBottom: 32 }}>
-          {(currentSectionData?.questions || []).map((question, index) => (
-            <div key={question.questionID} style={{ marginBottom: 32, padding: 16, border: '1px solid #f0f0f0', borderRadius: 8 }}>
-              <div style={{ marginBottom: 16 }}>
-                <Title level={4}>Câu {index + 1}</Title>
-                <Paragraph style={{ fontSize: 16, marginBottom: 16 }}>
-                  {question.content}
-                </Paragraph>
-              </div>
-
-              <div style={{ marginBottom: 16 }}>
-                {renderQuestion(question)}
-              </div>
-
-              {/* Question status indicator */}
-              <div style={{ marginTop: 8 }}>
-                {answers[question.questionID] !== undefined ? (
-                  <Tag color="green" icon={<CheckCircleOutlined />}>
-                    Đã trả lời
-                  </Tag>
-                ) : (
-                  <Tag color="orange">
-                    Chưa trả lời
-                  </Tag>
-                )}
+          {/* Navigation section (chọn phần làm bài) */}
+          <Card style={{ marginBottom: 24 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {sections.map((section, index) => {
+                const sectionAnsweredCount = (section.questions || []).filter(q => answers[q.questionID] !== undefined).length;
+                const isCompleted = sectionAnsweredCount === (section.questions?.length || 0);
+                return (
+                  <Button
+                    key={section.testSectionID || index}
+                    type={currentSection === index ? 'primary' : 'default'}
+                    size="small"
+                    onClick={() => setCurrentSection(index)}
+                    style={{
+                      minWidth: 140,
+                      height: 'auto',
+                      padding: '8px 12px',
+                      backgroundColor: isCompleted ? '#52c41a' : undefined,
+                      borderColor: isCompleted ? '#52c41a' : undefined,
+                      color: isCompleted ? 'white' : undefined
+                    }}
+                  >
+                    <div style={{ textAlign: 'left', lineHeight: 1.2 }}>
+                      <div style={{ fontWeight: 500 }}>{section.context || `Phần ${index + 1}`}</div>
+                      <div style={{ fontSize: '10px', opacity: 0.8, marginTop: 2 }}>
+                        {sectionAnsweredCount}/{section.questions?.length || 0} câu
+                      </div>
+                    </div>
+                  </Button>
+                );
+              })}
+            </div>
+          </Card>
+          <Card>
+            <div style={{ marginBottom: 24 }}>
+              <Title level={3}>{currentSectionData?.context || `Phần ${currentSection + 1}`}</Title>
+              <Paragraph style={{ fontSize: 16, marginBottom: 16 }}>
+                {currentSectionData?.description}
+              </Paragraph>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                {/* <Text type="secondary">
+                  Thời gian cho phần này: {currentSectionData?.timeLimit || ''} phút
+                </Text> */}
+                <Text type="secondary">
+                  {(currentSectionData?.questions?.length || 0)} câu hỏi
+                </Text>
               </div>
             </div>
-          ))}
-        </div>
 
-        {/* Navigation Buttons */}
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Button
-            onClick={handlePrevSection}
-            disabled={currentSection === 0}
-          >
-            Trang trước
-          </Button>
+            <Divider />
 
-          <Space>
-            {currentSection < sections.length - 1 ? (
-              <Button type="primary" onClick={handleNextSection}>
-                Trang sau
-              </Button>
-            ) : (
+            {/* Questions in current section */}
+            <div style={{ marginBottom: 32 }}>
+              {(currentSectionData?.questions || []).map((question, index) => (
+                <div id={`question-${question.questionID}`} key={question.questionID} style={{ marginBottom: 32, padding: 16, border: '1px solid #f0f0f0', borderRadius: 8, position: 'relative', fontSize: questionFontSize }}>
+                  <FlagOutlined
+                    style={{
+                      color: flaggedQuestions.includes(question.questionID) ? '#faad14' : '#bbb',
+                      fontSize: 20,
+                      position: 'absolute',
+                      top: 8,
+                      right: 8,
+                      cursor: 'pointer',
+                      transition: 'color 0.2s'
+                    }}
+                    onClick={() => toggleFlag(question.questionID)}
+                    title={flaggedQuestions.includes(question.questionID) ? 'Bỏ gắn cờ' : 'Gắn cờ lưu ý'}
+                  />
+                  <div style={{ marginBottom: 16 }}>
+                    <span style={{ fontWeight: 600 }}>Câu {index + 1}:</span>
+                    <span style={{ marginLeft: 8 }}>{question.content}</span>
+                  </div>
+
+                  <div style={{ marginBottom: 16, fontSize: questionFontSize }}>
+                    {renderQuestion(question)}
+                  </div>
+
+                  {/* Question status indicator */}
+                  <div style={{ marginTop: 8 }}>
+                    {answers[question.questionID] !== undefined ? (
+                      <Tag color="green" icon={<CheckCircleOutlined />}>
+                        Đã trả lời
+                      </Tag>
+                    ) : (
+                      <Tag color="orange">
+                        Chưa trả lời
+                      </Tag>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Navigation Buttons */}
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <Button
-                type="primary"
-                danger
-                icon={<CheckCircleOutlined />}
-                onClick={handleSubmitTest}
+                onClick={handlePrevSection}
+                disabled={currentSection === 0}
               >
-                Nộp bài
+                Trang trước
               </Button>
-            )}
-          </Space>
-        </div>
-      </Card>
+
+              <Space>
+                {currentSection < sections.length - 1 ? (
+                  <Button type="primary" onClick={handleNextSection}>
+                    Trang sau
+                  </Button>
+                ) : (
+                  <Button
+                    type="primary"
+                    danger
+                    icon={<CheckCircleOutlined />}
+                    onClick={handleSubmitTest}
+                  >
+                    Nộp bài
+                  </Button>
+                )}
+              </Space>
+            </div>
+          </Card>
+        </Col>
+        {/* Sidebar câu hỏi - chuyển sang phải, sticky */}
+        <Col xs={24} md={6} lg={5} style={{ marginBottom: 24, position: 'sticky', top: 32, alignSelf: 'flex-start', zIndex: 2 }}>
+          <Card title="Danh sách câu hỏi" bordered style={{ minHeight: 300 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {(currentSectionData?.questions || []).map((question, idx) => (
+                <Button
+                  key={question.questionID}
+                  size="small"
+                  type="default"
+                  style={{
+                    width: 44,
+                    height: 44,
+                    padding: 0,
+                    borderColor: flaggedQuestions.includes(question.questionID) ? '#faad14' : undefined,
+                    background: flaggedQuestions.includes(question.questionID) ? '#fffbe6' : undefined,
+                    position: 'relative',
+                  }}
+                  onClick={() => scrollToQuestion(question.questionID)}
+                >
+                  <span style={{ fontWeight: 600 }}>{idx + 1}</span>
+                  <FlagOutlined
+                    style={{
+                      color: flaggedQuestions.includes(question.questionID) ? '#faad14' : '#bbb',
+                      fontSize: 16,
+                      position: 'absolute',
+                      right: 4,
+                      top: 4,
+                      cursor: 'pointer',
+                    }}
+                    onClick={e => {
+                      e.stopPropagation();
+                      toggleFlag(question.questionID);
+                    }}
+                  />
+                </Button>
+              ))}
+            </div>
+          </Card>
+        </Col>
+      </Row>
 
       {/* Confirm Submit Modal */}
       <Modal

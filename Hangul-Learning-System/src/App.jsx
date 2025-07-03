@@ -44,6 +44,7 @@ import ViewTest from './pages/student-portal/ViewTest';
 import TakeTest from './pages/student-portal/TakeTest';
 import TestResult from './pages/student-portal/TestResult';
 import SystemConfig from './components/dashboard/pages/SystemConfig';
+import TestDetail from './pages/student-portal/TestDetail';
 import './App.css';
 import 'antd/dist/reset.css';
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -123,6 +124,7 @@ const studentRoutes = [
   { path: '/view-test/:testEventID', element: <ViewTest /> },
   { path: '/take-test/:testEventID', element: <TakeTest /> },
   { path: '/test-result/:testId', element: <TestResult /> },
+  { path: '/test-detail/:studentTestID', element: <TestDetail /> },
   { path: '/lesson-detail' , element: <LessonDetailPage/>},
  
 
