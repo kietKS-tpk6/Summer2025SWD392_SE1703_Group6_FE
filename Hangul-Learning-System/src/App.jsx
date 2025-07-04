@@ -87,6 +87,7 @@ const lecturerRoutes = [
   { path: '/attendance', element: <AttendancePage/>},
   { path: '/check-attendance', element: <CheckAttendancePage /> },
   { path: '/assessment', element: <AssessmentManagement /> },
+  { path: '/assessment/:testID', element: <ViewDetailAssessment /> },
 ];
 
 // Public routes configuration
