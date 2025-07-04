@@ -33,11 +33,7 @@ const PaymentForm = () => {
         description="Bạn cần đăng nhập để thực hiện thanh toán."
         type="warning"
         showIcon
-        action={
-          <Button type="primary" onClick={() => navigate("/login")}>
-            Đăng nhập
-          </Button>
-        }
+        
       />
     );
   }
