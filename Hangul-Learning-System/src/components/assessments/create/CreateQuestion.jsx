@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Input, Button, Card, Upload, Radio, Space, message } from 'antd';
 import { PlusOutlined, DeleteOutlined, UploadOutlined } from '@ant-design/icons';
+import * as XLSX from 'xlsx';
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
@@ -9,7 +10,7 @@ const TRUE_FALSE_OPTIONS = [
   { text: 'False', key: 'B' },
 ];
 
-const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score }) => {
+const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score, onImportExcel }) => {
   const [minOptions, setMinOptions] = useState(2);
   const [maxOptions, setMaxOptions] = useState(10);
 
@@ -225,8 +226,31 @@ const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score }) => {
       ? (Number(score) / questions.length).toFixed(2)
       : '';
 
+  const handleImportExcel = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (typeof onImportExcel === 'function') {
+      onImportExcel(file);
+    }
+  };
+
   return (
     <div>
+      <input
+        type="file"
+        accept=".xlsx,.xls"
+        style={{ display: 'none' }}
+        id="import-excel-input"
+        onChange={handleImportExcel}
+      />
+      <Button
+        type="primary"
+        icon={<UploadOutlined />}
+        style={{ marginBottom: 16 }}
+        onClick={() => document.getElementById('import-excel-input').click()}
+      >
+        Import Excel
+      </Button>
       <Button
         type="dashed"
         icon={<PlusOutlined />} 
@@ -270,7 +294,16 @@ const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score }) => {
                     {q.imageURL ? 'Đổi ảnh' : 'Thêm ảnh'}
                   </Button>
                 </Upload>
-                {q.imageURL && <span style={{ color: '#1890ff' }}>{q.imageURL}</span>}
+                {q.imageURL && (
+                  <>
+                    <span style={{ color: '#1890ff' }}>{q.imageURL}</span>
+                    <Button type="link" size="small" onClick={() => {
+                      // Xóa imageURL của câu hỏi
+                      const newQuestions = questions.map((ques, i) => i === idx ? { ...ques, imageURL: undefined } : ques);
+                      onChange && onChange(newQuestions);
+                    }}>X</Button>
+                  </>
+                )}
                 <Upload
                   customRequest={e => handleQuestionUpload(idx, e.file, 'audio')}
                   showUploadList={false}
@@ -281,7 +314,16 @@ const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score }) => {
                     {q.audioURL ? 'Đổi audio' : 'Thêm audio'}
                   </Button>
                 </Upload>
-                {q.audioURL && <span style={{ color: '#1890ff' }}>{q.audioURL}</span>}
+                {q.audioURL && (
+                  <>
+                    <span style={{ color: '#1890ff' }}>{q.audioURL}</span>
+                    <Button type="link" size="small" onClick={() => {
+                      // Xóa audioURL của câu hỏi
+                      const newQuestions = questions.map((ques, i) => i === idx ? { ...ques, audioURL: undefined } : ques);
+                      onChange && onChange(newQuestions);
+                    }}>X</Button>
+                  </>
+                )}
               </div>
             </>
           )}
@@ -295,7 +337,6 @@ const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score }) => {
             <>
               <div style={{ marginBottom: 8, fontWeight: 500 }}>
                 Đáp án (chọn đáp án đúng):
-
               </div>
               <Radio.Group
                 value={q.correct}
@@ -303,54 +344,62 @@ const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score }) => {
                 style={{ width: '100%' }}
               >
                 <Space direction="vertical" style={{ width: '100%' }}>
-                  {q.answers.map((a, aIdx) => (
-                    <div key={a.key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <Radio value={aIdx} />
-                      <Input
-                        placeholder={`Đáp án ${a.key}`}
-                        value={a.text}
-                        onChange={e => handleAnswerChange(idx, aIdx, e.target.value)}
-                        style={{ flex: 1 }}
-                      />
-                      {/* Upload ảnh/audio cho đáp án */}
-                      <Upload
-                        customRequest={e => handleAnswerUpload(idx, aIdx, e.file, 'image')}
-                        showUploadList={false}
-                        accept="image/*"
-                        disabled={!!a.audioURL}
-                      >
-                        <Button icon={<UploadOutlined />} disabled={!!a.audioURL} size="small">
-                          {a.imageURL ? 'Đổi ảnh' : 'Ảnh'}
-                        </Button>
-                      </Upload>
-                      {a.imageURL && (
-                        <>
-                          <span style={{ color: '#1890ff', fontSize: 12 }}>{a.imageURL}</span>
-                          <Button type="link" size="small" onClick={() => handleRemoveAnswerFile(idx, aIdx, 'image')}>X</Button>
-                        </>
-                      )}
-                      <Upload
-                        customRequest={e => handleAnswerUpload(idx, aIdx, e.file, 'audio')}
-                        showUploadList={false}
-                        accept="audio/*"
-                        disabled={!!a.imageURL}
-                      >
-                        <Button icon={<UploadOutlined />} disabled={!!a.imageURL} size="small">
-                          {a.audioURL ? 'Đổi audio' : 'Audio'}
-                        </Button>
-                      </Upload>
-                      {a.audioURL && (
-                        <>
-                          <span style={{ color: '#1890ff', fontSize: 12 }}>{a.audioURL}</span>
-                          <Button type="link" size="small" onClick={() => handleRemoveAnswerFile(idx, aIdx, 'audio')}>X</Button>
-                        </>
-                      )}
-                      {/* Nút xóa đáp án */}
-                      {q.answers.length > minOptions && (
-                        <Button danger size="small" icon={<DeleteOutlined />} onClick={() => handleRemoveOption(idx, aIdx)} />
-                      )}
-                    </div>
-                  ))}
+                  {/* Xác định loại đáp án chung cho cả câu hỏi */}
+                  {(() => {
+                    let answerType = null;
+                    if (q.answers.some(a => a.text)) answerType = 'text';
+                    else if (q.answers.some(a => a.imageURL)) answerType = 'image';
+                    else if (q.answers.some(a => a.audioURL)) answerType = 'audio';
+                    return q.answers.map((a, aIdx) => (
+                      <div key={a.key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <Radio value={aIdx} />
+                        <Input
+                          placeholder={`Đáp án ${a.key}`}
+                          value={a.text}
+                          onChange={e => handleAnswerChange(idx, aIdx, e.target.value)}
+                          style={{ flex: 1 }}
+                          disabled={answerType === 'image' || answerType === 'audio' || !!a.imageURL || !!a.audioURL}
+                        />
+                        {/* Upload ảnh/audio cho đáp án */}
+                        <Upload
+                          customRequest={e => handleAnswerUpload(idx, aIdx, e.file, 'image')}
+                          showUploadList={false}
+                          accept="image/*"
+                          disabled={answerType === 'text' || answerType === 'audio' || !!a.audioURL || !!a.text}
+                        >
+                          <Button icon={<UploadOutlined />} disabled={answerType === 'text' || answerType === 'audio' || !!a.audioURL || !!a.text} size="small">
+                            {a.imageURL ? 'Đổi ảnh' : 'Ảnh'}
+                          </Button>
+                        </Upload>
+                        {a.imageURL && (
+                          <>
+                            <span style={{ color: '#1890ff', fontSize: 12 }}>{a.imageURL}</span>
+                            <Button type="link" size="small" onClick={() => handleRemoveAnswerFile(idx, aIdx, 'image')}>X</Button>
+                          </>
+                        )}
+                        <Upload
+                          customRequest={e => handleAnswerUpload(idx, aIdx, e.file, 'audio')}
+                          showUploadList={false}
+                          accept="audio/*"
+                          disabled={answerType === 'text' || answerType === 'image' || !!a.imageURL || !!a.text}
+                        >
+                          <Button icon={<UploadOutlined />} disabled={answerType === 'text' || answerType === 'image' || !!a.imageURL || !!a.text} size="small">
+                            {a.audioURL ? 'Đổi audio' : 'Audio'}
+                          </Button>
+                        </Upload>
+                        {a.audioURL && (
+                          <>
+                            <span style={{ color: '#1890ff', fontSize: 12 }}>{a.audioURL}</span>
+                            <Button type="link" size="small" onClick={() => handleRemoveAnswerFile(idx, aIdx, 'audio')}>X</Button>
+                          </>
+                        )}
+                        {/* Nút xóa đáp án */}
+                        {q.answers.length > minOptions && (
+                          <Button danger size="small" icon={<DeleteOutlined />} onClick={() => handleRemoveOption(idx, aIdx)} />
+                        )}
+                      </div>
+                    ));
+                  })()}
                   {/* Nút thêm đáp án */}
                   {q.answers.length < maxOptions && (
                     <Button type="dashed" icon={<PlusOutlined />} size="small" onClick={() => handleAddOption(idx)}>

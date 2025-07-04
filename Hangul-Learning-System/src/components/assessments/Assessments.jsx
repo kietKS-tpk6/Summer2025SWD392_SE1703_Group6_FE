@@ -8,6 +8,7 @@ import axios from 'axios';
 import { API_URL } from '../../config/api';
 import { useNavigate } from 'react-router-dom';
 import ViewDetailAssessment from './ViewDetailAssessment';
+import * as XLSX from 'xlsx';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -442,7 +443,52 @@ const Assessments = () => {
 
   const [userRole, setUserRole] = useState(null);
 
- 
+  // Add this handler for Excel import
+  const handleImportExcel = async (file, sectionIdx = 0) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await fetch(`${API_URL}api/ImportExcel/mcq/import/excel`, {
+        method: 'POST',
+        body: formData,
+      });
+      const apiData = await response.json();
+      // Map API data to FE format
+      if (apiData && Array.isArray(apiData.data)) {
+        const questions = apiData.data.map(q => {
+          // Collect all optionX (A, B, C, D, ...)
+          const answers = Object.keys(q)
+            .filter(key => key.startsWith('option'))
+            .map(key => ({
+              text: q[key],
+              key: key.replace('option', ''),
+            }));
+          // Find correct answer index
+          const correctIdx = q.correctAnswer
+            ? answers.findIndex(a => a.key === q.correctAnswer)
+            : 0;
+          return {
+            content: q.content,
+            answers,
+            correct: correctIdx,
+          };
+        });
+        setFormData(prev => {
+          const newSections = [...(prev.sections || [])];
+          if (!newSections[sectionIdx]) return prev;
+          newSections[sectionIdx] = {
+            ...newSections[sectionIdx],
+            questions,
+          };
+          return { ...prev, sections: newSections };
+        });
+      } else {
+        message.error('Dữ liệu file không hợp lệ!');
+      }
+    } catch (err) {
+      message.error('Lỗi khi import file Excel!');
+    }
+  };
 
   return (
     <div>
@@ -558,6 +604,7 @@ const Assessments = () => {
             subjects={subjects}
             categoryOptions={categoryOptions}
             onSubjectChange={handleSubjectChange}
+            onImportExcel={handleImportExcel}
           />
         </div>
       )}
