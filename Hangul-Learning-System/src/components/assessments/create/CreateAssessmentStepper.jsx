@@ -9,7 +9,7 @@ import CreateAssessmentConfirm from './CreateAssessmentConfirm';
 // TODO: tạo SectionQuestionsForm đúng logic mới
 const SectionQuestionsForm = () => <div>SectionQuestionsForm (TODO)</div>;
 
-const CreateAssessmentStepper = ({ formData, setFormData, onFinish, showNotify, subjects, categoryOptions, onSubjectChange }) => {
+const CreateAssessmentStepper = ({ formData, setFormData, onFinish, showNotify, subjects, categoryOptions, onSubjectChange, onImportExcel }) => {
   const [current, setCurrent] = useState(0);
   const basicInfoFormRef = useRef();
 
@@ -34,6 +34,7 @@ const CreateAssessmentStepper = ({ formData, setFormData, onFinish, showNotify, 
           testType={formData.basicInfo?.testType}
           sections={formData.sections}
           onChange={sections => setFormData(prev => ({ ...prev, sections }))}
+          onImportExcel={onImportExcel}
         />
       ),
     },

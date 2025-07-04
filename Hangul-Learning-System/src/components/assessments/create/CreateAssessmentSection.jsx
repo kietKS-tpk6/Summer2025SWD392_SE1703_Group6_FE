@@ -33,7 +33,7 @@ const DEFAULT_ANSWERS = [
   { text: '', key: 'D' },
 ];
 
-const CreateAssessmentSection = ({ testType, sections = [], onChange }) => {
+const CreateAssessmentSection = ({ testType, sections = [], onChange, onImportExcel }) => {
   // Quản lý index của section đang active
   const [activeKey, setActiveKey] = useState('0');
   // Luôn lấy sectionList từ props.sections
@@ -376,6 +376,7 @@ const CreateAssessmentSection = ({ testType, sections = [], onChange }) => {
                   }}
                   type={section.type}
                   score={section.score}
+                  onImportExcel={file => onImportExcel && onImportExcel(file, Number(activeKey))}
                 />
               ) : (
                 <div style={{ color: '#aaa', textAlign: 'center', margin: 24 }}>

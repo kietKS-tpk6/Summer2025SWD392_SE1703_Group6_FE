@@ -10,6 +10,12 @@ const CATEGORY_LABELS = {
 };
 
 const CreateAssessmentConfirm = ({ basicInfo, sections }) => {
+  // Lấy fullname từ localStorage
+  let fullname = '';
+  try {
+    const user = JSON.parse(localStorage.getItem('user'));
+    fullname = user?.fullname || user?.fullName || '';
+  } catch {}
   return (
     <div>
       <h3>Thông tin cơ bản</h3>
@@ -18,6 +24,7 @@ const CreateAssessmentConfirm = ({ basicInfo, sections }) => {
         <Descriptions.Item label="Môn học">{basicInfo?.SubjectName || basicInfo?.SubjectID}</Descriptions.Item>
         <Descriptions.Item label="Loại">{basicInfo?.testType}</Descriptions.Item>
         <Descriptions.Item label="Phân loại">{CATEGORY_LABELS[basicInfo?.Category] || basicInfo?.Category}</Descriptions.Item>
+        <Descriptions.Item label="Người tạo">{fullname}</Descriptions.Item>
       </Descriptions>
 
       <h3 style={{ marginTop: 24 }}>Danh sách section & câu hỏi</h3>
