@@ -9,6 +9,9 @@ import PendingAssessmentCardList from './PendingAssessmentCardList';
 const ClassDetail = (props) => {
   const location = useLocation();
   const classId = props.classId || location.state?.classId;
+  const assessments = props.assessments || location.state?.assessments;
+  const availableTests = props.availableTests || location.state?.availableTests;
+  const subjectId = props.subjectId || location.state?.subjectId;
   const [reloadTimetable, setReloadTimetable] = useState(0);
   const [selectedLesson, setSelectedLesson] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -40,7 +43,7 @@ const ClassDetail = (props) => {
       </div>
       {/* Sidebar */}
       <div style={{ width: 340, minWidth: 260 }}>
-        <PendingAssessmentCardList />
+        <PendingAssessmentCardList classId={classId} assessments={assessments} availableTests={availableTests} subjectId={subjectId} />
       </div>
       <LessonDetailModal
         open={modalOpen}
