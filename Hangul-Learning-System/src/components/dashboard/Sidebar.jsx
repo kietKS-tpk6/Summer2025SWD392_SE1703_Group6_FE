@@ -109,7 +109,7 @@ const Sidebar = () => {
       label: 'Lịch kiểm tra',
     },
     {
-      key: '/student/enrollment-history',
+      key: '/student/enroll',
       icon: <ReadOutlined />, // icon lịch sử
       label: 'Lớp học đã đăng ký',
     },
@@ -123,11 +123,11 @@ const Sidebar = () => {
       icon: <BookOutlined />, // icon chứng chỉ
       label: 'Chứng chỉ',
     },
-    {
-      key: '/student/studying-class',
-      icon: <ApartmentOutlined />, // icon lớp học
-      label: 'Lớp đang học',
-    },
+    // {
+    //   key: '/student/studying-class',
+    //   icon: <ApartmentOutlined />, // icon lớp học
+    //   label: 'Lớp đang học',
+    // },
     {
       key: '/',
       icon: <DashboardOutlined />, // icon dashboard

@@ -24,7 +24,7 @@ import AssessmentManagement from './components/assessments/Assessments'; // hoáº
 // import About from './pages/viewer-portal/About';
 // import Courses from './pages/viewer-portal/Courses';
 // import Contact from './pages/viewer-portal/Contact';
-import StudentPage from './pages/student-portal/StudentPage';
+import EnrollClass from './pages/student-portal/EnrollClass';
 import NotFoundPage from './components/error/NotFoundPage';
 import LoginPage from './pages/authentication/LoginPage';
 import RegisterPage from './pages/authentication/RegisterPage';
@@ -43,6 +43,7 @@ import TakeTest from './pages/student-portal/TakeTest';
 import TestResult from './pages/student-portal/TestResult';
 import SystemConfig from './components/dashboard/pages/SystemConfig';
 import TestDetail from './pages/student-portal/TestDetail';
+import ViewEnrolledClassDetail from './pages/student-portal/ViewEnrolledClassDetail';
 import './App.css';
 import 'antd/dist/reset.css';
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -108,19 +109,20 @@ const publicRoutes = [
 
 // Student routes configuration
 const studentRoutes = [
-  { path: '/  ', element: <StudentPage /> },
+  // { path: '/  ', element: <StudentPage /> },
   { path: '/profile', element: <StudentDetail/> },
   { path: '/schedule', element: <WeeklyTimeTable/> }, 
   { path: '/payment-success', element: <PaymentSuccess/>},
   { path: '/payment-failed', element: <PaymentFailed/>},
   { path: '/payment/:classId', element: <PaymentForm /> },
-  { path: '/class-detail/:id', element: <ViewClassDetail/>},
   { path: '/lesson-detail' , element: <LessonDetailPage/>},
   { path: '/test-schedule', element: <StudentTestSchedule /> },
   { path: '/view-test/:testEventID', element: <ViewTest /> },
   { path: '/take-test/:testEventID', element: <TakeTest /> },
   { path: '/test-result/:testId', element: <TestResult /> },
   { path: '/test-detail/:studentTestID', element: <TestDetail /> },
+  { path: '/enroll', element: <EnrollClass/>},
+  { path: '/enroll/:classId', element: <ViewEnrolledClassDetail/>},
   //{ path: '/weekly-time-table', element: <WeeklyTimeTable/>},
 ];
 
