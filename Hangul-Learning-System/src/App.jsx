@@ -163,7 +163,7 @@ const App = () => {
         <Route
           path="/lecturer/*"
           element={
-            <ProtectedRoute allowedRoles={['Lecture']}>
+            <ProtectedRoute allowedRoles={['Lecture', 'Lecturer', 'Teacher']}>
               <Layout style={{ minHeight: '100vh' }}>
                 <LecturerSidebar />
                 <Layout>

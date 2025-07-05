@@ -43,6 +43,7 @@ const ViewDetailAssessment = ({ testID: propTestID }) => {
   const [approving, setApproving] = useState(false);
   const [testStatus, setTestStatus] = useState();
   const [creatorFullname, setCreatorFullname] = useState('');
+  const [createBy, setCreateBy] = useState('');
   const [testInfo, setTestInfo] = useState({});
   let userRole = null;
   try {
@@ -61,8 +62,14 @@ const ViewDetailAssessment = ({ testID: propTestID }) => {
     currentUser = JSON.parse(localStorage.getItem('user')) || {};
   } catch {}
   const isOwnDraft = isManager && testInfo.status === 0 && testInfo.account?.accountID === currentUser.accountId;
-  const isLecture = currentUser.role === 'Lecture';
-  const isOwnDraftLecture = isLecture && testInfo.status === 0 && testInfo.account?.accountID === currentUser.accountId;
+  const isLecture = userRole === 'Lecture';
+  const isOwnDraftLecture = isLecture && testInfo.status === 0 && createBy === currentUser.accountId;
+
+  console.log('Current user:', currentUser);
+  console.log('Test info:', testInfo);
+  console.log('Params:', params);
+  console.log('createBy:', createBy, 'accountId:', currentUser.accountId, 'status:', testInfo.status);
+  console.log('isOwnDraftLecture:', isOwnDraftLecture);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -82,7 +89,9 @@ const ViewDetailAssessment = ({ testID: propTestID }) => {
         try {
           const testRes = await axios.get(`${API_URL}api/Test/${testID}`);
           const fullname = testRes.data?.account?.fullname || '';
+          const createBy = testRes.data?.createBy || '';
           setCreatorFullname(fullname);
+          setCreateBy(createBy);
           setTestInfo(testRes.data || {});
         } catch {}
       } catch (e) {
@@ -143,7 +152,7 @@ const ViewDetailAssessment = ({ testID: propTestID }) => {
               setApproving(false);
             }}
             loading={approving}
-            disabled={loading || approving || testStatus !== 0}
+            disabled={loading || approving || testInfo.status !== 0}
             style={{ marginBottom: 16, marginLeft: 8 }}
           >
             Gửi duyệt cho quản lí

@@ -135,7 +135,16 @@ const Assessments = () => {
 
   // Handlers
   const handleView = (record) => {
-    navigate(`/dashboard/assessment/${record.testID}`);
+    // Lấy role hiện tại từ localStorage hoặc context
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (user.role === 'Manager') {
+      navigate(`/dashboard/assessment/${record.testID}`);
+    } else if (user.role === 'Lecture' || user.role === 'Lecturer' || user.role === 'Teacher') {
+      navigate(`/lecturer/assessment/${record.testID}`);
+    } else {
+      // fallback cho các role khác nếu cần
+      navigate(`/assessment/${record.testID}`);
+    }
   };
   const handleEdit = (record) => {
     Modal.info({
