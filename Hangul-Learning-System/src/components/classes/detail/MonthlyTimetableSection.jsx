@@ -96,7 +96,7 @@ const MonthlyTimetableSection = ({ classId }) => {
           ) : error ? (
             <div style={{ padding: 24, color: 'red' }}>{error}</div>
           ) : (
-            <Calendar dateCellRender={dateCellRender} />
+            <Calendar cellRender={dateCellRender} />
           )
         )}
       </Card>
