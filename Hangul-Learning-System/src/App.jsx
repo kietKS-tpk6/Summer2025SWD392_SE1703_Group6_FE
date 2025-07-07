@@ -19,7 +19,7 @@ import ViewerPage from './pages/viewer-portal/ViewerPage';
 import HomeContent from './components/Homepage/Content';
 import ViewClassDetail from './pages/student-portal/ViewClassDetail';
 import WeeklyTimeTable from './pages/student-portal/WeeklyTimeTable';
-import StudentDetail from './pages/student-portal/StudentDetail';
+import AccountDetail from '../src/components/common/AccountDetail';
 import AssessmentManagement from './components/assessments/Assessments'; // hoặc tên file bạn muốn
 // import About from './pages/viewer-portal/About';
 // import Courses from './pages/viewer-portal/Courses';
@@ -63,7 +63,7 @@ const dashboardRoutes = [
   { path: '/analytics', element: <Analytics /> },
   { path: '/chat', element: <Chat /> },
   { path: '/schedule', element: <Schedule /> },
-  { path: '/profile', element: <Profile /> },
+  { path: '/profile', element: <AccountDetail /> },
   { path: '/settings', element: <Settings /> },
   { path: '/assessment', element: <AssessmentManagement /> },
   { path: '/lesson-detail' , element: <LessonDetailPage/>},
@@ -80,11 +80,12 @@ const lecturerRoutes = [
   { path: '/assignments', element: <div>Assignments Page</div> },
   { path: '/students', element: <div>Students Page</div> },
   { path: '/messages', element: <div>Messages Page</div> },
-  { path: '/profile', element: <div>Profile Page</div> },
+  { path: '/profile', element: <AccountDetail/> },
   { path: '/settings', element: <div>Settings Page</div> },
   { path: '/lesson-detail' , element: <LessonDetailPage/>},
   { path: '/attendance', element: <AttendancePage/>},
   { path: '/check-attendance', element: <CheckAttendancePage /> },
+  { path: '/attendance', element: <AttendancePage/>},
 ];
 
 // Public routes configuration
@@ -110,7 +111,7 @@ const publicRoutes = [
 // Student routes configuration
 const studentRoutes = [
   // { path: '/  ', element: <StudentPage /> },
-  { path: '/profile', element: <StudentDetail/> },
+  { path: '/profile', element: <AccountDetail/> },
   { path: '/schedule', element: <WeeklyTimeTable/> }, 
   { path: '/payment-success', element: <PaymentSuccess/>},
   { path: '/payment-failed', element: <PaymentFailed/>},
@@ -130,7 +131,7 @@ const App = () => {
   return (
     <Router>
       <Routes>
-        {/* Dashboard Layout */}
+        {/* Manager Layout */}
         <Route
           path="/dashboard/*"
           element={
