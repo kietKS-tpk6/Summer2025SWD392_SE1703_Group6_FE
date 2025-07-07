@@ -118,8 +118,8 @@ const Users = () => {
   const columns = [
     {
       title: 'ID',
-      dataIndex: 'id',
-      key: 'id',
+      dataIndex: 'accountID',
+      key: 'accountID',
     },
     {
       title: 'Họ tên',
