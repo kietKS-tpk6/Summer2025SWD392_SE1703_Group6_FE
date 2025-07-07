@@ -76,7 +76,7 @@ const dashboardRoutes = [
 // Lecturer routes configuration
 const lecturerRoutes = [
   { path: '/', element: <LecturerDashboard /> },
-  { path: '/courses', element: <div>Courses Page</div> },
+  { path: '/class', element: <div>Courses Page</div> },
   { path: '/schedule', element: <TeachingSchedule /> },
   { path: '/assignments', element: <div>Assignments Page</div> },
   { path: '/students', element: <div>Students Page</div> },
