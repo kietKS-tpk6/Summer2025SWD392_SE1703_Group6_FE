@@ -60,9 +60,15 @@ const TestSchedule = ({ classId }) => {
       { title: 'Thời gian kiểm tra', key: 'testTime', render: (_, item) => item.startAt && item.endAt ? `${new Date(item.startAt).toLocaleString('vi-VN')} - ${new Date(item.endAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}` : 'Chưa có thời gian kiểm tra' },
       { title: 'Trạng thái', key: 'status', render: (_, item) => { const status = getVirtualStatus(item.startAt, item.endAt); return <Tag color={status.color}>{status.text}</Tag>; } },
       { title: 'Thao tác', key: 'actions', align: 'center', render: (_, item) => (
-          <Button size="small" type="primary" onClick={() => navigate(`/lecturer/view-test/${item.testEventID}`)}>
-            Xem chi tiết
-          </Button>
+          item.testID ? (
+            <Button size="small" type="primary" onClick={() => navigate(`/lecturer/view-test/${item.testEventID}`)}>
+              Xem chi tiết
+            </Button>
+          ) : (
+            <Button size="small" type="dashed" onClick={() => navigate(`/lecturer/create-test/${item.testEventID}`)}>
+              Tạo bài kiểm tra
+            </Button>
+          )
         )
       },
     ];
