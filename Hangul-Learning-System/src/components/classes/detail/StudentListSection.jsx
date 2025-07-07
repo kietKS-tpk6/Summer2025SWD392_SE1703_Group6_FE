@@ -124,7 +124,7 @@ const StudentListSection = ({ classId }) => {
           <Table
             columns={columns}
             dataSource={data}
-            rowKey={(record, idx) => record.studentID || idx}
+            rowKey={(record) => record.studentID || record.id || record.key}
             pagination={false}
           />
         )

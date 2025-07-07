@@ -3,9 +3,10 @@ import { Calendar, Badge, Card, Spin, Typography } from 'antd';
 import { BookOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import axios from 'axios';
-import { API_URL } from '../../../config/api';
-import Notification from '../../common/Notification';
+import { API_URL } from '../../config/api';
+import Notification from '../common/Notification';
 import UpcomingLessonsSidebar from './UpcomingLessonsSidebar';
+import LessonDetailModal from '../classes/detail/lesson/LessonDetailModal';
 
 const { Title, Text } = Typography;
 
@@ -18,6 +19,8 @@ const TeachingSchedule = () => {
     message: '',
     description: ''
   });
+  const [selectedLesson, setSelectedLesson] = useState(null);
+  const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
 
   useEffect(() => {
     fetchLecturerLessons();
@@ -80,6 +83,11 @@ const TeachingSchedule = () => {
     return map;
   }, [lessons]);
 
+  const handleLessonClick = (lesson) => {
+    setSelectedLesson(lesson);
+    setIsLessonModalOpen(true);
+  };
+
   const dateCellRender = (value) => {
     const dateStr = value.format('YYYY-MM-DD');
     const dayLessons = lessonsByDate[dateStr] || [];
@@ -87,7 +95,7 @@ const TeachingSchedule = () => {
       <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
         {dayLessons.map((lesson, idx) => (
           <li key={idx} style={{ marginBottom: 8 }}>
-            <span style={{ cursor: 'pointer' }}>
+            <span style={{ cursor: 'pointer' }} onClick={() => handleLessonClick(lesson)}>
               <Badge
                 status="processing"
                 text={
@@ -144,6 +152,11 @@ const TeachingSchedule = () => {
         {/* Sidebar */}
         <UpcomingLessonsSidebar lessons={lessons} />
       </div>
+      <LessonDetailModal
+        open={isLessonModalOpen}
+        lesson={selectedLesson}
+        onClose={() => setIsLessonModalOpen(false)}
+      />
     </div>
   );
 };

@@ -19,9 +19,9 @@ import ViewerPage from './pages/viewer-portal/ViewerPage';
 import HomeContent from './components/Homepage/Content';
 import ViewClassDetail from './pages/student-portal/ViewClassDetail';
 import WeeklyTimeTable from './pages/student-portal/WeeklyTimeTable';
+import AssessmentManagement from './components/assessments/Assessments';
 import AccountDetail from '../src/components/common/AccountDetail';
 import AssessmentManagement from './components/assessments/Assessments'; // hoặc tên file bạn muốn
-// import StudentDetail from './pages/student-portal/StudentDetail';
 import AssessmentManagement from './components/assessments/Assessments'; 
 import ViewDetailAssessment from './components/assessments/ViewDetailAssessment';
 
@@ -40,7 +40,7 @@ import ClassDetail from './components/classes/detail/ClassDetail';
 import LessonDetailPage from './components/classes/detail/lesson/LessonDetailPage';
 import AttendancePage from './components/classes/attendance/AttendancePage';
 import CheckAttendancePage from './components/classes/attendance/CheckAttendancePage';
-import TeachingSchedule from './components/dashboard/pages/TeachingSchedule';
+import TeachingSchedule from './components/lecturer-portal/TeachingSchedule';
 import StudentTestSchedule from './pages/student-portal/StudentTestSchedule';
 import ViewTest from './pages/student-portal/ViewTest';
 import TakeTest from './pages/student-portal/TakeTest';
@@ -91,7 +91,6 @@ const lecturerRoutes = [
   { path: '/lesson-detail' , element: <LessonDetailPage/>},
   { path: '/attendance', element: <AttendancePage/>},
   { path: '/check-attendance', element: <CheckAttendancePage /> },
-  { path: '/attendance', element: <AttendancePage/>},
 ];
 
 // Public routes configuration
@@ -161,7 +160,7 @@ const App = () => {
         <Route
           path="/lecturer/*"
           element={
-            <ProtectedRoute allowedRoles={['Lecture']}>
+            <ProtectedRoute allowedRoles={['Lecture', 'Lecturer', 'Teacher']}>
               <Layout style={{ minHeight: '100vh' }}>
                 <LecturerSidebar />
                 <Layout>

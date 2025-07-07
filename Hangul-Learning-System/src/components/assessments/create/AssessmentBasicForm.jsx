@@ -33,13 +33,21 @@ const CATEGORY_ENUM_MAP = {
 
 const AssessmentBasicForm = React.forwardRef(({ subjects = [], formData = {}, onChange, categoryOptions = [], onSubjectChange }, ref) => {
   const [form] = Form.useForm();
+  const [category, setCategory] = useState(formData.Category || undefined);
 
   useEffect(() => {
     form.setFieldsValue(formData || {});
+    setCategory(formData.Category || undefined);
   }, [formData, form]);
 
   const handleValuesChange = (_, allValues) => {
     onChange && onChange(allValues);
+    if (allValues.Category !== undefined) {
+      setCategory(allValues.Category);
+      if (allValues.Category === 'Final' || allValues.Category === 'Midterm') {
+        form.setFieldsValue({ testType: 'Mix' });
+      }
+    }
   };
 
   React.useImperativeHandle(ref, () => ({
@@ -56,6 +64,14 @@ const AssessmentBasicForm = React.forwardRef(({ subjects = [], formData = {}, on
     >
       {/* Môn học lên trên */}
       <Form.Item
+        label="Tên bài kiểm tra"
+        name="TestName"
+        rules={[{ required: true, message: 'Vui lòng nhập tên bài kiểm tra' }]}
+      >
+        <Input placeholder="Nhập tên bài kiểm tra" />
+      </Form.Item>
+
+      <Form.Item
         label="Môn học"
         name="SubjectID"
         rules={[{ required: true, message: 'Vui lòng chọn môn học' }]}
@@ -68,27 +84,7 @@ const AssessmentBasicForm = React.forwardRef(({ subjects = [], formData = {}, on
           ))}
         </Select>
       </Form.Item>
-      {/* Tên bài kiểm tra */}
-      <Form.Item
-        label="Tên bài kiểm tra"
-        name="TestName"
-        rules={[{ required: true, message: 'Vui lòng nhập tên bài kiểm tra' }]}
-      >
-        <Input placeholder="Nhập tên bài kiểm tra" />
-      </Form.Item>
-      {/* Nội dung kiểm tra */}
-      <Form.Item
-        label="Nội dung kiểm tra"
-        name="testType"
-        rules={[{ required: true, message: 'Vui lòng chọn nội dung kiểm tra' }]}
-      >
-        <Select placeholder="Chọn nội dung kiểm tra">
-          {TEST_CONTENT_OPTIONS.map(opt => (
-            <Option key={opt.value} value={opt.value}>{opt.label}</Option>
-          ))}
-        </Select>
-      </Form.Item>
-      {/* Category xuống dưới, lấy từ props */}
+
       <Form.Item
         label="Phân loại (Category)"
         name="Category"
@@ -100,6 +96,26 @@ const AssessmentBasicForm = React.forwardRef(({ subjects = [], formData = {}, on
           ))}
         </Select>
       </Form.Item>
+
+      
+
+      <Form.Item
+        label="Nội dung kiểm tra"
+        name="testType"
+        rules={[{ required: true, message: 'Vui lòng chọn nội dung kiểm tra' }]}
+      >
+        <Select placeholder="Chọn nội dung kiểm tra">
+          {(category === 'Final' || category === 'Midterm') ? (
+            <Option key="Mix" value="Mix">Tổng hợp</Option>
+          ) : (
+            TEST_CONTENT_OPTIONS.map(opt => (
+              <Option key={opt.value} value={opt.value}>{opt.label}</Option>
+            ))
+          )}
+        </Select>
+      </Form.Item>
+
+      
     </Form>
   );
 });

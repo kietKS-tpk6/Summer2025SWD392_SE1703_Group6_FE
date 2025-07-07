@@ -46,6 +46,8 @@ const Classes = () => {
   });
   const [finalizeModal, setFinalizeModal] = useState({ open: false, record: null, content: '', allowConfirm: true });
   const [infoModal, setInfoModal] = useState({ open: false, content: '' });
+  const [classAssessments, setClassAssessments] = useState({});
+  const [availableTestsMap, setAvailableTestsMap] = useState({});
 
   const navigate = useNavigate();
 
@@ -91,8 +93,52 @@ const Classes = () => {
     fetchData(statusFilter, pagination.current, pagination.pageSize);
   };
 
-  const handleView = (record) => {
-    navigate('detail', { state: { classId: record.classID } });
+  const fetchAssessmentsForClass = async (classId, subjectId) => {
+    try {
+      console.log('[fetchAssessmentsForClass] classId:', classId);
+      const res = await axios.get(`${API_URL}api/TestEvent/get-by-class-id/${classId}`);
+      console.log('[fetchAssessmentsForClass] response:', res.data);
+      const assessments = Array.isArray(res.data?.data) ? res.data.data : [];
+      setClassAssessments(prev => ({ ...prev, [classId]: assessments }));
+      const testsMap = {};
+      console.log('y');
+      for (const assessment of assessments) {
+        console.log('x');
+        if (assessment.assessmentCategory !== undefined && assessment.testType !== undefined && subjectId) {
+          try {
+            const testRes = await axios.get(`${API_URL}api/Test/advanced-search`, {
+              params: {
+                category: assessment.assessmentCategory,
+                subjectId: subjectId,
+                testType: assessment.testType,
+                status: 3,
+              }
+            });
+            console.log(10 + testRes.data);
+            testsMap[assessment.testEventID] = Array.isArray(testRes.data) ? testRes.data : (testRes.data?.data || []);
+          } catch {
+            testsMap[assessment.testEventID] = [];
+          }
+        }
+      }
+      setAvailableTestsMap(prev => {
+        const newMap = { ...prev, ...testsMap };
+        console.log('[fetchAssessmentsForClass] availableTestsMap:', newMap);
+        return newMap;
+      });
+      return assessments;
+    } catch (err) {
+      console.error('[fetchAssessmentsForClass] ERROR:', err);
+      setClassAssessments(prev => ({ ...prev, [classId]: [] }));
+      setAvailableTestsMap(prev => ({ ...prev }));
+      return [];
+    }
+  };
+
+  const handleView = async (record) => {
+    const assessments = await fetchAssessmentsForClass(record.classID, record.subjectID || record.subjectId);
+    console.log('[handleView] navigate detail with:', { classId: record.classID, assessments, availableTests: availableTestsMap });
+    navigate('detail', { state: { classId: record.classID, assessments, availableTests: availableTestsMap, subjectId: record.subjectID || record.subjectId } });
   };
 
   const handleEdit = (record) => { /* ... */ };
