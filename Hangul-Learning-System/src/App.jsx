@@ -128,6 +128,7 @@ const studentRoutes = [
   { path: '/take-test/:testEventID', element: <TakeTest /> },
   { path: '/test-result/:testId', element: <TestResult /> },
   { path: '/test-detail/:studentTestID', element: <TestDetail /> },
+  { path: '/enroll/:classId', element: <ViewEnrolledClassDetail/>},
   //{ path: '/weekly-time-table', element: <WeeklyTimeTable/>},
 ];
 
