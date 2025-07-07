@@ -49,6 +49,7 @@ import ViewEnrolledClassDetail from './pages/student-portal/ViewEnrolledClassDet
 import './App.css';
 import 'antd/dist/reset.css';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import LecturerClassList from './components/class/LecturerClassList';
 
 const { Content } = Layout;
 
@@ -79,7 +80,9 @@ const dashboardRoutes = [
 // Lecturer routes configuration
 const lecturerRoutes = [
   { path: '/', element: <LecturerDashboard /> },
-  { path: '/class', element: <div>Courses Page</div> },
+  { path: '/class', element: <LecturerClassList /> },
+  { path: '/class/:classId', element: <ViewEnrolledClassDetail /> },
+  { path: '/check-attendance', element: <CheckAttendancePage /> },
   { path: '/schedule', element: <TeachingSchedule /> },
   { path: '/assignments', element: <div>Assignments Page</div> },
   { path: '/students', element: <div>Students Page</div> },

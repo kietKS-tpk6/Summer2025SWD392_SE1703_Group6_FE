@@ -6,6 +6,8 @@ import axios from 'axios';
 import { API_URL } from '../../config/api';
 import Syllabus from './Syllabus';
 import TestSchedule from './TestSchedule';
+import ViewLessonsOfClass from '../../components/lessons/ViewLessonsOfClass';
+import StudentListSection from '../../components/classes/detail/StudentListSection';
 
 const ViewEnrolledClassDetail = () => {
     const { classId } = useParams();
@@ -13,6 +15,15 @@ const ViewEnrolledClassDetail = () => {
     const [classData, setClassData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    // Lấy role từ localStorage
+    let userRole = null;
+    try {
+        const user = JSON.parse(localStorage.getItem('user'));
+        userRole = user && user.role;
+    } catch (e) {
+        userRole = null;
+    }
 
     useEffect(() => {
         const fetchClass = async () => {
@@ -40,7 +51,7 @@ const ViewEnrolledClassDetail = () => {
                 ← Quay lại
             </Button>
             <Row gutter={32}>
-                {/* Bên trái: Thông tin class (1) phía trên, Lịch học (2) phía dưới */}
+                {/* Bên trái: Thông tin class (1) phía trên, Lịch kiểm tra (2) phía dưới */}
                 <Col xs={24} md={16}>
                     <Card bordered style={{ borderRadius: 18, marginBottom: 32 }}>
                         <Row gutter={32}>
@@ -65,22 +76,27 @@ const ViewEnrolledClassDetail = () => {
                                 <div style={{ marginBottom: 8 }}>
                                     <b>Ngày bắt đầu:</b> {classData.teachingStartTime ? new Date(classData.teachingStartTime).toLocaleDateString('vi-VN') : '--'}
                                 </div>
-                                {/* <div style={{ marginBottom: 8 }}>
-                  <b>Sĩ số:</b> {classData.numberStudentEnroll} / {classData.maxStudentAcp}
-                </div>
-                <div style={{ marginBottom: 8 }}>
-                  <b>Mô tả:</b> {classData.description || 'Không có mô tả.'}
-                </div> */}
                             </Col>
                         </Row>
                     </Card>
                     <div style={{ marginTop: 32 }}>
-                        <Syllabus classId={classId} />
+                        {userRole === 'Lecture' ? (
+                            <StudentListSection classId={classId} />
+                        ) : (
+                            <Syllabus classId={classId} />
+                        )}
+                    </div>
+                    <div style={{ marginTop: 32 }}>
+                        <TestSchedule classId={classId} />
                     </div>
                 </Col>
-                {/* Bên phải: Lịch kiểm tra (3) chiếm toàn bộ chiều cao */}
+                {/* Bên phải: Nếu là giảng viên thì hiển thị danh sách bài học, nếu không thì hiển thị lịch kiểm tra */}
                 <Col xs={24} md={8}>
-                    <TestSchedule classId={classId} />
+                    {userRole === 'Lecture' ? (
+                        <ViewLessonsOfClass classId={classId} />
+                    ) : (
+                        <TestSchedule classId={classId} />
+                    )}
                 </Col>
             </Row>
         </div>

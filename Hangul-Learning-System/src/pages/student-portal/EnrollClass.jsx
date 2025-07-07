@@ -8,28 +8,6 @@ import EnrollSummary from './EnrollSummary';
 import SortByLecturer from './SortByLecturer';
 // import './StudentPage.css';
 
-const studentInfo = {
-  name: 'Nguyễn Văn A',
-  id: '20231234',
-  email: 'nguyenvana@example.com',
-  avatar: '',
-};
-
-const todaySchedule = [
-  { time: '08:00 - 10:00', subject: 'Lập trình Web', room: 'Phòng 101' },
-  { time: '13:00 - 15:00', subject: 'Toán rời rạc', room: 'Phòng 202' },
-];
-
-const recentTests = [
-  { subject: 'Lập trình Web', score: '8.5/10' },
-  { subject: 'Toán rời rạc', score: '7.0/10' },
-];
-
-const notifications = [
-  'Hạn đăng ký học phần đến 20/06/2024',
-  'Lịch thi cuối kỳ sẽ được công bố vào tuần sau',
-];
-
 const EnrollClass = () => {
   const [enrolledClasses, setEnrolledClasses] = useState([]);
   const [loading, setLoading] = useState(true);
