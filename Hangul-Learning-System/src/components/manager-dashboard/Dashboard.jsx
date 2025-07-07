@@ -8,6 +8,7 @@ import ClassCountBySubjectBarChart from './charts/ClassCountBySubjectBarChart';
 import StudentSignupMonthlyAreaChart from './charts/StudentSignupMonthlyAreaChart';
 import RevenueByMonthLineChart from './charts/RevenueByMonthLineChart';
 import ClassStatusDistributionPieChart from './charts/ClassStatusDistributionPieChart';
+import ManagerAlertTasksList from './ManagerAlertTasksList';
 const Dashboard = () => {
   return (
     <div style={{ padding: '24px 0 0 0' }}>
@@ -35,6 +36,7 @@ const Dashboard = () => {
               </Col>
             </Row>
           </div>
+          <ManagerAlertTasksList/>
         </div>
         {/* Right Sidebar */}
         <div style={{ minWidth: 320 }}>
