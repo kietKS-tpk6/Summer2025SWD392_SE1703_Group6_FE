@@ -74,7 +74,7 @@ const StudentListSection = ({ classId }) => {
     const user = JSON.parse(localStorage.getItem('user'));
     let prefix = '';
     if (user?.role === 'Manager') prefix = '/dashboard';
-    else if (user?.role === 'Lecturer') prefix = '/lecturer';
+    else if (user?.role === 'Lecture') prefix = '/lecturer';
     else prefix = '';
     navigate(`${prefix}/attendance`, { state: { classId } });
   };

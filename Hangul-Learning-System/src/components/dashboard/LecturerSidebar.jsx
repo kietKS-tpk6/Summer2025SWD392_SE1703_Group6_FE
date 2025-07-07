@@ -52,7 +52,7 @@ const LecturerSidebar = () => {
       label: 'Hồ sơ',
     },
     {
-      key: '/lecture/class',
+      key: '/lecturer/class',
       icon: <ReadOutlined />, // icon lịch sử
       label: 'Lớp học của tôi',
     },

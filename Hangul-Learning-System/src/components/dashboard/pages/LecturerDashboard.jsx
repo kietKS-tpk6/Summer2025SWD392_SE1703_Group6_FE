@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, Row, Col, Statistic, Table, Button, Space } from 'antd';
 import { UserOutlined, BookOutlined, CalendarOutlined, FileTextOutlined } from '@ant-design/icons';
+import LecturerClassList from '../../class/LecturerClassList';
 
 const LecturerDashboard = () => {
   // Dữ liệu thống kê mẫu
@@ -91,6 +92,8 @@ const LecturerDashboard = () => {
           style={{ borderRadius: '8px' }}
         />
       </Card>
+
+      <LecturerClassList />
     </div>
   );
 };

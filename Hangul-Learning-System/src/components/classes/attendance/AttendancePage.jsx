@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Tag, Spin, Typography } from 'antd';
+import { Table, Tag, Spin, Typography, Button } from 'antd';
 import { CheckCircleTwoTone, CloseCircleTwoTone, MinusOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { API_URL } from '../../../config/api';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const { Title } = Typography;
 
@@ -15,6 +15,7 @@ const statusMap = {
 
 const AttendancePage = (props) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const classId = props.classId || location.state?.classId;
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -87,7 +88,10 @@ const AttendancePage = (props) => {
   ];
 
   return (
-    <div style={{ maxWidth: 1100, margin: '0 auto', padding: 24, minHeight: '100vh', boxSizing: 'border-box', background: '#fafcff' }}>
+    <div style={{ maxWidth: 1100, margin: '0 auto', padding: 24, minHeight: '100vh', boxSizing: 'border-box', background: '#fff' }}>
+      <Button onClick={() => navigate(-1)} style={{ marginBottom: 24 }}>
+        ← Quay lại
+      </Button>
       <Title level={3} style={{ marginBottom: 32 }}>Bảng điểm danh lớp</Title>
       <Table
         columns={columns}

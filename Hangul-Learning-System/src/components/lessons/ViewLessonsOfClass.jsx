@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { List, Card, Typography, Spin, Button, Empty } from 'antd';
 import axios from 'axios';
 import { API_URL } from '../../config/api';
+import { useNavigate } from 'react-router-dom';
 
 const { Title, Text } = Typography;
 
@@ -9,6 +10,16 @@ const ViewLessonsOfClass = ({ classId }) => {
   const [lessons, setLessons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
+
+  // Lấy role từ localStorage
+  let userRole = null;
+  try {
+    const user = JSON.parse(localStorage.getItem('user'));
+    userRole = user && user.role;
+  } catch (e) {
+    userRole = null;
+  }
 
   useEffect(() => {
     const fetchLessons = async () => {
@@ -39,7 +50,14 @@ const ViewLessonsOfClass = ({ classId }) => {
         renderItem={lesson => (
           <List.Item>
             <Card bordered>
-              <Title level={5}>{lesson.lessonTitle}</Title>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Title level={5} style={{ margin: 0 }}>{lesson.lessonTitle}</Title>
+                {userRole === 'Lecture' && (
+                  <Button size="small" type="primary" style={{ marginLeft: 12 }} onClick={() => navigate('/lecturer/check-attendance', { state: { lessonId: lesson.classLessonID } })}>
+                    Điểm danh
+                  </Button>
+                )}
+              </div>
               <div><Text strong>Thời gian:</Text> {new Date(lesson.startTime).toLocaleString()} - {new Date(lesson.endTime).toLocaleString()}</div>
               <div><Text strong>Giảng viên:</Text> {lesson.lectureName}</div>
               <div><Text strong>Môn học:</Text> {lesson.subjectName}</div>

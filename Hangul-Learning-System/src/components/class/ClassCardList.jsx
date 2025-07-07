@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import { API_URL, endpoints } from '../../config/api';
-import ClassCard from '../Class/ClassCard';
+import ClassCard from '../class/ClassCard';
 import { Carousel } from 'antd';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 
