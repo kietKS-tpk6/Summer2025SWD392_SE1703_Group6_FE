@@ -179,4 +179,7 @@ export const endpoints = {
     getByStudentId: 'api/TestEvent/get-by-student-id/{studentId}',
     getAssignment: 'api/TestEvent/{testEventID}/assignment/',
   },
+  dashboardManager: {
+    rightSidebar: 'api/DashboardManager/right-sidebar'
+  }
 };

@@ -1,12 +1,17 @@
 import React from 'react';
 import { Row, Col, Card, Statistic } from 'antd';
 import { UserOutlined, TeamOutlined, BookOutlined, MessageOutlined } from '@ant-design/icons';
-import SystemConfig from './SystemConfig';
-
+import SystemConfig from '../dashboard/pages/SystemConfig';
+import ManagerRightSidebar from './ManagerRightSidebar';
 const Dashboard = () => {
   return (
     <div>
       <h1>Dashboard</h1>
+      <div style={{ display: 'flex' }}>
+      
+
+      {/* Main Content */}
+      <div style={{ flex: 1 }}>
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} lg={6}>
           <Card>
@@ -45,6 +50,12 @@ const Dashboard = () => {
           </Card>
         </Col>
       </Row>
+      </div>
+
+      {/* Right Sidebar */}
+      <ManagerRightSidebar />
+    </div>
+     
     </div>
   );
 };
