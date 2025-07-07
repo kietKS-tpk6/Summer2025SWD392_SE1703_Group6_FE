@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Layout } from 'antd';
 import Sidebar from './components/dashboard/Sidebar';
 import LecturerSidebar from './components/dashboard/LecturerSidebar';
-import Dashboard from './components/dashboard/pages/Dashboard';
+import Dashboard from './components/manager-dashboard/Dashboard';
 import Users from './components/dashboard/pages/Users';
 import ClassManagement from './components/classes/Classes';
 import Subjects from './components/dashboard/pages/Subjects';
