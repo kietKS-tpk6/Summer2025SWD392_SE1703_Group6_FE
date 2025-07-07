@@ -19,14 +19,16 @@ import ViewerPage from './pages/viewer-portal/ViewerPage';
 import HomeContent from './components/Homepage/Content';
 import ViewClassDetail from './pages/student-portal/ViewClassDetail';
 import WeeklyTimeTable from './pages/student-portal/WeeklyTimeTable';
-import StudentDetail from './pages/student-portal/StudentDetail';
+import AccountDetail from '../src/components/common/AccountDetail';
+import AssessmentManagement from './components/assessments/Assessments'; // hoặc tên file bạn muốn
+// import StudentDetail from './pages/student-portal/StudentDetail';
 import AssessmentManagement from './components/assessments/Assessments'; 
 import ViewDetailAssessment from './components/assessments/ViewDetailAssessment';
 
 // import About from './pages/viewer-portal/About';
 // import Courses from './pages/viewer-portal/Courses';
 // import Contact from './pages/viewer-portal/Contact';
-import StudentPage from './pages/student-portal/StudentPage';
+import EnrollClass from './pages/student-portal/EnrollClass';
 import NotFoundPage from './components/error/NotFoundPage';
 import LoginPage from './pages/authentication/LoginPage';
 import RegisterPage from './pages/authentication/RegisterPage';
@@ -45,6 +47,7 @@ import TakeTest from './pages/student-portal/TakeTest';
 import TestResult from './pages/student-portal/TestResult';
 import SystemConfig from './components/dashboard/pages/SystemConfig';
 import TestDetail from './pages/student-portal/TestDetail';
+import ViewEnrolledClassDetail from './pages/student-portal/ViewEnrolledClassDetail';
 import './App.css';
 import 'antd/dist/reset.css';
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -64,7 +67,8 @@ const dashboardRoutes = [
   { path: '/analytics', element: <Analytics /> },
   { path: '/chat', element: <Chat /> },
   { path: '/schedule', element: <Schedule /> },
-  { path: '/profile', element: <Profile /> },
+  { path: '/profile', element: <AccountDetail/> },
+  { path: '/profile/:accountId', element: <AccountDetail /> },
   { path: '/settings', element: <Settings /> },
   { path: '/assessment', element: <AssessmentManagement /> },
   { path: '/assessment/:testID', element: <ViewDetailAssessment /> },
@@ -77,16 +81,17 @@ const dashboardRoutes = [
 // Lecturer routes configuration
 const lecturerRoutes = [
   { path: '/', element: <LecturerDashboard /> },
-  { path: '/courses', element: <div>Courses Page</div> },
+  { path: '/class', element: <div>Courses Page</div> },
   { path: '/schedule', element: <TeachingSchedule /> },
   { path: '/assignments', element: <div>Assignments Page</div> },
   { path: '/students', element: <div>Students Page</div> },
   { path: '/messages', element: <div>Messages Page</div> },
-  { path: '/profile', element: <div>Profile Page</div> },
+  { path: '/profile', element: <AccountDetail/> },
   { path: '/settings', element: <div>Settings Page</div> },
   { path: '/lesson-detail' , element: <LessonDetailPage/>},
   { path: '/attendance', element: <AttendancePage/>},
   { path: '/check-attendance', element: <CheckAttendancePage /> },
+  { path: '/attendance', element: <AttendancePage/>},
 ];
 
 // Public routes configuration
@@ -112,23 +117,18 @@ const publicRoutes = [
 
 // Student routes configuration
 const studentRoutes = [
-  { path: '/  ', element: <StudentPage /> },
-  { path: '/profile', element: <StudentDetail/> },
+  // { path: '/  ', element: <StudentPage /> },
+  { path: '/profile', element: <AccountDetail/> },
   { path: '/schedule', element: <WeeklyTimeTable/> }, 
   { path: '/payment-success', element: <PaymentSuccess/>},
   { path: '/payment-failed', element: <PaymentFailed/>},
   { path: '/payment/:classId', element: <PaymentForm /> },
-  { path: '/class-detail/:id', element: <ViewClassDetail/>},
   { path: '/lesson-detail' , element: <LessonDetailPage/>},
   { path: '/test-schedule', element: <StudentTestSchedule /> },
   { path: '/view-test/:testEventID', element: <ViewTest /> },
   { path: '/take-test/:testEventID', element: <TakeTest /> },
   { path: '/test-result/:testId', element: <TestResult /> },
   { path: '/test-detail/:studentTestID', element: <TestDetail /> },
-  { path: '/lesson-detail' , element: <LessonDetailPage/>},
- 
-
-
   //{ path: '/weekly-time-table', element: <WeeklyTimeTable/>},
 ];
 
@@ -136,7 +136,7 @@ const App = () => {
   return (
     <Router>
       <Routes>
-        {/* Dashboard Layout */}
+        {/* Manager Layout */}
         <Route
           path="/dashboard/*"
           element={

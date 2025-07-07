@@ -3,6 +3,7 @@ import { Table, Button, Space, Input, message, Select } from 'antd';
 import { SearchOutlined, PlusOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { API_URL, endpoints } from '../../../config/api';
+import { useNavigate } from 'react-router-dom';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -22,6 +23,8 @@ const Users = () => {
     total: 0
   });
 
+  const navigate = useNavigate();
+
   const fetchUsers = async (page = 1, pageSize = 10, search = '', roleFilter, genderFilter, statusFilter) => {
     try {
       setLoading(true);
@@ -40,6 +43,7 @@ const Users = () => {
         const formattedData = response.data.data.items.map((user, index) => ({
           key: index,
           id: index + 1,
+          accountID: user.accountID,
           name: `${user.lastName} ${user.firstName}`,
           email: user.email,
           phoneNumber: user.phoneNumber,
@@ -114,8 +118,8 @@ const Users = () => {
   const columns = [
     {
       title: 'ID',
-      dataIndex: 'id',
-      key: 'id',
+      dataIndex: 'accountID',
+      key: 'accountID',
     },
     {
       title: 'Họ tên',
@@ -147,7 +151,9 @@ const Users = () => {
       key: 'actions',
       render: (_, record) => (
         <Space>
-          <Button type="primary" size="small">Sửa</Button>
+          <Button type="primary" size="small" onClick={() => {
+            navigate(`/dashboard/profile/${record.accountID}`);
+          }}>Xem chi tiết</Button>
           <Button danger size="small">Xóa</Button>
         </Space>
       ),
