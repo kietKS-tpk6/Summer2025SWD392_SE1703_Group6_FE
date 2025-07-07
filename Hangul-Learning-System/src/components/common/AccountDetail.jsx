@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Layout, Descriptions, Tag, Spin, Alert, Button, Input, DatePicker, Select, message, Upload, Avatar } from 'antd';
-import { UploadOutlined, UserOutlined } from '@ant-design/icons';
+import { Layout, Descriptions, Tag, Spin, Alert, Button, Input, DatePicker, Select, message, Upload, Avatar, Modal } from 'antd';
+import { UploadOutlined, UserOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { API_URL, endpoints } from '../../config/api';
 import dayjs from 'dayjs';
 import Notification from './Notification';
+import { useParams, useNavigate } from 'react-router-dom';
 
 const { Content } = Layout;
 const { Option } = Select;
@@ -22,7 +23,9 @@ const statusViMap = {
 };
 // const statusMap = { 0: <Tag color="green">Đang hoạt động</Tag>, 1: <Tag color="red">Ngưng hoạt động</Tag> };
 
-const AccountDetail = () => {
+const AccountDetail = ({ accountID: propAccountID }) => {
+  const params = useParams();
+  const navigate = useNavigate();
   const [studentData, setStudentData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -32,13 +35,21 @@ const AccountDetail = () => {
   const [avatarUrl, setAvatarUrl] = useState(null);
   const [latestUploadedImage, setLatestUploadedImage] = useState(null);
   const [notification, setNotification] = useState({ visible: false, type: 'success', message: '', description: '' });
+  const [showEditConfirm, setShowEditConfirm] = useState(false);
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+  // Thêm biến kiểm tra role của user đăng nhập
+  let showBackButton = false;
+  try {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (user && user.role === 'Manager') showBackButton = true;
+  } catch {}
 
   useEffect(() => {
-    // Lấy accountID từ localStorage nếu có đăng nhập, nếu không thì hardcode
-    let accountId = 'A00001';
+    // Lấy accountID từ prop, nếu không có thì lấy từ URL, nếu không thì hardcode
+    let accountId = propAccountID || params.accountId || 'A00001';
     try {
       const user = JSON.parse(localStorage.getItem('user'));
-      if (user && user.accountId) accountId = user.accountId;
+      if (!propAccountID && !params.accountId && user && user.accountId) accountId = user.accountId;
     } catch {}
 
     const fetchStudent = async () => {
@@ -74,7 +85,7 @@ const AccountDetail = () => {
       }
     };
     fetchStudent();
-  }, []);
+  }, [propAccountID, params.accountId]);
 
   // Hàm buildPayload dùng chung
   const buildPayload = (overrides = {}) => {
@@ -108,11 +119,8 @@ const AccountDetail = () => {
     return payload;
   };
 
-  // Khi bấm chỉnh sửa, copy dữ liệu sang editValues
-  const handleEdit = () => {
+  const handleEditConfirmed = () => {
     const currentImage = studentData.img || avatarUrl || '';
-    console.log('handleEdit - currentImage:', currentImage);
-    
     setEditValues({
       ...studentData,
       birthDate: studentData.birthDate ? dayjs(studentData.birthDate) : null,
@@ -120,8 +128,13 @@ const AccountDetail = () => {
       image: currentImage,
     });
     setAvatarUrl(currentImage || null);
-    setLatestUploadedImage(null); // Reset khi bắt đầu edit
+    setLatestUploadedImage(null);
     setIsEditing(true);
+    setShowEditConfirm(false);
+  };
+
+  const handleEdit = () => {
+    setShowEditConfirm(true);
   };
 
   // Khi thay đổi trường
@@ -269,6 +282,9 @@ const AccountDetail = () => {
     setLatestUploadedImage(null);
   };
 
+  // Thêm hàm kiểm tra role
+  const isManager = (studentData?.role === 'Manager' || (editValues?.role === 'Manager'));
+
   return (
     <Layout style={{ minHeight: '100vh', background: '#fff' }}>
       <Notification
@@ -281,6 +297,16 @@ const AccountDetail = () => {
       {/* <Sidebar /> */}
       {/* <Layout> */}
         <Content style={{ margin: '24px', padding: '32px', borderRadius: '30px', minHeight: 400 }}>
+          {showBackButton && (
+            <Button
+              style={{ marginBottom: 16, display: 'flex', alignItems: 'center' }}
+              icon={<ArrowLeftOutlined />}
+              onClick={() => navigate('/dashboard/users')}
+              type="primary"
+            >
+              Quay lại
+            </Button>
+          )}
           <h2 style={{ fontWeight: 700, fontSize: 28, marginBottom: 24 }}>Thông tin cá nhân</h2>
           {loading ? (
             <Spin />
@@ -355,14 +381,32 @@ const AccountDetail = () => {
                     studentData.birthDate
                   )}
                 </Descriptions.Item>
-                <Descriptions.Item label="Vai trò">{roleViMap[studentData.role] || studentData.role}</Descriptions.Item>
+                <Descriptions.Item label="Vai trò">
+                  {isEditing && isManager ? (
+                    <Select value={editValues.role} onChange={v => handleChange('role', v)} style={{ width: '100%' }}>
+                      <Option value="Manager">Quản lý</Option>
+                      <Option value="Lecture">Giảng viên</Option>
+                      <Option value="Student">Học sinh</Option>
+                    </Select>
+                  ) : (
+                    roleViMap[studentData.role] || studentData.role
+                  )}
+                </Descriptions.Item>
                 <Descriptions.Item label="Trạng thái">
-                  {statusViMap[studentData.status] || studentData.status}
+                  {isEditing && isManager ? (
+                    <Select value={editValues.status} onChange={v => handleChange('status', v)} style={{ width: '100%' }}>
+                      <Option value="Active">Đang hoạt động</Option>
+                      <Option value="Blocked">Đã bị khóa</Option>
+                      <Option value="Deleted">Đã xóa</Option>
+                    </Select>
+                  ) : (
+                    statusViMap[studentData.status] || studentData.status
+                  )}
                 </Descriptions.Item>
               </Descriptions>
               {isEditing ? (
                 <div style={{ marginTop: 24 }}>
-                  <Button type="primary" onClick={handleSave} style={{ marginRight: 8 }}>Lưu</Button>
+                  <Button type="primary" onClick={() => setShowSaveConfirm(true)} style={{ marginRight: 8 }}>Lưu</Button>
                   <Button onClick={handleCancel}>Hủy</Button>
                 </div>
               ) : (
@@ -377,6 +421,33 @@ const AccountDetail = () => {
               )}
             </>
           ) : null}
+          <Modal
+            open={showEditConfirm}
+            onCancel={() => setShowEditConfirm(false)}
+            onOk={handleEditConfirmed}
+            okText="Đồng ý"
+            cancelText="Hủy"
+            title="Bạn có chắc muốn chỉnh sửa?"
+          >
+            Thao tác này sẽ cho phép chỉnh sửa thông tin cá nhân.
+          </Modal>
+          <Modal
+            open={showSaveConfirm}
+            onCancel={() => setShowSaveConfirm(false)}
+            onOk={() => {
+              setShowSaveConfirm(false);
+              handleSave();
+            }}
+            okText="Đồng ý"
+            cancelText="Hủy"
+            title="Bạn có chắc muốn lưu thay đổi?"
+          >
+            {isManager ? (
+              'Thao tác này sẽ lưu lại các thay đổi thông tin cá nhân của người dùng này.'
+            ) : (
+              'Thao tác này sẽ lưu lại các thay đổi thông tin cá nhân của bạn.'
+            )}
+          </Modal>
         </Content>
       {/* </Layout> */}
     </Layout>
