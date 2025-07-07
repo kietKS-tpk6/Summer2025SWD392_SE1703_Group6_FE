@@ -29,7 +29,7 @@ const LecturerSidebar = () => {
   const [avatar, setAvatar] = React.useState(null);
 
   React.useEffect(() => {
-    if (role === 'Lecture' && accountID) {
+    if ((role === 'Lecture' || role === 'Manager') && accountID) {
       axios.get(`${API_URL}api/Account/${accountID}`).then(res => {
         if (res.data && res.data.img) {
           setAvatar(res.data.img);
@@ -115,7 +115,7 @@ const LecturerSidebar = () => {
           borderBottom: '1px solid #eee',
         }}
       >
-        {role === 'Lecture' && avatar ? (
+        {(role === 'Lecture' || role === 'Manager') && avatar ? (
           <img
             src={avatar}
             alt="Avatar"
