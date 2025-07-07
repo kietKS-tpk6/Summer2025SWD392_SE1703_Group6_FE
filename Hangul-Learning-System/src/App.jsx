@@ -10,7 +10,7 @@ import Subjects from './components/dashboard/pages/Subjects';
 import CreateSubject from './components/dashboard/pages/subject/CreateSubject';
 import Syllabus from './components/dashboard/pages/Syllabus';
 import Blog from './components/dashboard/pages/Blog';
-import Analytics from './components/dashboard/pages/Analytics';
+import Analytics from './components/analytics/Analytics';
 import Chat from './components/dashboard/pages/Chat';
 import Schedule from './components/dashboard/pages/Schedule';
 import Profile from './components/dashboard/pages/Profile';
