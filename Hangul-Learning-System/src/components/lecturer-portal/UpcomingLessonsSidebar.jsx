@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, Typography, Badge } from 'antd';
 import { ClockCircleOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import LessonDetailModal from '../../classes/detail/lesson/LessonDetailModal';
+import LessonDetailModal from '../classes/detail/lesson/LessonDetailModal';
 
 const { Text } = Typography;
 

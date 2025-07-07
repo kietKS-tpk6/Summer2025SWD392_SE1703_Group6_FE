@@ -38,7 +38,7 @@ import ClassDetail from './components/classes/detail/ClassDetail';
 import LessonDetailPage from './components/classes/detail/lesson/LessonDetailPage';
 import AttendancePage from './components/classes/attendance/AttendancePage';
 import CheckAttendancePage from './components/classes/attendance/CheckAttendancePage';
-import TeachingSchedule from './components/dashboard/pages/TeachingSchedule';
+import TeachingSchedule from './components/lecturer-portal/TeachingSchedule';
 import StudentTestSchedule from './pages/student-portal/StudentTestSchedule';
 import ViewTest from './pages/student-portal/ViewTest';
 import TakeTest from './pages/student-portal/TakeTest';
