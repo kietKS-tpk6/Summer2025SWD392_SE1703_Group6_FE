@@ -48,56 +48,74 @@ const ManagerRightSidebar = () => {
   if (!data) return null;
 
   return (
-    <div style={{ width: 320, padding: "16px", background: "#fafafa", height: "100vh", overflowY: "auto" }}>
-      <Title level={4}>Tổng quan hôm nay</Title>
+    <div style={{
+      width: 320,
+      padding: '24px 18px',
+      background: '#fff',
+      borderRadius: 18,
+      boxShadow: '0 4px 16px 0 rgba(24, 144, 255, 0.07)',
+      minHeight: 400,
+      color: '#222',
+      fontFamily: 'inherit',
+      height: 'fit-content',
+      overflowY: 'auto',
+      border: '1px solid #f0f0f0',
+    }}>
+      <Title level={4} style={{ color: '#1890ff', fontWeight: 700, marginBottom: 18 }}>Tổng quan hôm nay</Title>
 
-      <Card size="small" style={{ marginBottom: 12 }}>
-        <Text><CalendarOutlined /> Số lớp học hôm nay:</Text>
-        <Title level={3}>{data.todayClasses}</Title>
+      <Card size="small" style={{ marginBottom: 12, borderRadius: 12, border: '1px solid #f0f0f0', background: '#f8fbff' }}>
+        <Text style={{ color: '#222' }}><CalendarOutlined style={{ color: '#1890ff' }} /> Số lớp học hôm nay:</Text>
+        <Title level={3} style={{ color: '#1890ff', margin: 0 }}>{data.todayClasses}</Title>
       </Card>
 
-      <Card size="small" style={{ marginBottom: 12 }}>
-        <Text><FileTextOutlined /> Bài kiểm tra hôm nay:</Text>
-        <Title level={3}>{data.todayTests}</Title>
+      <Card size="small" style={{ marginBottom: 12, borderRadius: 12, border: '1px solid #f0f0f0', background: '#f8fbff' }}>
+        <Text style={{ color: '#222' }}><FileTextOutlined style={{ color: '#1890ff' }} /> Bài kiểm tra hôm nay:</Text>
+        <Title level={3} style={{ color: '#1890ff', margin: 0 }}>{data.todayTests}</Title>
       </Card>
 
-      <Divider orientation="left">⏱ Lớp đủ điều kiện chốt danh sách</Divider>
+      <Divider orientation="left" style={{ color: '#1890ff', fontWeight: 600, borderColor: '#e6f4ff' }}>
+        ⏱ Lớp đủ điều kiện chốt DS
+      </Divider>
       <List
         size="small"
         dataSource={data.eligibleClassForOpening}
-        locale={{emptyText: 'Không có lớp nào đủ điều kiện'}}
+        locale={{emptyText: <span style={{ color: '#bbb' }}>Không có lớp nào đủ điều kiện</span>}}
         renderItem={(item) => (
-          <List.Item key={item.ClassID}>
-            <Text>
+          <List.Item key={item.ClassID} style={{ border: 'none', padding: '4px 0' }}>
+            <Text style={{ color: '#222' }}>
               <ExclamationCircleOutlined style={{ color: "#faad14" }} /> {item.ClassName} - {item.StudentCount} HV (bắt đầu: {item.TeachingStartTime ? new Date(item.TeachingStartTime).toLocaleDateString() : ''})
             </Text>
           </List.Item>
         )}
       />
 
-      <Divider orientation="left">📆 Lớp gần tới hạn mở nhưng chưa đủ sĩ số</Divider>
+      <Divider orientation="left" style={{ color: '#1890ff', fontWeight: 600, borderColor: '#e6f4ff' }}>
+        📆 Lớp sắp mở chưa đủ sĩ số
+      </Divider>
       <List
         size="small"
         dataSource={data.classNearOpenButNotReady}
-        locale={{emptyText: 'Không có lớp nào gần tới hạn'}}
+        locale={{emptyText: <span style={{ color: '#bbb' }}>Không có lớp nào gần tới hạn</span>}}
         renderItem={(item) => (
-          <List.Item key={item.ClassID}>
-            <Text>
+          <List.Item key={item.ClassID} style={{ border: 'none', padding: '4px 0' }}>
+            <Text style={{ color: '#222' }}>
               <ClockCircleOutlined style={{ color: "#1890ff" }} /> {item.ClassName} ({item.StudentCount}/{item.MinStudentAcpt} HV, bắt đầu: {item.TeachingStartTime ? new Date(item.TeachingStartTime).toLocaleDateString() : ''})
             </Text>
           </List.Item>
         )}
       />
 
-      <Divider orientation="left">📝 Gán đề kiểm tra cho các buổi kiểm tra sau</Divider>
+      <Divider orientation="left" style={{ color: '#1890ff', fontWeight: 600, borderColor: '#e6f4ff' }}>
+        📝 Gán đề cho buổi kiểm tra
+      </Divider>
       <List
         size="small"
         dataSource={data.testEventsNeedingTestID}
-        locale={{emptyText: 'Không có buổi kiểm tra nào cần gán đề'}}
+        locale={{emptyText: <span style={{ color: '#bbb' }}>Không có buổi kiểm tra nào cần gán đề</span>}}
         renderItem={(item) => (
-          <List.Item key={item.testEventID}>
-            <Text>
-              <FileSearchOutlined style={{ color: "#cf1322" }} /> {item.subjectName} (bắt đầu: {item.timeLessonStart ? new Date(item.timeLessonStart).toLocaleString() : ''})
+          <List.Item key={item.testEventID} style={{ border: 'none', padding: '4px 0' }}>
+            <Text style={{ color: '#222' }}>
+              <FileSearchOutlined style={{ color: "#cf1322" }} /> {item.subjectName} ({item.timeLessonStart ? new Date(item.timeLessonStart).toLocaleString() : ''})
             </Text>
           </List.Item>
         )}
