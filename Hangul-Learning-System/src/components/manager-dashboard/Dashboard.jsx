@@ -3,59 +3,44 @@ import { Row, Col, Card, Statistic } from 'antd';
 import { UserOutlined, TeamOutlined, BookOutlined, MessageOutlined } from '@ant-design/icons';
 import SystemConfig from '../dashboard/pages/SystemConfig';
 import ManagerRightSidebar from './ManagerRightSidebar';
+import DashboardSummaryCards from './DashboardSummaryCards'
+import ClassCountBySubjectBarChart from './charts/ClassCountBySubjectBarChart';
+import StudentSignupMonthlyAreaChart from './charts/StudentSignupMonthlyAreaChart';
+import RevenueByMonthLineChart from './charts/RevenueByMonthLineChart';
+import ClassStatusDistributionPieChart from './charts/ClassStatusDistributionPieChart';
 const Dashboard = () => {
   return (
-    <div>
-      <h1>Dashboard</h1>
-      <div style={{ display: 'flex' }}>
-      
-
-      {/* Main Content */}
-      <div style={{ flex: 1 }}>
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="Total Users"
-              value={1128}
-              prefix={<UserOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="Active Classes"
-              value={24}
-              prefix={<TeamOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="Total Lessons"
-              value={156}
-              prefix={<BookOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="Messages"
-              value={89}
-              prefix={<MessageOutlined />}
-            />
-          </Card>
-        </Col>
-      </Row>
+    <div style={{ padding: '24px 0 0 0' }}>
+      <h1 style={{ fontWeight: 700, fontSize: 32, marginBottom: 24 }}>Bảng điều khiển</h1>
+      <div style={{ display: 'flex', gap: 48, alignItems: 'flex-start' }}>
+        {/* Main Content */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <DashboardSummaryCards/>
+          {/* Charts Grid */}
+          <div style={{ marginTop: 32 }}>
+            <Row gutter={[32, 32]}>
+              <Col xs={24} md={12}>
+              <RevenueByMonthLineChart />
+             
+              </Col>
+              <Col xs={24} md={12}>
+              <ClassCountBySubjectBarChart />
+               
+              </Col>
+              <Col xs={24} md={12}>
+              <ClassStatusDistributionPieChart />
+              </Col>
+              <Col xs={24} md={12}>
+              <StudentSignupMonthlyAreaChart />
+              </Col>
+            </Row>
+          </div>
+        </div>
+        {/* Right Sidebar */}
+        <div style={{ minWidth: 320 }}>
+          <ManagerRightSidebar />
+        </div>
       </div>
-
-      {/* Right Sidebar */}
-      <ManagerRightSidebar />
-    </div>
-     
     </div>
   );
 };
