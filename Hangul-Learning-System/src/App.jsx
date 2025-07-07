@@ -19,10 +19,8 @@ import ViewerPage from './pages/viewer-portal/ViewerPage';
 import HomeContent from './components/Homepage/Content';
 import ViewClassDetail from './pages/student-portal/ViewClassDetail';
 import WeeklyTimeTable from './pages/student-portal/WeeklyTimeTable';
-import AssessmentManagement from './components/assessments/Assessments';
 import AccountDetail from '../src/components/common/AccountDetail';
-import AssessmentManagement from './components/assessments/Assessments'; // hoặc tên file bạn muốn
-import AssessmentManagement from './components/assessments/Assessments'; 
+import AssessmentManagement from './components/assessments/Assessments'; // hoặc tên file bạn muốn 
 import ViewDetailAssessment from './components/assessments/ViewDetailAssessment';
 
 // import About from './pages/viewer-portal/About';
@@ -128,6 +126,7 @@ const studentRoutes = [
   { path: '/take-test/:testEventID', element: <TakeTest /> },
   { path: '/test-result/:testId', element: <TestResult /> },
   { path: '/test-detail/:studentTestID', element: <TestDetail /> },
+  { path: '/enroll', element: <EnrollClass/>},
   { path: '/enroll/:classId', element: <ViewEnrolledClassDetail/>},
   //{ path: '/weekly-time-table', element: <WeeklyTimeTable/>},
 ];
