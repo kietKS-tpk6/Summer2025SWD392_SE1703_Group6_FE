@@ -34,7 +34,7 @@ const Sidebar = () => {
   const [avatar, setAvatar] = useState(null);
 
   useEffect(() => {
-    if (role === 'Student' && accountID) {
+    if ((role === 'Student' || role === 'Manager') && accountID) {
       axios.get(`${API_URL}api/Account/${accountID}`).then(res => {
         if (res.data && res.data.img) {
           setAvatar(res.data.img);
@@ -195,7 +195,7 @@ const Sidebar = () => {
           borderBottom: '1px solid #eee',
         }}
       >
-        {role === 'Student' && avatar ? (
+        {(role === 'Student' || role === 'Manager') && avatar ? (
           <img
             src={avatar}
             alt="Avatar"
