@@ -190,5 +190,9 @@ export const endpoints = {
     classCountBySubject:'api/Chart/class-count-by-subject',
     classStatusDistribution : 'api/Chart/class-status-distribution',
     subjectIncome: 'api/Chart/subject-income',
+  },
+  analytic: {
+    paymentTable: 'api/DashboardAnalytics/payment-table',
+    lecturerStatistic: 'api/DashboardAnalytics/lecturer-statistic',
   }
 };
