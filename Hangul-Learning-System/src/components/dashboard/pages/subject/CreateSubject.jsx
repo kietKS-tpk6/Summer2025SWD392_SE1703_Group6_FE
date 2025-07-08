@@ -377,8 +377,34 @@ const CreateSubject = () => {
     editForm.resetFields();
   };
 
+  const handleImportExcelClassSlots = async (importedSlots) => {
+    // Chỉ kiểm tra đã có thông tin môn học
+    const values = form.getFieldsValue();
+    const basicInfo = {
+      name: values.name || subjectData.basicInfo?.name,
+      description: values.description || subjectData.basicInfo?.description,
+      minAverageScoreToPass: values.minAverageScoreToPass || subjectData.basicInfo?.minAverageScoreToPass
+    };
+    if (!basicInfo.name || !basicInfo.description || !basicInfo.minAverageScoreToPass) {
+      setNotificationConfig({
+        visible: true,
+        type: 'error',
+        message: 'Thiếu thông tin!',
+        description: 'Vui lòng nhập đầy đủ thông tin môn học trước khi import file Excel.',
+      });
+      return;
+    }
+    // Lưu lại thông tin vào state nếu cần
+    setSubjectData(prev => ({
+      ...prev,
+      basicInfo
+    }));
+    setClassSlots(importedSlots);
+    setCurrent(1); // Chuyển sang bước 2
+  };
+
   const steps = [
-    { title: 'Thông tin & cấu hình môn học', content: (<><Title level={4}>Thông tin môn học</Title><BasicInfoStep form={form} subjectId={subjectId} isEditing={isEditing} /><Title level={4}>Cấu hình môn học</Title><ConfigurationStep /></>) },
+    { title: 'Thông tin & cấu hình môn học', content: (<><Title level={4}>Thông tin môn học</Title><BasicInfoStep form={form} subjectId={subjectId} isEditing={isEditing} /><Title level={4}>Cấu hình môn học</Title><ConfigurationStep onGenerateClassSlots={handleImportExcelClassSlots} /></>) },
     { title: 'Thông tin buổi học', content: <ClassInfoStep classSlots={classSlots} editingSlot={editingSlot} setEditingSlot={setEditingSlot} handleEditSlot={handleEditSlot} handleUpdateSlot={handleUpdateSlot} editForm={editForm} /> },
     { title: 'Thông tin đánh giá', content: <AssessmentStep form={form} configuration={subjectData.configuration} /> },
     { title: 'Chọn slot kiểm tra', content: <TestSlotsStep classSlots={classSlots} form={form} assessmentInfo={subjectData.assessmentInfo} /> },

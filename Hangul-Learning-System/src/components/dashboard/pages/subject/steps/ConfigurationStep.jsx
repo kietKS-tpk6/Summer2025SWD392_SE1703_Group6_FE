@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Form, InputNumber, Card, message } from 'antd';
+import { Form, InputNumber, Card, message, Upload, Button } from 'antd';
+import { UploadOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { API_URL, endpoints } from '../../../../../config/api';
 
@@ -7,6 +8,35 @@ const ConfigurationStep = ({ onGenerateClassSlots }) => {
   const [maxWeeks, setMaxWeeks] = useState(null);
   const [maxSlotsPerWeek, setMaxSlotsPerWeek] = useState(null);
   const [maxTotalMinutes, setMaxTotalMinutes] = useState(null);
+
+  // Hàm xử lý upload file Excel
+  const handleExcelUpload = async (file) => {
+    const formData = new FormData();
+    formData.append('File', file);
+
+    try {
+      const res = await axios.post(
+        `${API_URL}api/ImportExcel/schedule/import/excel`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      if (res.data.success) {
+        message.success(res.data.message || 'Nhập thời khóa biểu thành công!');
+        if (onGenerateClassSlots) {
+          onGenerateClassSlots(res.data.data);
+        }
+      } else {
+        message.error(res.data.message || 'Có lỗi khi nhập file Excel');
+      }
+    } catch (err) {
+      message.error('Không thể nhập file Excel');
+    }
+    return false; // Ngăn antd upload mặc định
+  };
 
   useEffect(() => {
     const fetchConfig = async () => {
@@ -29,80 +59,91 @@ const ConfigurationStep = ({ onGenerateClassSlots }) => {
   }, []);
 
   return (
-    <Card>
-      <Form.Item
-        name="totalWeeks"
-        label={
-          maxWeeks !== null
-            ? `Tổng số tuần (Tối đa: ${maxWeeks} tuần)`
-            : 'Tổng số tuần'
-        }
-        rules={[
-          { required: true, message: 'Vui lòng nhập tổng số tuần' },
-          ({ getFieldValue }) => ({
-            validator(_, value) {
-              if (maxWeeks !== null && value > maxWeeks) {
-                return Promise.reject(new Error(`Tối đa ${maxWeeks} tuần`));
-              }
-              return Promise.resolve();
-            },
-          }),
-        ]}
-      >
-        <InputNumber min={1} placeholder="VD: 10" style={{ width: '100%' }} />
-      </Form.Item>
+    <>
+      <div style={{ marginBottom: 16 }}>
+        <Upload
+          beforeUpload={handleExcelUpload}
+          showUploadList={false}
+          accept=".xlsx,.xls"
+        >
+          <Button icon={<UploadOutlined />}>Nhập thông tin buổi học từ file Excel</Button>
+        </Upload>
+      </div>
+      <Card>
+        <Form.Item
+          name="totalWeeks"
+          label={
+            maxWeeks !== null
+              ? `Tổng số tuần (Tối đa: ${maxWeeks} tuần)`
+              : 'Tổng số tuần'
+          }
+          rules={[
+            { required: true, message: 'Vui lòng nhập tổng số tuần' },
+            ({ getFieldValue }) => ({
+              validator(_, value) {
+                if (maxWeeks !== null && value > maxWeeks) {
+                  return Promise.reject(new Error(`Tối đa ${maxWeeks} tuần`));
+                }
+                return Promise.resolve();
+              },
+            }),
+          ]}
+        >
+          <InputNumber min={1} placeholder="VD: 10" style={{ width: '100%' }} />
+        </Form.Item>
 
-      <Form.Item
-        name="slotsPerWeek"
-        label={
-          maxSlotsPerWeek !== null
-            ? `Số slot mỗi tuần (Tối đa: ${maxSlotsPerWeek} slot/tuần)`
-            : 'Số slot mỗi tuần'
-        }
-        rules={[
-          { required: true, message: 'Vui lòng nhập số slot mỗi tuần' },
-          ({ getFieldValue }) => ({
-            validator(_, value) {
-              if (maxSlotsPerWeek !== null && value > maxSlotsPerWeek) {
-                return Promise.reject(new Error(`Tối đa ${maxSlotsPerWeek} slot mỗi tuần`));
-              }
-              return Promise.resolve();
-            },
-          }),
-        ]}
-      >
-        <InputNumber min={1} placeholder="VD: 3" style={{ width: '100%' }} />
-      </Form.Item>
+        <Form.Item
+          name="slotsPerWeek"
+          label={
+            maxSlotsPerWeek !== null
+              ? `Số slot mỗi tuần (Tối đa: ${maxSlotsPerWeek} slot/tuần)`
+              : 'Số slot mỗi tuần'
+          }
+          rules={[
+            { required: true, message: 'Vui lòng nhập số slot mỗi tuần' },
+            ({ getFieldValue }) => ({
+              validator(_, value) {
+                if (maxSlotsPerWeek !== null && value > maxSlotsPerWeek) {
+                  return Promise.reject(new Error(`Tối đa ${maxSlotsPerWeek} slot mỗi tuần`));
+                }
+                return Promise.resolve();
+              },
+            }),
+          ]}
+        >
+          <InputNumber min={1} placeholder="VD: 3" style={{ width: '100%' }} />
+        </Form.Item>
 
-      <Form.Item
-        name="defaultDuration"
-        label={
-          maxTotalMinutes !== null
-            ? `Thời lượng mặc định mỗi tiết (Tổng tối đa: ${maxTotalMinutes} phút/slot)`
-            : 'Thời lượng mặc định mỗi tiết'
-        }
-        rules={[
-          { required: true, message: 'Vui lòng nhập thời lượng mặc định cho mỗi tiết' },
-          ({ getFieldValue }) => ({
-            validator(_, value) {
-              const slots = getFieldValue('slotsPerWeek');
-              if (
-                maxTotalMinutes !== null &&
-                slots &&
-                value * slots > maxTotalMinutes
-              ) {
-                return Promise.reject(
-                  new Error(`Tổng thời lượng không vượt quá ${maxTotalMinutes} phút`)
-                );
-              }
-              return Promise.resolve();
-            },
-          }),
-        ]}
-      >
-        <InputNumber min={1} placeholder="VD: 45" style={{ width: '100%' }} />
-      </Form.Item>
-    </Card>
+        <Form.Item
+          name="defaultDuration"
+          label={
+            maxTotalMinutes !== null
+              ? `Thời lượng mặc định mỗi tiết (Tổng tối đa: ${maxTotalMinutes} phút/slot)`
+              : 'Thời lượng mặc định mỗi tiết'
+          }
+          rules={[
+            { required: true, message: 'Vui lòng nhập thời lượng mặc định cho mỗi tiết' },
+            ({ getFieldValue }) => ({
+              validator(_, value) {
+                const slots = getFieldValue('slotsPerWeek');
+                if (
+                  maxTotalMinutes !== null &&
+                  slots &&
+                  value * slots > maxTotalMinutes
+                ) {
+                  return Promise.reject(
+                    new Error(`Tổng thời lượng không vượt quá ${maxTotalMinutes} phút`)
+                  );
+                }
+                return Promise.resolve();
+              },
+            }),
+          ]}
+        >
+          <InputNumber min={1} placeholder="VD: 45" style={{ width: '100%' }} />
+        </Form.Item>
+      </Card>
+    </>
   );
 };
 
