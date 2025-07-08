@@ -190,14 +190,14 @@ const WeeklyTimeTable = () => {
               <Button icon={<RightOutlined />} onClick={() => setWeekIndex(weekIndex + 1)} style={{ marginLeft: 16 }} />
             </div>
             <Card style={{ boxShadow: '0 2px 12px #eee' }}>
-              <Row gutter={8} style={{ background: '#fafbfc', borderRadius: 8, padding: 8 }}>
+              <Row gutter={8} style={{ background: '#fafbfc', borderRadius: 8, padding: 8, flexWrap: 'nowrap', overflowX: 'auto' }}>
                 {weekDays.map((day, idx) => {
                   const date = dayjs(weekRange.start).add(idx, 'day');
                   return (
-                    <Col key={day} span={24/7} style={{ minWidth: 120 }}>
+                    <Col key={day} flex={1} style={{ minWidth: 120, display: 'flex', flexDirection: 'column' }}>
                       <div style={{ textAlign: 'center', fontWeight: 600, marginBottom: 8 }}>{day}</div>
                       <div style={{ textAlign: 'center', color: '#888', marginBottom: 8, fontSize: 13 }}>{date.format('DD/MM')}</div>
-                      <div style={{ minHeight: 90 }}>
+                      <div style={{ minHeight: 90, flex: 1 }}>
                         {lessonsByDay[date.format('YYYY-MM-DD')] && lessonsByDay[date.format('YYYY-MM-DD')].length > 0 ? (
                           lessonsByDay[date.format('YYYY-MM-DD')].map(lesson => (
                             <Card key={lesson.classLessonID} size="small" style={{ marginBottom: 8, background: '#f6ffed', borderColor: '#b7eb8f' }}>
