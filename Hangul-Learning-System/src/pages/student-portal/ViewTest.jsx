@@ -30,7 +30,7 @@ import {
 import dayjs from 'dayjs';
 import axios from 'axios';
 import { API_URL, endpoints } from '../../config/api';
-import { message } from 'antd';
+import Notification from '../../components/common/Notification';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -72,6 +72,7 @@ const ViewTest = () => {
   const [passwordError, setPasswordError] = useState('');
   const [sections, setSections] = useState([]);
   const [history, setHistory] = useState([]);
+  const [notification, setNotification] = useState({ visible: false, type: 'error', message: '', description: '' });
 
   // Lấy lịch sử làm bài
   const fetchHistory = useCallback(async (testEventID) => {
@@ -144,6 +145,30 @@ const ViewTest = () => {
   }, [testData]);
 
   const handleStartTest = () => {
+    // Kiểm tra thời gian hiện tại có nằm trong khoảng kiểm tra không
+    if (testData && testData.startAt && testData.endAt) {
+      const now = dayjs();
+      const start = dayjs(testData.startAt);
+      const end = dayjs(testData.endAt);
+      if (now.isBefore(start)) {
+        setNotification({
+          visible: true,
+          type: 'error',
+          message: 'Chưa đến thời gian làm bài',
+          description: 'Vui lòng đợi đến khi bài kiểm tra bắt đầu.'
+        });
+        return;
+      }
+      if (now.isAfter(end)) {
+        setNotification({
+          visible: true,
+          type: 'error',
+          message: 'Đã hết thời gian làm bài',
+          description: 'Bạn không thể vào làm bài nữa.'
+        });
+        return;
+      }
+    }
     if (testData && testData.password) {
       setPasswordModalVisible(true);
       setInputPassword('');
@@ -417,6 +442,15 @@ const ViewTest = () => {
         />
         {passwordError && <div style={{ color: 'red', marginTop: 8 }}>{passwordError}</div>}
       </Modal>
+
+      {/* Notification */}
+      <Notification
+        visible={notification.visible}
+        type={notification.type}
+        message={notification.message}
+        description={notification.description}
+        onClose={() => setNotification(n => ({ ...n, visible: false }))}
+      />
     </div>
   );
 };
