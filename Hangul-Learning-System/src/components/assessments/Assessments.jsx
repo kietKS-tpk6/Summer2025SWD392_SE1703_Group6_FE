@@ -69,6 +69,10 @@ const Assessments = () => {
   const navigate = useNavigate();
   const [openModal, setOpenModal] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
+  // Thêm state cho phân trang
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(200);
+  const [total, setTotal] = useState(0);
 
   // Thêm state cho popup gửi duyệt
   const [sendApproveModal, setSendApproveModal] = useState(false);
@@ -98,32 +102,36 @@ const Assessments = () => {
     fetchSubjects();
   }, []);
 
-  // Fetch tests từ API
+  // Fetch tests từ API (dùng get-by-status, có phân trang)
   useEffect(() => {
     const fetchTests = async () => {
       try {
-        // Lấy cả bài test Drafted, Pending, Actived
-        const statuses = ['Drafted', 'Pending', 'Actived'];
-        let allTests = [];
-        for (const status of statuses) {
-          const res = await axios.get(`${API_URL}api/Test/all-with-sections?status=${status}`);
-          if (res.data?.data) {
-            allTests = allTests.concat(res.data.data.map(test => ({ ...test, Status: status })));
+        const res = await axios.get(`${API_URL}api/Test/get-by-status`, {
+          params: {
+            status: statusFilter,
+            page,
+            pageSize,
           }
-        }
-        // Sắp xếp theo updateAt giảm dần (mới nhất lên đầu)
-        allTests.sort((a, b) => {
-          const dateA = a.updateAt ? new Date(a.updateAt).getTime() : 0;
-          const dateB = b.updateAt ? new Date(b.updateAt).getTime() : 0;
-          return dateB - dateA;
         });
-        setData(allTests);
+        const items = res.data?.items || [];
+        setTotal(res.data?.total || 0);
+        // Map đúng các trường cần thiết cho bảng
+        const mapped = items.map(item => ({
+          testID: item.testID,
+          createdByName: item.createdByName,
+          subjectName: item.subjectName,
+          createAt: item.createAt,
+          Status: statusFilter, // hoặc item.status nếu muốn dùng số
+          testSections: item.testSections || [],
+        }));
+        setData(mapped);
       } catch (e) {
         setData([]);
+        setTotal(0);
       }
     };
     fetchTests();
-  }, []);
+  }, [statusFilter, page, pageSize]);
 
   // Filter + search
   const filteredData = data.filter(item => {
@@ -269,6 +277,17 @@ const Assessments = () => {
             audioURL: question.audioURL || "",
             options,
           });
+          // Nếu là câu hỏi viết (section.type === 'Writing') và có barem
+          if (section.type === 'Writing' && Array.isArray(question.criteriaList) && question.criteriaList.length > 0) {
+            // Gọi API tạo barem điểm cho writing
+            const barems = question.criteriaList.map(barem => ({
+              questionID,
+              criteriaName: barem.criteriaName,
+              maxScore: barem.maxScore,
+              description: barem.description,
+            }));
+            await axios.post(`${API_URL}WritingBarem/bulk-create`, { barems });
+          }
         }
       }
       // 4. Cập nhật trạng thái test
@@ -427,6 +446,15 @@ const Assessments = () => {
             statusFilter={statusFilter}
             setStatusFilter={setStatusFilter}
             onCreate={() => setShowCreate(true)}
+            pagination={{
+              current: page,
+              pageSize: pageSize,
+              total: total,
+              onChange: (p, ps) => {
+                setPage(p);
+                setPageSize(ps);
+              },
+            }}
           />
         </>
       ) : (

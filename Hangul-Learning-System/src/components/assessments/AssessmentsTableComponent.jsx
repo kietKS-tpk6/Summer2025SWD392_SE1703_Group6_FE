@@ -164,12 +164,7 @@ export default function AssessmentsTable({
               return status;
             },
           },
-          {
-            title: 'Số trang',
-            dataIndex: 'testSections',
-            key: 'testSections',
-            render: (sections) => Array.isArray(sections) ? sections.length : 0,
-          },
+          
           {
             title: 'Hành động',
             key: 'actions',
