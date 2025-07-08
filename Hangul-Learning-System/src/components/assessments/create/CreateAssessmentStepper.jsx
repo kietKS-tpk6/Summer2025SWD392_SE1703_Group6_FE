@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Steps, Button, message } from 'antd';
+import { Steps, Button } from 'antd';
 import AssessmentBasicForm from './AssessmentBasicForm';
 import CreateAssessmentSection from './CreateAssessmentSection';
 import CreateAssessmentConfirm from './CreateAssessmentConfirm';
@@ -12,6 +12,76 @@ const SectionQuestionsForm = () => <div>SectionQuestionsForm (TODO)</div>;
 const CreateAssessmentStepper = ({ formData, setFormData, onFinish, showNotify, subjects, categoryOptions, onSubjectChange, onImportExcel }) => {
   const [current, setCurrent] = useState(0);
   const basicInfoFormRef = useRef();
+  const sectionFormsRef = useRef([]); // ref cho các form section
+  const [showNoSectionWarning, setShowNoSectionWarning] = useState(false);
+  const [sectionErrors, setSectionErrors] = useState({});
+  const [sectionNameErrors, setSectionNameErrors] = useState({});
+
+  // Validate sections, questions, answers
+  const validateSections = () => {
+    const errors = {};
+    const nameErrors = {};
+    let hasError = false;
+    (formData.sections || []).forEach((section, sIdx) => {
+      // Validate section name
+      if (!section.name || !section.name.trim()) {
+        nameErrors[sIdx] = true;
+        hasError = true;
+      }
+      // Validate section type
+      if (!section.type) {
+        errors[`type_${sIdx}`] = true;
+        hasError = true;
+      }
+      // Validate section score (chỉ check, không return sớm)
+      if (section.score === undefined || section.score === null || section.score === '' || isNaN(Number(section.score))) {
+        errors[`score_${sIdx}`] = true;
+        hasError = true;
+      }
+      // Validate questions (luôn check, không return sớm)
+      if (!section.questions || section.questions.length === 0) {
+        errors[`questions_${sIdx}`] = 'Chưa có câu hỏi';
+        hasError = true;
+      }
+      (section.questions || []).forEach((q, qIdx) => {
+        // Validate question content
+        if (!q.content || !q.content.trim()) {
+          errors[`qcontent_${sIdx}_${qIdx}`] = true;
+          hasError = true;
+        }
+        // Validate MCQ answers
+        if (section.type === 'MCQ') {
+          if (!q.answers || q.answers.length < 2) {
+            errors[`qanswer_${sIdx}_${qIdx}`] = true;
+            hasError = true;
+          } else {
+            q.answers.forEach((a, aIdx) => {
+              if ((!a.text || !a.text.trim()) && !a.imageURL && !a.audioURL) {
+                errors[`qanswer_${sIdx}_${qIdx}_${aIdx}`] = true;
+                hasError = true;
+              }
+            });
+          }
+          // Validate correct answer
+          if (typeof q.correct !== 'number' || q.correct < 0 || q.correct >= (q.answers ? q.answers.length : 0)) {
+            errors[`qcorrect_${sIdx}_${qIdx}`] = true;
+            hasError = true;
+          }
+        }
+        // Validate TrueFalse correct
+        if (section.type === 'TrueFalse') {
+          if (typeof q.correct !== 'number' || (q.correct !== 0 && q.correct !== 1)) {
+            errors[`qcorrect_${sIdx}_${qIdx}`] = true;
+            hasError = true;
+          }
+        }
+      });
+    });
+    setSectionErrors(errors);
+    setSectionNameErrors(nameErrors);
+    // Luôn trả về false nếu có lỗi, true nếu không có lỗi
+    return !hasError;
+  };
 
   const steps = [
     {
@@ -31,10 +101,18 @@ const CreateAssessmentStepper = ({ formData, setFormData, onFinish, showNotify, 
       title: 'Tạo Trang & nhập câu hỏi',
       content: (
         <CreateAssessmentSection
+          ref={sectionFormsRef}
           testType={formData.basicInfo?.testType}
           sections={formData.sections}
           onChange={sections => setFormData(prev => ({ ...prev, sections }))}
           onImportExcel={onImportExcel}
+          showNoSectionWarning={showNoSectionWarning}
+          onAddSectionWarningClear={() => setShowNoSectionWarning(false)}
+          errors={sectionErrors}
+          showSectionNameError={sectionNameErrors}
+          onSectionNameInput={idx => {
+            setSectionNameErrors(prev => ({ ...prev, [idx]: false }));
+          }}
         />
       ),
     },
@@ -55,13 +133,24 @@ const CreateAssessmentStepper = ({ formData, setFormData, onFinish, showNotify, 
         await basicInfoFormRef.current?.validate();
         setCurrent(1);
       } catch (_) {
-        message.error('Vui lòng nhập đầy đủ thông tin cơ bản!');
       }
     } else if (current === 1) {
-      // Kiểm tra tổng điểm các section phải = 10
+      if (!formData.sections || formData.sections.length === 0) {
+        setShowNoSectionWarning(true);
+        return;
+      }
+      setShowNoSectionWarning(false);
       const totalScore = (formData.sections || []).reduce((sum, sec) => sum + (Number(sec?.score) || 0), 0);
       if (totalScore !== 10) {
-        message.error('Tổng điểm các trang phải đúng bằng 10!');
+        showNotify && showNotify({ type: 'error', message: 'Tổng điểm các trang phải đúng 10 điểm!' });
+        return;
+      }
+      // Validate sections/questions/answers
+      const valid = validateSections();
+      if (!valid) {
+        showNotify && showNotify({ type: 'error', message: 'Vui lòng nhập đầy đủ thông tin cho tất cả các trang, câu hỏi và đáp án!' });
+        // Force re-render to show all errors
+        setSectionErrors(prev => ({ ...prev }));
         return;
       }
       setCurrent(2);

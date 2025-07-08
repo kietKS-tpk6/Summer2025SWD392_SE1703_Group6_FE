@@ -259,6 +259,13 @@ const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, s
               password: values.password,
             };
             await axios.put(`${API_URL}api/TestEvent/configure`, body);
+            // Gọi API update status testEvent thành Actived (1)
+            if (modalTestEvent?.testEventID) {
+              await axios.put(`${API_URL}api/TestEvent/update-status`, {
+                testEventIDToUpdate: modalTestEvent.testEventID,
+                status: 1
+              });
+            }
             setModalOpen(false);
             await reloadAssessments();
             // TODO: Có thể thêm thông báo thành công nếu muốn
@@ -315,7 +322,7 @@ const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, s
               />
             </Form.Item>
           </Form.Item>
-          <Form.Item label="Số lượng học sinh cho phép" name="attemptLimit" rules={[{ required: true, message: 'Nhập số lượng học sinh' }]}> 
+          <Form.Item label="Số lần học sinh làm bài" name="attemptLimit" rules={[{ required: true, message: 'Nhập số lượng học sinh' }]}> 
             <Input type="number" min={1} onChange={e => setAttemptLimit(e.target.value)} />
           </Form.Item>
           <Form.Item label="Password cho bài test" name="password" rules={[{ required: true, message: 'Nhập password' }]}> 

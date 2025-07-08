@@ -10,7 +10,7 @@ const TRUE_FALSE_OPTIONS = [
   { text: 'False', key: 'B' },
 ];
 
-const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score, onImportExcel }) => {
+const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score, onImportExcel, errors = {}, sectionIdx }) => {
   const [minOptions, setMinOptions] = useState(2);
   const [maxOptions, setMaxOptions] = useState(10);
 
@@ -172,34 +172,42 @@ const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score, onImpor
 
   // Upload ảnh/audio cho từng câu hỏi (MCQ)
   const handleQuestionUpload = (qIdx, file, type) => {
-    const newQuestions = questions.map((q, i) => {
-      if (i !== qIdx) return q;
-      if (type === 'image') {
-        return { ...q, imageURL: file.name, audioURL: undefined };
-      } else if (type === 'audio') {
-        return { ...q, audioURL: file.name, imageURL: undefined };
-      }
-      return q;
-    });
-    onChange && onChange(newQuestions);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const newQuestions = questions.map((q, i) => {
+        if (i !== qIdx) return q;
+        if (type === 'image') {
+          return { ...q, imageURL: e.target.result, audioURL: undefined };
+        } else if (type === 'audio') {
+          return { ...q, audioURL: e.target.result, imageURL: undefined };
+        }
+        return q;
+      });
+      onChange && onChange(newQuestions);
+    };
+    reader.readAsDataURL(file);
   };
 
   // Upload ảnh/audio cho từng đáp án (MCQ)
   const handleAnswerUpload = (qIdx, aIdx, file, type) => {
-    const newQuestions = questions.map((q, i) => {
-      if (i !== qIdx) return q;
-      const newAnswers = q.answers.map((a, j) => {
-        if (j !== aIdx) return a;
-        if (type === 'image') {
-          return { ...a, imageURL: file.name, audioURL: undefined };
-        } else if (type === 'audio') {
-          return { ...a, audioURL: file.name, imageURL: undefined };
-        }
-        return a;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const newQuestions = questions.map((q, i) => {
+        if (i !== qIdx) return q;
+        const newAnswers = q.answers.map((a, j) => {
+          if (j !== aIdx) return a;
+          if (type === 'image') {
+            return { ...a, imageURL: e.target.result, audioURL: undefined };
+          } else if (type === 'audio') {
+            return { ...a, audioURL: e.target.result, imageURL: undefined };
+          }
+          return a;
+        });
+        return { ...q, answers: newAnswers };
       });
-      return { ...q, answers: newAnswers };
-    });
-    onChange && onChange(newQuestions);
+      onChange && onChange(newQuestions);
+    };
+    reader.readAsDataURL(file);
   };
 
   // Xóa file ảnh/audio của đáp án
@@ -296,7 +304,8 @@ const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score, onImpor
                 </Upload>
                 {q.imageURL && (
                   <>
-                    <span style={{ color: '#1890ff' }}>{q.imageURL}</span>
+                    <img src={q.imageURL} alt="img" style={{ maxWidth: 100, maxHeight: 100, marginLeft: 8 }} />
+                    <span style={{ color: '#1890ff', marginLeft: 8 }}>Đã chọn ảnh</span>
                     <Button type="link" size="small" onClick={() => {
                       // Xóa imageURL của câu hỏi
                       const newQuestions = questions.map((ques, i) => i === idx ? { ...ques, imageURL: undefined } : ques);
@@ -332,7 +341,9 @@ const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score, onImpor
             value={q.content}
             onChange={e => handleQuestionChange(idx, e.target.value)}
             style={{ marginBottom: 16 }}
+            status={errors[`qcontent_${sectionIdx}_${idx}`] ? 'error' : undefined}
           />
+          {errors[`qcontent_${sectionIdx}_${idx}`] && <div style={{ color: 'red', fontSize: 12, marginBottom: 8 }}>Chưa nhập nội dung câu hỏi!</div>}
           {type === 'MCQ' && (
             <>
               <div style={{ marginBottom: 8, fontWeight: 500 }}>
@@ -352,14 +363,19 @@ const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score, onImpor
                     else if (q.answers.some(a => a.audioURL)) answerType = 'audio';
                     return q.answers.map((a, aIdx) => (
                       <div key={a.key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <Radio value={aIdx} />
+                        <Radio
+                          value={aIdx}
+                          style={errors[`qcorrect_${sectionIdx}_${idx}`] ? { border: '1px solid red', borderRadius: 4 } : {}}
+                        />
                         <Input
                           placeholder={`Đáp án ${a.key}`}
                           value={a.text}
                           onChange={e => handleAnswerChange(idx, aIdx, e.target.value)}
                           style={{ flex: 1 }}
                           disabled={answerType === 'image' || answerType === 'audio' || !!a.imageURL || !!a.audioURL}
+                          status={errors[`qanswer_${sectionIdx}_${idx}`] || errors[`qanswer_${sectionIdx}_${idx}_${aIdx}`] ? 'error' : undefined}
                         />
+                        {errors[`qanswer_${sectionIdx}_${idx}_${aIdx}`] && <span style={{ color: 'red', fontSize: 12 }}>Chưa nhập nội dung đáp án!</span>}
                         {/* Upload ảnh/audio cho đáp án */}
                         <Upload
                           customRequest={e => handleAnswerUpload(idx, aIdx, e.file, 'image')}
@@ -373,8 +389,8 @@ const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score, onImpor
                         </Upload>
                         {a.imageURL && (
                           <>
-                            <span style={{ color: '#1890ff', fontSize: 12 }}>{a.imageURL}</span>
-                            <Button type="link" size="small" onClick={() => handleRemoveAnswerFile(idx, aIdx, 'image')}>X</Button>
+                            <img src={a.imageURL} alt="img" style={{ maxWidth: 40, maxHeight: 40, marginLeft: 8 }} />
+                            <span style={{ color: '#1890ff', marginLeft: 8 }}>Đã chọn ảnh</span>
                           </>
                         )}
                         <Upload
@@ -408,6 +424,8 @@ const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score, onImpor
                   )}
                 </Space>
               </Radio.Group>
+              {errors[`qanswer_${sectionIdx}_${idx}`] && <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>Phải có ít nhất 2 đáp án hợp lệ!</div>}
+              {errors[`qcorrect_${sectionIdx}_${idx}`] && <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>Chưa chọn đáp án đúng!</div>}
             </>
           )}
           {type === 'TrueFalse' && (
@@ -434,6 +452,7 @@ const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score, onImpor
                   ))}
                 </Space>
               </Radio.Group>
+              {errors[`qcorrect_${sectionIdx}_${idx}`] && <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>Chưa chọn đáp án đúng!</div>}
             </>
           )}
         </Card>

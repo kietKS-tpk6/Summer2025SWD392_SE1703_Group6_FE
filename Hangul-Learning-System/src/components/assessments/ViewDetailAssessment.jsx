@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Descriptions, Card, Collapse, List, Spin, Alert, Button, Tag, Typography, Row, Col } from 'antd';
+import { Descriptions, Card, Collapse, List, Spin, Alert, Button, Tag, Typography, Row, Col, Input, InputNumber, message } from 'antd';
 import axios from 'axios';
 import { API_URL } from '../../config/api';
-import { UserOutlined, FileTextOutlined, InfoCircleOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { UserOutlined, FileTextOutlined, InfoCircleOutlined, CheckCircleOutlined, PlusOutlined, DeleteOutlined, EditOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 
 const { Panel } = Collapse;
 
@@ -45,6 +45,9 @@ const ViewDetailAssessment = ({ testID: propTestID }) => {
   const [creatorFullname, setCreatorFullname] = useState('');
   const [createBy, setCreateBy] = useState('');
   const [testInfo, setTestInfo] = useState({});
+  const [isEditing, setIsEditing] = useState(false);
+  const [editSections, setEditSections] = useState([]);
+  const [editTestName, setEditTestName] = useState('');
   let userRole = null;
   try {
     const user = JSON.parse(localStorage.getItem('user'));
@@ -78,7 +81,7 @@ const ViewDetailAssessment = ({ testID: propTestID }) => {
       try {
         const res = await axios.get(`${API_URL}api/Questions/by-test/${testID}`);
         setSections(res.data || []);
-        console.log(res.data);
+        setEditSections(JSON.parse(JSON.stringify(res.data || [])));
         // Lấy status từ section đầu tiên (giả sử backend trả về status ở đây)
         if (res.data && res.data[0] && res.data[0].testStatus !== undefined) {
           setTestStatus(res.data[0].testStatus);
@@ -93,6 +96,7 @@ const ViewDetailAssessment = ({ testID: propTestID }) => {
           setCreatorFullname(fullname);
           setCreateBy(createBy);
           setTestInfo(testRes.data || {});
+          setEditTestName(testRes.data?.testName || '');
         } catch {}
       } catch (e) {
         setError('Không thể tải chi tiết bài kiểm tra');
@@ -123,132 +127,319 @@ const ViewDetailAssessment = ({ testID: propTestID }) => {
     }
   };
 
-  return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div></div>
-        {isOwnDraft && (
-          <Button
-            type="primary"
-            onClick={handleApprove}
-            loading={approving}
-            disabled={loading || approving || testStatus === 3}
-            style={{ marginBottom: 16 }}
-          >
-            Duyệt bài kiểm tra
-          </Button>
-        )}
-        {isOwnDraftLecture && (
-          <Button
-            type="primary"
-            onClick={async () => {
-              setApproving(true);
-              try {
-                await axios.put(`${API_URL}api/Test/update-status-fix`, { testID, testStatus: 1 });
-                setTestStatus(1);
-                const res = await axios.get(`${API_URL}api/Questions/by-test/${testID}`);
-                setSections(res.data || []);
-              } catch {}
-              setApproving(false);
-            }}
-            loading={approving}
-            disabled={loading || approving || testInfo.status !== 0}
-            style={{ marginBottom: 16, marginLeft: 8 }}
-          >
-            Gửi duyệt cho quản lí
-          </Button>
-        )}
-      </div>
-      <h2 style={{ marginBottom: 16, color: '#1677ff', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
-        <FileTextOutlined /> {testInfo.testName || 'Chi tiết bài kiểm tra'}
-      </h2>
-      {loading ? (
-        <Spin />
-      ) : error ? (
-        <Alert type="error" message={error} />
-      ) : (
-        <>
-          <Card bordered style={{ marginBottom: 24, background: '#f8fafd' }}>
-            <Row gutter={24}>
-              <Col xs={24} md={12}>
-                <Descriptions column={1} size="small" labelStyle={{ fontWeight: 600 }}>
-                  <Descriptions.Item label={<span><InfoCircleOutlined /> Loại</span>}>
-                    {TEST_TYPE_LABELS[testInfo.testType] ?? testInfo.testType}
-                  </Descriptions.Item>
-                  <Descriptions.Item label={<span><InfoCircleOutlined /> Phân loại</span>}>
-                    {CATEGORY_LABELS[testInfo.category] ?? testInfo.category}
-                  </Descriptions.Item>
-                  <Descriptions.Item label={<span><CheckCircleOutlined /> Trạng thái</span>}>
-                    <Tag color={testInfo.status === 3 ? 'green' : testInfo.status === 1 ? 'orange' : testInfo.status === 0 ? 'default' : 'red'}>
-                      {STATUS_LABELS[testInfo.status] ?? testInfo.status}
-                    </Tag>
-                  </Descriptions.Item>
-                  <Descriptions.Item label={<span><UserOutlined /> Người tạo</span>}>
-                    {creatorFullname}
-                  </Descriptions.Item>            
-                  <Descriptions.Item label={<span><InfoCircleOutlined /> Điểm</span>}>
-                    {basicInfo.score}
-                  </Descriptions.Item>
-                </Descriptions>
-              </Col>
-              
-            </Row>
-          </Card>
+  // Hàm xử lý thay đổi nội dung câu hỏi
+  const handleQuestionChange = (sectionIdx, qIdx, value) => {
+    setEditSections(prev => prev.map((sec, i) => i !== sectionIdx ? sec : {
+      ...sec,
+      questions: sec.questions.map((q, j) => j !== qIdx ? q : { ...q, context: value })
+    }));
+  };
 
-          <h3 style={{ marginTop: 24 }}>Danh sách section & câu hỏi</h3>
-          <Collapse accordion>
-            {sections.map((section, idx) => (
-              <Panel header={`Trang ${idx + 1}: ${section.context || ''}`} key={idx}>
-                <p><b>Điểm:</b> {section.score}</p>
-                <List
-                  header={<b>Danh sách câu hỏi</b>}
-                  dataSource={section.questions || []}
-                  renderItem={(q, qIdx) => (
-                    <List.Item>
-                      <Card
-                        title={`Câu ${qIdx + 1}`}
-                        style={{ width: '100%' }}
-                        size="small"
-                      >
-                        <div><b>Nội dung:</b> {q.context}
-                          {q.imageURL && (
-                            <img src={q.imageURL} alt="img" style={{ maxWidth: 120, marginLeft: 8, verticalAlign: 'middle' }} />
-                          )}
-                          {q.audioURL && (
-                            <audio src={q.audioURL} controls style={{ marginLeft: 8, verticalAlign: 'middle' }} />
-                          )}
-                        </div>
-                        {Array.isArray(q.options) && q.options.length > 0 && (
-                          <div>
-                            <b>Đáp án:</b>
-                            <ul>
-                              {q.options.map((a, aIdx) => (
-                                <li key={aIdx}>
-                                  {String.fromCharCode(65 + aIdx)}. {a.context}
-                                  {a.imageURL && (
-                                    <img src={a.imageURL} alt="img" style={{ maxWidth: 80, marginLeft: 8, verticalAlign: 'middle' }} />
-                                  )}
-                                  {a.audioURL && (
-                                    <audio src={a.audioURL} controls style={{ marginLeft: 8, verticalAlign: 'middle' }} />
-                                  )}
-                                  {a.isCorrect && <b style={{ color: 'green' }}> (Đúng)</b>}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
+  // Hàm xử lý thay đổi đáp án
+  const handleAnswerChange = (sectionIdx, qIdx, aIdx, value) => {
+    setEditSections(prev => prev.map((sec, i) => i !== sectionIdx ? sec : {
+      ...sec,
+      questions: sec.questions.map((q, j) => j !== qIdx ? q : {
+        ...q,
+        options: q.options.map((a, k) => k !== aIdx ? a : { ...a, context: value })
+      })
+    }));
+  };
+
+  // Thêm câu hỏi
+  const handleAddQuestion = (sectionIdx) => {
+    setEditSections(prev => prev.map((sec, i) => i !== sectionIdx ? sec : {
+      ...sec,
+      questions: [
+        ...sec.questions,
+        { context: '', options: [], imageURL: '', audioURL: '' }
+      ]
+    }));
+  };
+
+  // Xóa câu hỏi
+  const handleDeleteQuestion = (sectionIdx, qIdx) => {
+    setEditSections(prev => prev.map((sec, i) => i !== sectionIdx ? sec : {
+      ...sec,
+      questions: sec.questions.filter((_, j) => j !== qIdx)
+    }));
+  };
+
+  // Thêm đáp án
+  const handleAddAnswer = (sectionIdx, qIdx) => {
+    setEditSections(prev => prev.map((sec, i) => i !== sectionIdx ? sec : {
+      ...sec,
+      questions: sec.questions.map((q, j) => j !== qIdx ? q : {
+        ...q,
+        options: [...(q.options || []), { context: '', isCorrect: false }]
+      })
+    }));
+  };
+
+  // Xóa đáp án
+  const handleDeleteAnswer = (sectionIdx, qIdx, aIdx) => {
+    setEditSections(prev => prev.map((sec, i) => i !== sectionIdx ? sec : {
+      ...sec,
+      questions: sec.questions.map((q, j) => j !== qIdx ? q : {
+        ...q,
+        options: q.options.filter((_, k) => k !== aIdx)
+      })
+    }));
+  };
+
+  // Đánh dấu đáp án đúng
+  const handleSetCorrect = (sectionIdx, qIdx, aIdx) => {
+    setEditSections(prev => prev.map((sec, i) => i !== sectionIdx ? sec : {
+      ...sec,
+      questions: sec.questions.map((q, j) => j !== qIdx ? q : {
+        ...q,
+        options: q.options.map((a, k) => ({ ...a, isCorrect: k === aIdx }))
+      })
+    }));
+  };
+
+  // Hàm xác nhận lưu
+  const handleSave = async () => {
+    try {
+      // Lấy accountId từ localStorage
+      const user = JSON.parse(localStorage.getItem('user'));
+      const accountId = user?.accountId;
+      // Gọi API update testName
+      await axios.put(`${API_URL}api/Test/${testID}`, {
+        testID,
+        testName: editTestName,
+        requestingAccountID: accountId
+      });
+      // TODO: Gọi API update questions nếu có thay đổi
+      setTestInfo(prev => ({ ...prev, testName: editTestName }));
+      message.success('Đã cập nhật tên bài kiểm tra!');
+    } catch (e) {
+      message.error('Cập nhật tên bài kiểm tra thất bại!');
+    }
+    setIsEditing(false);
+  };
+
+  return (
+    <div style={{ maxWidth: 950, margin: '0 auto', padding: 24 }}>
+      {/* Thanh tiêu đề & nút thao tác */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <FileTextOutlined style={{ fontSize: 32, color: '#1677ff' }} />
+          {isEditing ? (
+            <Input
+              value={editTestName}
+              onChange={e => setEditTestName(e.target.value)}
+              style={{ fontSize: 24, fontWeight: 700, color: '#1677ff', width: 350 }}
+              maxLength={100}
+            />
+          ) : (
+            <Typography.Title level={2} style={{ margin: 0, color: '#1677ff', fontWeight: 700, fontSize: 28 }}>
+              {testInfo.testName || 'Chi tiết bài kiểm tra'}
+            </Typography.Title>
+          )}
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {isOwnDraft && (
+            <Button
+              type="primary"
+              icon={<CheckOutlined />}
+              onClick={handleApprove}
+              loading={approving}
+              disabled={loading || approving || testStatus === 3}
+            >
+              Duyệt bài kiểm tra
+            </Button>
+          )}
+          {isOwnDraftLecture && (
+            <Button
+              type="primary"
+              icon={<CheckOutlined />}
+              onClick={async () => {
+                setApproving(true);
+                try {
+                  await axios.put(`${API_URL}api/Test/update-status-fix`, { testID, testStatus: 1 });
+                  setTestStatus(1);
+                  const res = await axios.get(`${API_URL}api/Questions/by-test/${testID}`);
+                  setSections(res.data || []);
+                } catch {}
+                setApproving(false);
+              }}
+              loading={approving}
+              disabled={loading || approving || testInfo.status !== 0}
+            >
+              Gửi duyệt cho quản lí
+            </Button>
+          )}
+          {testInfo.status === 0 && (isOwnDraft || isOwnDraftLecture) && !isEditing && (
+            <Button type="primary" icon={<EditOutlined />} onClick={() => setIsEditing(true)}>
+              Cập nhật
+            </Button>
+          )}
+          {isEditing && (
+            <Button type="primary" icon={<CheckOutlined />} onClick={handleSave}>
+              Xác nhận
+            </Button>
+          )}
+          <Button onClick={() => navigate(-1)} icon={<CloseOutlined />}>
+            Quay lại
+          </Button>
+        </div>
+      </div>
+      {/* Card thông tin test */}
+      <Card bordered style={{ marginBottom: 32, background: '#f8fafd', boxShadow: '0 2px 8px #f0f1f2' }}>
+        <Row gutter={32}>
+          <Col xs={24} md={12}>
+            {(() => {
+              let subjectName = '';
+              if (testInfo.subject && testInfo.subject.subjectName) subjectName = testInfo.subject.subjectName;
+              else if (testInfo.subjectName) subjectName = testInfo.subjectName;
+              else subjectName = 'Chưa có môn học';
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
+                  <InfoCircleOutlined style={{ marginRight: 8, color: '#1677ff' }} />
+                  <b>Môn học:</b>&nbsp;
+                  <span style={{ color: '#1677ff', fontWeight: 600 }}>{subjectName}</span>
+                </div>
+              );
+            })()}
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
+              <InfoCircleOutlined style={{ marginRight: 8, color: '#1677ff' }} />
+              <b>Loại:</b>&nbsp;{TEST_TYPE_LABELS[testInfo.testType] ?? testInfo.testType}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
+              <InfoCircleOutlined style={{ marginRight: 8, color: '#1677ff' }} />
+              <b>Phân loại:</b>&nbsp;{CATEGORY_LABELS[testInfo.category] ?? testInfo.category}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
+              <UserOutlined style={{ marginRight: 8, color: '#1677ff' }} />
+              <b>Người tạo:</b>&nbsp;{creatorFullname}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
+              <CheckCircleOutlined style={{ marginRight: 8, color: '#1677ff' }} />
+              <b>Trạng thái:</b>&nbsp;
+              <Tag color={testInfo.status === 3 ? 'green' : testInfo.status === 1 ? 'orange' : testInfo.status === 0 ? 'default' : 'red'} style={{ fontWeight: 600, fontSize: 15 }}>
+                {STATUS_LABELS[testInfo.status] ?? testInfo.status}
+              </Tag>
+            </div>
+          </Col>
+        </Row>
+      </Card>
+      {/* Danh sách section & câu hỏi */}
+      <Typography.Title level={4} style={{ marginTop: 0, marginBottom: 16, color: '#222' }}>
+        Danh sách section & câu hỏi
+      </Typography.Title>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        {(isEditing ? editSections : sections).map((section, idx) => (
+          <Card key={idx} bordered style={{ background: '#fff', boxShadow: '0 1px 6px #f0f1f2' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <Typography.Title level={5} style={{ margin: 0, color: '#1677ff' }}>
+                Trang {idx + 1}: <span style={{ color: '#222' }}>{section.context || ''}</span>
+              </Typography.Title>
+              <span style={{ fontWeight: 500, color: '#888' }}>Điểm: {section.score}</span>
+            </div>
+            {/* Hiển thị ảnh/audio tổng của section */}
+            {(section.imageURL || section.audioURL) && (
+              <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 16 }}>
+                {section.imageURL && (
+                  <img
+                    src={section.imageURL}
+                    alt="img"
+                    style={{ maxWidth: 180, maxHeight: 120, borderRadius: 8, border: '1px solid #eee', boxShadow: '0 2px 8px #0001' }}
+                  />
+                )}
+                {section.audioURL && (
+                  <audio controls src={section.audioURL} style={{ height: 36, borderRadius: 6, background: '#fff' }} />
+                )}
+              </div>
+            )}
+            <Typography.Text strong style={{ color: '#444', fontSize: 16 }}>Danh sách câu hỏi</Typography.Text>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 8 }}>
+              {(section.questions || []).map((q, qIdx) => (
+                <Card
+                  key={qIdx}
+                  size="small"
+                  style={{ background: '#f6faff', border: '1px solid #e6eaf0', boxShadow: '0 1px 3px #f0f1f2' }}
+                  bodyStyle={{ padding: 16 }}
+                  title={<span style={{ color: '#1677ff', fontWeight: 600 }}>Câu {qIdx + 1}</span>}
+                  extra={isEditing && <Button danger size="small" icon={<DeleteOutlined />} onClick={() => handleDeleteQuestion(idx, qIdx)} />}
+                >
+                  <div style={{ marginBottom: 8 }}>
+                    <b>Nội dung:</b> {isEditing ? (
+                      <Input.TextArea
+                        value={q.context}
+                        onChange={e => handleQuestionChange(idx, qIdx, e.target.value)}
+                        autoSize
+                        style={{ marginTop: 4 }}
+                      />
+                    ) : (
+                      <span style={{ color: '#222' }}>{q.context}</span>
+                    )}
+                    {q.imageURL && (
+                      <img src={q.imageURL} alt="img" style={{ maxWidth: 120, marginLeft: 8, verticalAlign: 'middle', borderRadius: 4, border: '1px solid #eee' }} />
+                    )}
+                    {q.audioURL && (
+                      <audio src={q.audioURL} controls style={{ marginLeft: 8, verticalAlign: 'middle' }} />
+                    )}
+                  </div>
+                  {Array.isArray(q.options) && q.options.length > 0 && (
+                    <div style={{ marginTop: 8 }}>
+                      <b>Đáp án:</b>
+                      <ul style={{ paddingLeft: 24, margin: 0 }}>
+                        {q.options.map((a, aIdx) => (
+                          <li key={aIdx} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                            {isEditing ? (
+                              <>
+                                <Input
+                                  value={a.context}
+                                  onChange={e => handleAnswerChange(idx, qIdx, aIdx, e.target.value)}
+                                  style={{ width: 200 }}
+                                />
+                                <Button
+                                  type={a.isCorrect ? 'primary' : 'default'}
+                                  onClick={() => handleSetCorrect(idx, qIdx, aIdx)}
+                                  size="small"
+                                  icon={<CheckOutlined />}
+                                >
+                                  Đúng
+                                </Button>
+                                <Button danger size="small" icon={<DeleteOutlined />} onClick={() => handleDeleteAnswer(idx, qIdx, aIdx)} />
+                              </>
+                            ) : (
+                              <>
+                                <span style={{ fontWeight: 500 }}>{String.fromCharCode(65 + aIdx)}.</span>
+                                <span style={{ color: a.isCorrect ? '#389e0d' : '#222', fontWeight: a.isCorrect ? 600 : 400 }}>
+                                  {a.context}
+                                  {a.isCorrect && <span style={{ marginLeft: 6 }}>(Đúng)</span>}
+                                </span>
+                              </>
+                            )}
+                            {a.imageURL && (
+                              <img src={a.imageURL} alt="img" style={{ maxWidth: 60, marginLeft: 8, verticalAlign: 'middle', borderRadius: 4, border: '1px solid #eee' }} />
+                            )}
+                            {a.audioURL && (
+                              <audio src={a.audioURL} controls style={{ marginLeft: 8, verticalAlign: 'middle' }} />
+                            )}
+                          </li>
+                        ))}
+                        {isEditing && (
+                          <Button type="dashed" size="small" icon={<PlusOutlined />} onClick={() => handleAddAnswer(idx, qIdx)} style={{ marginTop: 4 }}>
+                            Thêm đáp án
+                          </Button>
                         )}
-                      </Card>
-                    </List.Item>
+                      </ul>
+                    </div>
                   )}
-                />
-              </Panel>
-            ))}
-          </Collapse>
-        </>
-      )}
-      <Button onClick={() => navigate(-1)} style={{ marginTop: 16 }}>
-        Quay lại
-      </Button>
+                  {isEditing && (
+                    <Button type="dashed" size="small" icon={<PlusOutlined />} onClick={() => handleAddQuestion(idx)} style={{ marginTop: 8 }}>
+                      Thêm câu hỏi
+                    </Button>
+                  )}
+                </Card>
+              ))}
+            </div>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 };

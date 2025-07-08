@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Select, InputNumber, Upload, Button, Row, Col, Radio, Space, Card, Tabs, Alert } from 'antd';
+import { Form, Input, Select, InputNumber, Upload, Button, Row, Col, Radio, Space, Card, Tabs, Alert, message } from 'antd';
 import { UploadOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import CreateQuestion from './CreateQuestion';
 
@@ -33,8 +33,17 @@ const DEFAULT_ANSWERS = [
   { text: '', key: 'D' },
 ];
 
-const CreateAssessmentSection = ({ testType, sections = [], onChange, onImportExcel }) => {
-  // Quản lý index của section đang active
+const CreateAssessmentSection = ({
+  testType,
+  sections = [],
+  onChange,
+  onImportExcel,
+  errors = {},
+  showNoSectionWarning,
+  onAddSectionWarningClear,
+  showSectionNameError = {},
+  onSectionNameInput
+}) => {
   const [activeKey, setActiveKey] = useState('0');
   // Luôn lấy sectionList từ props.sections
   const sectionList = sections && sections.length > 0 ? sections : [];
@@ -48,15 +57,15 @@ const CreateAssessmentSection = ({ testType, sections = [], onChange, onImportEx
 
   // Đồng bộ lại type của section khi testType thay đổi
   useEffect(() => {
-    let updatedSections = sectionList;
     if (testType === 'Writing') {
-      updatedSections = sectionList.map(sec => ({ ...sec, type: 'Writing' }));
-    } else {
-      updatedSections = sectionList.map(sec => ({ ...sec, type: undefined }));
+      const updatedSections = sectionList.map(sec =>
+        sec.type !== 'Writing' ? { ...sec, type: 'Writing' } : sec
+      );
+      if (JSON.stringify(updatedSections) !== JSON.stringify(sectionList)) {
+        onChange && onChange(updatedSections);
+      }
     }
-    if (JSON.stringify(updatedSections) !== JSON.stringify(sectionList)) {
-      onChange && onChange(updatedSections);
-    }
+    // Không làm gì nếu testType khác 'Writing'
     // eslint-disable-next-line
   }, [testType]);
 
@@ -75,10 +84,11 @@ const CreateAssessmentSection = ({ testType, sections = [], onChange, onImportEx
     } else {
       newType = undefined;
     }
-    const newSection = { name: '', type: newType, score: '', questions: [] };
+    const newSection = { name: '', type: newType, score: 0, questions: [] };
     const newSections = [...sectionList, newSection];
     onChange && onChange(newSections);
     setActiveKey(String(newSections.length - 1));
+    if (onAddSectionWarningClear) onAddSectionWarningClear();
   };
 
   // Xóa section
@@ -198,26 +208,20 @@ const CreateAssessmentSection = ({ testType, sections = [], onChange, onImportEx
   // Tính tổng điểm các section
   const totalScore = sectionList.reduce((sum, sec) => sum + (Number(sec.score) || 0), 0);
 
-  // Kiểm tra có section nào điểm <= 0 không
-  const hasInvalidSectionScore = sectionList.some(sec => Number(sec.score) <= 0);
-
   return (
     <div>
-      {hasInvalidSectionScore ? (
-        <Alert
-          message="Mỗi trang phải có điểm lớn hơn 0 và không được là số âm."
-          type="error"
-          showIcon
-          style={{ marginBottom: 16 }}
-        />
-      ) : totalScore !== 10 && (
-        <Alert
-          message={`Tổng điểm của tất cả trang hiện tại là ${totalScore}. Tổng điểm phải đúng bằng 10.`}
-          type="warning"
-          showIcon
-          style={{ marginBottom: 16 }}
-        />
-      )}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+        <div style={{ minHeight: 24, display: 'flex', alignItems: 'center' }}>
+          {showNoSectionWarning && (
+            <span style={{ color: 'red', fontWeight: 500 }}>
+              Chưa tạo trang cho bài kiểm tra !
+            </span>
+          )}
+        </div>
+        <Button type="dashed" icon={<PlusOutlined />} onClick={handleAddSection}>
+          Tạo trang mới
+        </Button>
+      </div>
       <Tabs
         type="editable-card"
         activeKey={activeKey}
@@ -226,42 +230,40 @@ const CreateAssessmentSection = ({ testType, sections = [], onChange, onImportEx
           if (action === 'add') handleAddSection();
           if (action === 'remove') handleRemoveSection(targetKey);
         }}
-        hideAdd                    
-        tabBarExtraContent={
-          <Button type="dashed" icon={<PlusOutlined />} onClick={handleAddSection}>
-            Tạo trang mới
-          </Button>
-        }
+        hideAdd
       >
         {sectionList.map((section, idx) => (
           <TabPane tab={`Trang ${idx + 1}`} key={String(idx)} closable={sectionList.length > 1}>
             <Row gutter={16} style={{ marginBottom: 24 }}>
               <Col span={8}>
-                <div style={{ marginBottom: 8 }}>Tên trang</div>
-                <Input
-                  placeholder="Nhập tên trang"
-                  value={section.name || ''}
-                  onChange={e => handleHeaderChange('name', e.target.value)}
-                />
+                <Form.Item
+                  label="Tên trang"
+                  required
+                  validateStatus={showSectionNameError?.[idx] && !section.name ? 'error' : ''}
+                  help={showSectionNameError?.[idx] && !section.name ? 'Chưa nhập tên trang!' : ''}
+                  style={{ marginBottom: 0 }}
+                >
+                  <Input
+                    placeholder="Nhập tên trang"
+                    value={section.name || ''}
+                    onChange={e =>{
+                      handleHeaderChange('name', e.target.value); 
+                      onSectionNameInput?.(idx);
+                    } }
+                    status={showSectionNameError?.[idx] && !section.name ? 'error' : undefined}
+                  />
+                </Form.Item>
               </Col>
               <Col span={8}>
                 <Form.Item
                   label="Điểm"
-                  name={`score_${idx}`}
-                  rules={[
-                    { required: true, message: 'Nhập điểm!' },
-                    { type: 'number', max: 10, message: 'Không được phép cao hơn 10 điểm' }
-                  ]}
                   style={{ marginBottom: 0 }}
                 >
                   <InputNumber
-                    min={0}
-                    max={10}
                     style={{ width: '100%' }}
-                    value={section.score || ''}
+                    value={section.score}
                     onChange={val => handleHeaderChange('score', val)}
-                    placeholder="Nhập điểm  "
-                    step={0.1}
+                    placeholder="Nhập điểm"
                   />
                 </Form.Item>
               </Col>
@@ -276,6 +278,7 @@ const CreateAssessmentSection = ({ testType, sections = [], onChange, onImportEx
                         onChange={val => handleHeaderChange('type', val)}
                         style={{ width: '100%' }}
                         placeholder="Chọn thể loại kiểm tra"
+                        status={errors[`type_${idx}`] ? 'error' : undefined}
                       >
                         {SECTION_TYPE_OPTIONS_MAP.default.map(opt => (
                           <Option key={opt.value} value={opt.value}>{opt.label}</Option>
@@ -305,6 +308,7 @@ const CreateAssessmentSection = ({ testType, sections = [], onChange, onImportEx
                         onChange={val => handleHeaderChange('type', val)}
                         style={{ width: '100%' }}
                         placeholder="Chọn thể loại kiểm tra"
+                        status={errors[`type_${idx}`] ? 'error' : undefined}
                       >
                         {SECTION_TYPE_OPTIONS_MAP.all.map(opt => (
                           <Option key={opt.value} value={opt.value}>{opt.label}</Option>
@@ -314,11 +318,90 @@ const CreateAssessmentSection = ({ testType, sections = [], onChange, onImportEx
                   }
                   return <Input value={section.type || ''} disabled />;
                 })()}
+                {errors[`type_${idx}`] && <div style={{ color: 'red', fontSize: 12 }}>Chưa chọn loại trang!</div>}
               </Col>
+              {/* Upload ảnh/audio tổng cho section */}
+              <Col span={24}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 24,
+                  background: '#f6f8fa',
+                  borderRadius: 8,
+                  padding: '16px 20px',
+                  marginBottom: 20,
+                  marginTop: 8
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                    <Upload
+                      customRequest={e => {
+                        const file = e.file;
+                        const reader = new FileReader();
+                        reader.onload = ev => {
+                          const newSections = [...sectionList];
+                          newSections[idx] = { ...newSections[idx], imageURL: ev.target.result, audioURL: undefined };
+                          onChange && onChange(newSections);
+                        };
+                        reader.readAsDataURL(file);
+                      }}
+                      showUploadList={false}
+                      accept="image/*"
+                      disabled={!!section.audioURL}
+                    >
+                      <Button icon={<UploadOutlined />} disabled={!!section.audioURL} size="middle" type="primary">
+                        {section.imageURL ? 'Đổi ảnh' : 'Thêm ảnh'}
+                      </Button>
+                    </Upload>
+                    {section.imageURL && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <img src={section.imageURL} alt="img" style={{ maxWidth: 120, maxHeight: 80, borderRadius: 6, border: '1px solid #eee', boxShadow: '0 2px 8px #0001' }} />
+                        <Button type="text" size="small" danger onClick={() => {
+                          const newSections = [...sectionList];
+                          newSections[idx] = { ...newSections[idx], imageURL: undefined };
+                          onChange && onChange(newSections);
+                        }} style={{ marginLeft: 0 }}>X</Button>
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                    <Upload
+                      customRequest={e => {
+                        const file = e.file;
+                        const reader = new FileReader();
+                        reader.onload = ev => {
+                          const newSections = [...sectionList];
+                          newSections[idx] = { ...newSections[idx], audioURL: ev.target.result, imageURL: undefined };
+                          onChange && onChange(newSections);
+                        };
+                        reader.readAsDataURL(file);
+                      }}
+                      showUploadList={false}
+                      accept="audio/*"
+                      disabled={!!section.imageURL}
+                    >
+                      <Button icon={<UploadOutlined />} disabled={!!section.imageURL} size="middle" type="primary">
+                        {section.audioURL ? 'Đổi audio' : 'Thêm audio'}
+                      </Button>
+                    </Upload>
+                    {section.audioURL && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <audio controls src={section.audioURL} style={{ height: 36, verticalAlign: 'middle', borderRadius: 6, background: '#fff' }} />
+                        <Button type="text" size="small" danger onClick={() => {
+                          const newSections = [...sectionList];
+                          newSections[idx] = { ...newSections[idx], audioURL: undefined };
+                          onChange && onChange(newSections);
+                        }} style={{ marginLeft: 0 }}>X</Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Col>
+              {/* End upload ảnh/audio tổng */}
             </Row>
             <div style={{ border: '1px solid #eee', borderRadius: 8, padding: 24, minHeight: 200 }}>
               <div style={{ marginBottom: 16, fontWeight: 500, color: '#1677ff', fontSize: 16 }}>
                 Tổng số câu hỏi: {section.questions ? section.questions.length : 0}
+                {errors[`questions_${idx}`] && <span style={{ color: 'red', marginLeft: 16 }}>{errors[`questions_${idx}`]}</span>}
               </div>
               {section.type === 'Writing' ? (
                 <>
@@ -377,6 +460,8 @@ const CreateAssessmentSection = ({ testType, sections = [], onChange, onImportEx
                   type={section.type}
                   score={section.score}
                   onImportExcel={file => onImportExcel && onImportExcel(file, Number(activeKey))}
+                  errors={errors}
+                  sectionIdx={idx}
                 />
               ) : (
                 <div style={{ color: '#aaa', textAlign: 'center', margin: 24 }}>
