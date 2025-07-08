@@ -4,10 +4,10 @@ import { UserOutlined, TeamOutlined, BookOutlined, MessageOutlined } from '@ant-
 import SystemConfig from '../dashboard/pages/SystemConfig';
 import ManagerRightSidebar from './ManagerRightSidebar';
 import DashboardSummaryCards from './DashboardSummaryCards'
-import ClassCountBySubjectBarChart from './charts/ClassCountBySubjectBarChart';
-import StudentSignupMonthlyAreaChart from './charts/StudentSignupMonthlyAreaChart';
-import RevenueByMonthLineChart from './charts/RevenueByMonthLineChart';
-import ClassStatusDistributionPieChart from './charts/ClassStatusDistributionPieChart';
+import ClassCountBySubjectBarChart from '../charts/ClassCountBySubjectBarChart';
+import StudentSignupMonthlyAreaChart from '../charts/StudentSignupMonthlyAreaChart';
+import RevenueByMonthLineChart from '../charts/RevenueByMonthLineChart';
+import ClassStatusDistributionPieChart from '../charts/ClassStatusDistributionPieChart';
 import ManagerAlertTasksList from './ManagerAlertTasksList';
 const Dashboard = () => {
   return (
