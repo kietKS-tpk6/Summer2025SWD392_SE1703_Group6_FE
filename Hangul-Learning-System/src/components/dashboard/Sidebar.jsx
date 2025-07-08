@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Layout, Menu } from 'antd';
 import {
   DashboardOutlined,
@@ -16,6 +16,8 @@ import {
 import logo from '../../../public/images/logoB.png'
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getUser, logout } from '../../utils/auth';
+import axios from 'axios';
+import { API_URL } from '../../config/api';
 //
 
 const { Sider } = Layout;
@@ -27,6 +29,21 @@ const Sidebar = () => {
   // Lấy role từ localStorage
   const user = getUser();
   const role = user?.role;
+  const accountID = user?.accountId;
+  const displayName = user ? `${user.lastName || ''} ${user.firstName || ''}`.trim() : 'User';
+  const [avatar, setAvatar] = useState(null);
+
+  useEffect(() => {
+    if ((role === 'Student' || role === 'Manager') && accountID) {
+      axios.get(`${API_URL}api/Account/${accountID}`).then(res => {
+        if (res.data && res.data.img) {
+          setAvatar(res.data.img);
+        }
+      }).catch(err => {
+        console.log('Error fetching avatar:', err);
+      });
+    }
+  }, [role, accountID]);
 
   const menuItems = [
     {
@@ -110,7 +127,7 @@ const Sidebar = () => {
       label: 'Lịch kiểm tra',
     },
     {
-      key: '/student/enrollment-history',
+      key: '/student/enroll',
       icon: <ReadOutlined />, // icon lịch sử
       label: 'Lớp học đã đăng ký',
     },
@@ -124,11 +141,11 @@ const Sidebar = () => {
       icon: <BookOutlined />, // icon chứng chỉ
       label: 'Chứng chỉ',
     },
-    {
-      key: '/student/studying-class',
-      icon: <ApartmentOutlined />, // icon lớp học
-      label: 'Lớp đang học',
-    },
+    // {
+    //   key: '/student/studying-class',
+    //   icon: <ApartmentOutlined />, // icon lớp học
+    //   label: 'Lớp đang học',
+    // },
     {
       key: '/',
       icon: <DashboardOutlined />, // icon dashboard
@@ -179,15 +196,23 @@ const Sidebar = () => {
           borderBottom: '1px solid #eee',
         }}
       >
-        <img
-          src={logo}
-          alt="Logo"
-          style={{ width: 100, height: 100, margin: '0 auto' }}
-        />
+        {(role === 'Student' || role === 'Manager') && avatar ? (
+          <img
+            src={avatar}
+            alt="Avatar"
+            style={{ width: 100, height: 100, margin: '0 auto', borderRadius: '50%', objectFit: 'cover' }}
+          />
+        ) : (
+          <img
+            src={logo}
+            alt="Logo"
+            style={{ width: 100, height: 100, margin: '0 auto' }}
+          />
+        )}
         <div style={{ fontWeight: 700, fontSize: 20, color: '#000', marginTop: 10 }}>
-          {role === 'Student' ? 'Student' : 'Manager'}
+          {displayName}
         </div>
-        <div style={{ fontSize: 12, color: '#b0b7c3' }}>Learn From Home</div>
+        <div style={{ fontSize: 12, color: '#b0b7c3', marginTop:8 }}>{role}</div>
       </div>
 
       <div

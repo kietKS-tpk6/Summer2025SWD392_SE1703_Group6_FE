@@ -118,6 +118,7 @@ const CreateClassStepper = ({
           onChange={(data) => setFormData(prev => ({ ...prev, lessons: data }))}
           maxDaysPerWeek={maxDaysPerWeek}
           onLecturerChange={handleLessonCreatorChangeLecturer}
+          subjectID={formData.basicInfo?.subjectID}
         />
       )
     },

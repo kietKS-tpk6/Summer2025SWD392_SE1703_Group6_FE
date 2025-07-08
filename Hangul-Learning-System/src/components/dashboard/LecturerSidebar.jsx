@@ -6,7 +6,7 @@ import {
   CalendarOutlined,
   FileTextOutlined,
   TeamOutlined,
-  CommentOutlined,
+  ReadOutlined,
   IdcardOutlined,
   SettingOutlined,
   LogoutOutlined,
@@ -14,6 +14,8 @@ import {
 import logo from '../../../public/images/logoB.png'
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getUser, logout } from '../../utils/auth';
+import axios from 'axios';
+import { API_URL } from '../../config/api';
 
 const { Sider } = Layout;
 
@@ -21,6 +23,22 @@ const LecturerSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const user = getUser();
+  const displayName = user ? `${user.lastName || ''} ${user.firstName || ''}`.trim() : 'User';
+  const accountID = user?.accountId;
+  const role = user?.role;
+  const [avatar, setAvatar] = React.useState(null);
+
+  React.useEffect(() => {
+    if ((role === 'Lecture' || role === 'Manager') && accountID) {
+      axios.get(`${API_URL}api/Account/${accountID}`).then(res => {
+        if (res.data && res.data.img) {
+          setAvatar(res.data.img);
+        }
+      }).catch(err => {
+        console.log('Error fetching avatar:', err);
+      });
+    }
+  }, [role, accountID]);
 
   const menuItems = [
     {
@@ -28,35 +46,25 @@ const LecturerSidebar = () => {
       icon: <DashboardOutlined />,
       label: 'Bảng điều khiển',
     },
-    // {
-    //   key: '/lecturer/courses',
-    //   icon: <BookOutlined />,
-    //   label: 'Khóa học của tôi',
-    // },
+    {
+      key: '/lecturer/profile',
+      icon: <IdcardOutlined />,
+      label: 'Hồ sơ',
+    },
+    {
+      key: '/lecturer/class',
+      icon: <ReadOutlined />, // icon lịch sử
+      label: 'Lớp học của tôi',
+    },
     {
       key: '/lecturer/schedule',
       icon: <CalendarOutlined />,
       label: 'Lịch giảng dạy',
     },
-    // {
-    //   key: '/lecturer/assignments',
-    //   icon: <FileTextOutlined />,
-    //   label: 'Bài tập',
-    // },
     {
       key: '/lecturer/students',
       icon: <TeamOutlined />,
       label: 'Học viên',
-    },
-    // {
-    //   key: '/lecturer/messages',
-    //   icon: <CommentOutlined />,
-    //   label: 'Tin nhắn',
-    // },
-    {
-      key: '/lecturer/profile',
-      icon: <IdcardOutlined />,
-      label: 'Hồ sơ',
     },
     {
       key: '/lecturer/settings',
@@ -70,7 +78,7 @@ const LecturerSidebar = () => {
     },
     {
       key: '/logout',
-      icon: <LogoutOutlined />, // icon logout
+      icon: <LogoutOutlined />,
       label: 'Đăng xuất ',
     }
   ];
@@ -112,15 +120,23 @@ const LecturerSidebar = () => {
           borderBottom: '1px solid #eee',
         }}
       >
-        <img
-          src={logo}
-          alt="Logo"
-          style={{ width: 100, height: 100, margin: '0 auto' }}
-        />
+        {(role === 'Lecture' || role === 'Manager') && avatar ? (
+          <img
+            src={avatar}
+            alt="Avatar"
+            style={{ width: 100, height: 100, margin: '0 auto', borderRadius: '50%', objectFit: 'cover' }}
+          />
+        ) : (
+          <img
+            src={logo}
+            alt="Logo"
+            style={{ width: 100, height: 100, margin: '0 auto' }}
+          />
+        )}
         <div style={{ fontWeight: 700, fontSize: 20, color: '#000', marginTop: 10 }}>
-          Lecturer
+          {displayName}
         </div>
-        <div style={{ fontSize: 12, color: '#b0b7c3' }}>Learn From Home</div>
+        <div style={{ fontSize: 12, color: '#b0b7c3', marginTop:8 }}>Lecture</div>
       </div>
 
       <div

@@ -5,8 +5,28 @@ import '../../styles/ClassCard.css';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
-const statusColor = (status) => (status === 1 ? 'success' : 'default');
-const statusText = (status) => (status === 1 ? 'ACTIVE' : 'INACTIVE');
+const statusColor = (status) => {
+  switch (status) {
+    case 0: return 'default'; // Pending
+    case 1: return 'blue';    // Open
+    case 2: return 'green';   // Ongoing
+    case 3: return 'gold';    // Completed
+    case 4: return 'red';     // Deleted
+    case 5: return 'volcano'; // Cancelled
+    default: return 'default';
+  }
+};
+const statusText = (status) => {
+  switch (status) {
+    case 0: return 'Chờ xử lý';
+    case 1: return 'Mở tuyển sinh';
+    case 2: return 'Đang dạy';
+    case 3: return 'Hoàn thành';
+    case 4: return 'Đã xóa';
+    case 5: return 'Đã hủy';
+    default: return 'Không xác định';
+  }
+};
 
 const ClassCard = ({
   imageURL,
