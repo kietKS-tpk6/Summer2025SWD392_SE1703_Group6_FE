@@ -87,7 +87,7 @@ const ViewTest = () => {
         return;
       }
       // Gọi API trả về tất cả kết quả
-      const res = await axios.get(`${API_URL}api/Test/list-test-results/${testEventID}`);
+      const res = await axios.get(`${API_URL}api/StudentTests/list-test-results/${testEventID}`);
       if (Array.isArray(res.data)) {
         // Lọc lại chỉ lấy kết quả của accountId hiện tại
         const filtered = res.data.filter(item => item.studentID === accountId);

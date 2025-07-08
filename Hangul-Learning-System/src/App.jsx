@@ -48,6 +48,8 @@ import './App.css';
 import 'antd/dist/reset.css';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import LecturerClassList from './components/class/LecturerClassList';
+import ViewTestLecturer from './pages/lecturer-portal/ViewTest';
+import LecturerTestDetail from './pages/lecturer-portal/LecturerTestDetail';
 
 const { Content } = Layout;
 
@@ -90,6 +92,8 @@ const lecturerRoutes = [
   { path: '/attendance', element: <AttendancePage/>},
   { path: '/check-attendance', element: <CheckAttendancePage /> },
   { path: '/attendance', element: <AttendancePage/>},
+  { path: '/view-test/:testEventID', element: <ViewTestLecturer /> },
+  { path: '/test-detail/:studentTestID', element: <LecturerTestDetail /> },
 ];
 
 // Public routes configuration
