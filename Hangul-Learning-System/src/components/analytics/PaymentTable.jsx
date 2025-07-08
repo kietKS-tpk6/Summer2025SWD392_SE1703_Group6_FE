@@ -1,47 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Table, Tag } from 'antd';
-
-export const mockPaymentTable = [
-  {
-    PaymentID: "PM0001",
-    StudentName: "Nguyễn Văn A",
-    Subject: "Sơ cấp 1",
-    Amount: 1200000,
-    Method: "Chuyển khoản",
-    Status: "Success",
-    PaidAt: "2025-06-15",
-  },
-  {
-    PaymentID: "PM0002",
-    StudentName: "Trần Thị B",
-    Subject: "Trung cấp 1",
-    Amount: 1350000,
-    Method: "Tiền mặt",
-    Status: "Pending",
-    PaidAt: "2025-06-17",
-  },
-  {
-    PaymentID: "PM0003",
-    StudentName: "Lê Văn C",
-    Subject: "Sơ cấp 2",
-    Amount: 1200000,
-    Method: "Momo",
-    Status: "Refunded",
-    PaidAt: "2025-06-20",
-  },
-  {
-    PaymentID: "PM0004",
-    StudentName: "Phạm Thị D",
-    Subject: "Ôn thi TOPIK",
-    Amount: 2000000,
-    Method: "Chuyển khoản",
-    Status: "Success",
-    PaidAt: "2025-07-01",
-  },
-];
+import axios from 'axios';
+import { API_URL, endpoints } from '../../config/api';
 
 const statusColor = {
-  Success: 'green',
+  Paid: 'green',
   Pending: 'gold',
   Refunded: 'red',
 };
@@ -49,62 +12,98 @@ const statusColor = {
 const columns = [
   {
     title: 'Mã giao dịch',
-    dataIndex: 'PaymentID',
-    key: 'PaymentID',
+    dataIndex: 'paymentID',
+    key: 'paymentID',
     width: 120,
     fixed: 'left',
   },
   {
     title: 'Học viên',
-    dataIndex: 'StudentName',
-    key: 'StudentName',
+    dataIndex: 'studentName',
+    key: 'studentName',
     width: 160,
   },
   {
-    title: 'Môn học',
-    dataIndex: 'Subject',
-    key: 'Subject',
+    title: 'Lớp học',
+    dataIndex: 'className',
+    key: 'className',
     width: 140,
   },
   {
     title: 'Số tiền',
-    dataIndex: 'Amount',
-    key: 'Amount',
+    dataIndex: 'amount',
+    key: 'amount',
     align: 'right',
-    render: (amount) => amount.toLocaleString('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }),
-    width: 120,
-  },
-  {
-    title: 'Phương thức',
-    dataIndex: 'Method',
-    key: 'Method',
+    render: (amount, record) => {
+      if (record.status === 'Refunded') {
+        return `- ${amount.toLocaleString('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 })}`;
+      }
+      return amount.toLocaleString('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 });
+    },
     width: 120,
   },
   {
     title: 'Trạng thái',
-    dataIndex: 'Status',
-    key: 'Status',
+    dataIndex: 'status',
+    key: 'status',
     render: (status) => <Tag color={statusColor[status] || 'default'}>{status}</Tag>,
     width: 110,
   },
   {
     title: 'Ngày thanh toán',
-    dataIndex: 'PaidAt',
-    key: 'PaidAt',
+    dataIndex: 'paidAt',
+    key: 'paidAt',
     render: (date) => new Date(date).toLocaleDateString('vi-VN'),
     width: 130,
   },
 ];
 
-const PaymentTable = ({ data = mockPaymentTable }) => {
+const PaymentTable = () => {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [total, setTotal] = useState(0);
+
+  const fetchPayments = async (pageNum = 1, pageSz = 10) => {
+    setLoading(true);
+    try {
+      const res = await axios.get(`${API_URL + endpoints.analytic.paymentTable}?page=${pageNum}&pageSize=${pageSz}`);
+      const result = res.data.data;
+      setData(result.items);
+      setTotal(result.totalItems);
+    } catch (err) {
+      setData([]);
+      setTotal(0);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPayments(page, pageSize);
+  }, [page, pageSize]);
+
   return (
     <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px 0 rgba(24,144,255,0.04)', padding: 20 }}>
       <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 16, color: '#1890ff' }}>Danh sách giao dịch thanh toán</div>
       <Table
         columns={columns}
         dataSource={data}
-        rowKey="PaymentID"
-        pagination={{ pageSize: 6 }}
+        rowKey="paymentID"
+        loading={loading}
+        pagination={{
+          current: page,
+          pageSize: pageSize,
+          total: total,
+          showSizeChanger: true,
+          pageSizeOptions: [5, 10, 20, 50],
+          onChange: (p, ps) => {
+            setPage(p);
+            setPageSize(ps);
+          },
+          showTotal: (total) => `Tổng cộng ${total} giao dịch`,
+        }}
         scroll={{ x: 900 }}
         bordered
         size="middle"

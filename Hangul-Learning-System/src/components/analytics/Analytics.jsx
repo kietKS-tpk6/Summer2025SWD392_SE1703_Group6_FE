@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Row, Col } from 'antd';
 import PaymentTable from './PaymentTable';
 import IncomeBySubjectPieChart from '../charts/IncomeBySubjectPieChart';
@@ -8,7 +8,31 @@ import ClassCompletionStatsTable from './ClassCompletionStatsTable';
 import ClassCompletionRateByMonthChart from '../charts/ClassCompletionRateByMonthChart';
 import AttendanceRateByClassBarChart from '../charts/AttendanceRateByClassBarChart';
 import TopAverageScoreClassesChart from '../charts/TopAverageScoreClassesChart';
+import LecturerClassCountBarChart from '../charts/LecturerClassCountBarChart';
+import LecturerRevenuePieChart from '../charts/LecturerRevenuePieChart';
+import LecturerStatisticTable from './LecturerStatisticTable';
+import axios from 'axios';
+import { API_URL, endpoints } from '../../config/api';
+
 const Analytics = () => {
+  const [lecturerStats, setLecturerStats] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchLecturerStats = async () => {
+      try {
+        setLoading(true);
+        const res = await axios.get(API_URL + endpoints.analytic.lecturerStatistic);
+        setLecturerStats(res.data.data || []);
+        console.log(res.data);
+      } catch (err) {
+        setLecturerStats([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLecturerStats();
+  }, []);
   const [expanded, setExpanded] = useState({
     income: true,
     class: false,
@@ -82,8 +106,16 @@ const Analytics = () => {
             expanded={expanded.lecturer}
             onToggle={() => handleExpand('lecturer')}
           >
-            <div style={{ color: '#bbb', fontStyle: 'italic' }}>
-              (Nội dung sẽ được bổ sung sau)
+             <LecturerStatisticTable data={lecturerStats} loading={loading} />
+             <div style={{ margin: '32px 0 0 0' }}>
+              <Row gutter={[32, 32]}>
+                <Col xs={24} md={12}>
+                <LecturerClassCountBarChart data={lecturerStats} loading={loading} />
+                </Col>
+                <Col xs={24} md={12}>
+                <LecturerRevenuePieChart data={lecturerStats} loading={loading} />
+                </Col>
+              </Row>
             </div>
           </AnalyticsSection>
         </Col>
