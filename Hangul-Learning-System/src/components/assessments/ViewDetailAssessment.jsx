@@ -32,6 +32,33 @@ const TEST_TYPE_LABELS = {
   8: 'Other',
 };
 
+// State để lưu barem điểm cho từng questionID
+const useWritingBarem = (sections) => {
+  const [baremMap, setBaremMap] = useState({});
+  useEffect(() => {
+    const fetchBarem = async () => {
+      const map = {};
+      for (const section of sections) {
+        if (section.testSectionType === 2 && Array.isArray(section.questions)) {
+          for (const q of section.questions) {
+            if (q.questionID) {
+              try {
+                const res = await axios.get(`${API_URL}WritingBarem/${q.questionID}`);
+                map[q.questionID] = res.data?.data || [];
+              } catch {
+                map[q.questionID] = [];
+              }
+            }
+          }
+        }
+      }
+      setBaremMap(map);
+    };
+    if (sections && sections.length > 0) fetchBarem();
+  }, [sections]);
+  return baremMap;
+};
+
 const ViewDetailAssessment = ({ testID: propTestID }) => {
   // testID có thể lấy từ prop hoặc từ URL
   const params = useParams();
@@ -98,6 +125,17 @@ const ViewDetailAssessment = ({ testID: propTestID }) => {
           setTestInfo(testRes.data || {});
           setEditTestName(testRes.data?.testName || '');
         } catch {}
+        // Gọi thêm API để lấy testSectionType, context cho từng section
+        try {
+          const sectionRes = await axios.get(`${API_URL}api/Questions/by-test/${testID}`);
+          if (Array.isArray(sectionRes.data)) {
+            setSections(prevSections => prevSections.map((sec, idx) => ({
+              ...sec,
+              testSectionType: sectionRes.data[idx]?.testSectionType,
+              context: sectionRes.data[idx]?.context,
+            })));
+          }
+        } catch {}
       } catch (e) {
         setError('Không thể tải chi tiết bài kiểm tra');
       } finally {
@@ -106,6 +144,9 @@ const ViewDetailAssessment = ({ testID: propTestID }) => {
     };
     if (testID) fetchDetail();
   }, [testID]);
+
+  // Lấy barem điểm cho từng questionID
+  const writingBaremMap = useWritingBarem(sections);
 
   // Lấy thông tin cơ bản từ section đầu tiên nếu có
   const basicInfo = sections.length > 0 ? sections[0] : {};
@@ -218,6 +259,9 @@ const ViewDetailAssessment = ({ testID: propTestID }) => {
     }
     setIsEditing(false);
   };
+
+  // Kiểm tra testType là Writing (6)
+  const isWritingTest = testInfo.testType === 6;
 
   return (
     <div style={{ maxWidth: 950, margin: '0 auto', padding: 24 }}>
@@ -379,6 +423,46 @@ const ViewDetailAssessment = ({ testID: propTestID }) => {
                     )}
                     {q.audioURL && (
                       <audio src={q.audioURL} controls style={{ marginLeft: 8, verticalAlign: 'middle' }} />
+                    )}
+                    {/* Hiển thị barem điểm cho câu hỏi viết nếu testSectionType === 2 */}
+                    {section.testSectionType === 2 && (
+                      <div style={{ marginTop: 12, marginBottom: 8 }}>
+                        <b>Barem chấm điểm:</b>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 4 }}>
+                          <thead>
+                            <tr>
+                              <th style={{ border: '1px solid #eee', padding: 4 }}>Tiêu chí</th>
+                              <th style={{ border: '1px solid #eee', padding: 4 }}>Điểm</th>
+                              <th style={{ border: '1px solid #eee', padding: 4 }}>Mô tả</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                           {q.questionID && writingBaremMap[q.questionID] ? (
+                             writingBaremMap[q.questionID].length > 0 ? (
+                               writingBaremMap[q.questionID].map((c, cIdx) => (
+                                 <tr key={c.writingBaremID || cIdx}>
+                                   <td style={{ border: '1px solid #eee', padding: 4 }}>{c.criteriaName}</td>
+                                   <td style={{ border: '1px solid #eee', padding: 4 }}>{c.maxScore}</td>
+                                   <td style={{ border: '1px solid #eee', padding: 4 }}>{c.description}</td>
+                                 </tr>
+                               ))
+                             ) : (
+                               <tr>
+                                 <td colSpan={3} style={{ textAlign: 'center', color: '#888', padding: 8 }}>
+                                   Chưa có barem chấm điểm
+                                 </td>
+                               </tr>
+                             )
+                           ) : (
+                             <tr>
+                               <td colSpan={3} style={{ textAlign: 'center', color: '#888', padding: 8 }}>
+                                 Đang tải barem điểm...
+                               </td>
+                             </tr>
+                           )}
+                          </tbody>
+                        </table>
+                      </div>
                     )}
                   </div>
                   {Array.isArray(q.options) && q.options.length > 0 && (

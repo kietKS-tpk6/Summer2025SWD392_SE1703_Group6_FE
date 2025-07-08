@@ -100,6 +100,30 @@ const CreateAssessmentConfirm = ({ basicInfo, sections }) => {
                         <audio src={q.previewAudio || q.audioURL} controls style={{ marginLeft: 8, verticalAlign: 'middle' }} />
                       )}
                     </div>
+                    {/* Hiển thị barem điểm cho câu hỏi viết */}
+                    {section.type === 'Writing' && Array.isArray(q.criteriaList) && q.criteriaList.length > 0 && (
+                      <div style={{ marginTop: 12, marginBottom: 8 }}>
+                        <b>Barem chấm điểm:</b>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 4 }}>
+                          <thead>
+                            <tr>
+                              <th style={{ border: '1px solid #eee', padding: 4 }}>Tiêu chí</th>
+                              <th style={{ border: '1px solid #eee', padding: 4 }}>Điểm</th>
+                              <th style={{ border: '1px solid #eee', padding: 4 }}>Mô tả</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {q.criteriaList.map((c, cIdx) => (
+                              <tr key={cIdx}>
+                                <td style={{ border: '1px solid #eee', padding: 4 }}>{c.criteriaName}</td>
+                                <td style={{ border: '1px solid #eee', padding: 4 }}>{c.maxScore}</td>
+                                <td style={{ border: '1px solid #eee', padding: 4 }}>{c.description}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
                     {section.type === 'MCQ' && (
                       <>
                         <div>

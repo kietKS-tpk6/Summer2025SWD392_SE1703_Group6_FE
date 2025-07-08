@@ -9,13 +9,14 @@ import CreateAssessmentConfirm from './CreateAssessmentConfirm';
 // TODO: tạo SectionQuestionsForm đúng logic mới
 const SectionQuestionsForm = () => <div>SectionQuestionsForm (TODO)</div>;
 
-const CreateAssessmentStepper = ({ formData, setFormData, onFinish, showNotify, subjects, categoryOptions, onSubjectChange, onImportExcel }) => {
+const CreateAssessmentStepper = ({ formData, setFormData, onFinish, showNotify, subjects, categoryOptions, onSubjectChange, onImportExcel, isWritingCriteriaValid }) => {
   const [current, setCurrent] = useState(0);
   const basicInfoFormRef = useRef();
   const sectionFormsRef = useRef([]); // ref cho các form section
   const [showNoSectionWarning, setShowNoSectionWarning] = useState(false);
   const [sectionErrors, setSectionErrors] = useState({});
   const [sectionNameErrors, setSectionNameErrors] = useState({});
+  const [baremError, setBaremError] = useState(false);
 
   // Validate sections, questions, answers
   const validateSections = () => {
@@ -169,6 +170,11 @@ const CreateAssessmentStepper = ({ formData, setFormData, onFinish, showNotify, 
         ))}
       </Steps>
       <div style={{ margin: '24px 0' }}>{steps[current].content}</div>
+      {baremError && (
+        <div style={{ color: 'red', fontWeight: 500, marginTop: 8 }}>
+          Barem điểm chưa đủ!
+        </div>
+      )}
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 24 }}>
         {current > 0 && (
           <Button onClick={prev}>
@@ -176,12 +182,45 @@ const CreateAssessmentStepper = ({ formData, setFormData, onFinish, showNotify, 
           </Button>
         )}
         {current < steps.length - 1 && (
-          <Button type="primary" onClick={next}>
+          <Button type="primary" onClick={() => {
+            if (current === 1) {
+              // Kiểm tra writing section
+              const writingSections = formData.sections?.filter(sec => sec.type === 'Writing') || [];
+              const hasInvalid = writingSections.some(sec => {
+                const q = (sec.questions && sec.questions[0]) || {};
+                const totalCriteria = (q.criteriaList || []).reduce((sum, item) => sum + (Number(item.maxScore) || 0), 0);
+                return Number(sec.score) !== Number(totalCriteria);
+              });
+              if (hasInvalid) {
+                setBaremError(true);
+                return;
+              } else {
+                setBaremError(false);
+              }
+            }
+            next();
+          }}>
             {current === 0 ? 'Tiếp tục' : 'Tiếp theo'}
           </Button>
         )}
         {current === steps.length - 1 && (
-          <Button type="primary" onClick={onFinish}>
+          <Button type="primary" onClick={() => {
+            if (current === 1) {
+              const writingSections = formData.sections?.filter(sec => sec.type === 'Writing') || [];
+              const hasInvalid = writingSections.some(sec => {
+                const q = (sec.questions && sec.questions[0]) || {};
+                const totalCriteria = (q.criteriaList || []).reduce((sum, item) => sum + (Number(item.maxScore) || 0), 0);
+                return Number(sec.score) !== Number(totalCriteria);
+              });
+              if (hasInvalid) {
+                setBaremError(true);
+                return;
+              } else {
+                setBaremError(false);
+              }
+            }
+            onFinish();
+          }}>
             Hoàn thành
           </Button>
         )}

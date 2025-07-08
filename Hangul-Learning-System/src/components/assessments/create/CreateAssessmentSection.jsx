@@ -208,6 +208,15 @@ const CreateAssessmentSection = ({
   // Tính tổng điểm các section
   const totalScore = sectionList.reduce((sum, sec) => sum + (Number(sec.score) || 0), 0);
 
+  // Sau khi khai báo các biến, thêm hàm kiểm tra điều kiện tổng điểm barem cho writing section
+  const isWritingCriteriaValid = sectionList
+    .filter(sec => sec.type === 'Writing')
+    .every(sec => {
+      const q = (sec.questions && sec.questions[0]) || {};
+      const totalCriteria = (q.criteriaList || []).reduce((sum, item) => sum + (Number(item.maxScore) || 0), 0);
+      return Number(sec.score) === totalCriteria;
+    });
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
@@ -236,9 +245,10 @@ const CreateAssessmentSection = ({
           <TabPane tab={`Trang ${idx + 1}`} key={String(idx)} closable={sectionList.length > 1}>
             <Row gutter={16} style={{ marginBottom: 24 }}>
               <Col span={8}>
+                <div style={{ marginBottom: 4, fontWeight: 500 }}>
+                  Tên trang:
+                </div>
                 <Form.Item
-                  label="Tên trang"
-                  required
                   validateStatus={showSectionNameError?.[idx] && !section.name ? 'error' : ''}
                   help={showSectionNameError?.[idx] && !section.name ? 'Chưa nhập tên trang!' : ''}
                   style={{ marginBottom: 0 }}
@@ -246,17 +256,21 @@ const CreateAssessmentSection = ({
                   <Input
                     placeholder="Nhập tên trang"
                     value={section.name || ''}
-                    onChange={e =>{
-                      handleHeaderChange('name', e.target.value); 
+                    onChange={e => {
+                      handleHeaderChange('name', e.target.value);
                       onSectionNameInput?.(idx);
-                    } }
+                    }}
                     status={showSectionNameError?.[idx] && !section.name ? 'error' : undefined}
                   />
                 </Form.Item>
               </Col>
               <Col span={8}>
+                <div style={{ marginBottom: 4, fontWeight: 500 }}>
+                  Điểm:
+                </div>
                 <Form.Item
-                  label="Điểm"
+                  validateStatus={errors[`score_${idx}`] ? 'error' : ''}
+                  help={errors[`score_${idx}`] ? 'Chưa nhập điểm hợp lệ!' : ''}
                   style={{ marginBottom: 0 }}
                 >
                   <InputNumber
@@ -264,61 +278,70 @@ const CreateAssessmentSection = ({
                     value={section.score}
                     onChange={val => handleHeaderChange('score', val)}
                     placeholder="Nhập điểm"
+                    min={1}
+                    max={10}
                   />
                 </Form.Item>
               </Col>
               <Col span={8}>
-                <div style={{ marginBottom: 8 }}>Loại</div>
-                {(() => {
-                  const MULTIPLE_TYPES = ['Vocabulary', 'Grammar', 'Listening', 'Reading', 'MCQ'];
-                  if (MULTIPLE_TYPES.includes(testType)) {
-                    return (
-                      <Select
-                        value={section.type || undefined}
-                        onChange={val => handleHeaderChange('type', val)}
-                        style={{ width: '100%' }}
-                        placeholder="Chọn thể loại kiểm tra"
-                        status={errors[`type_${idx}`] ? 'error' : undefined}
-                      >
-                        {SECTION_TYPE_OPTIONS_MAP.default.map(opt => (
-                          <Option key={opt.value} value={opt.value}>{opt.label}</Option>
-                        ))}
-                      </Select>
-                    );
-                  }
-                  if (testType === 'Writing') {
-                    return (
-                      <Select
-                        value={section.type || undefined}
-                        onChange={val => handleHeaderChange('type', val)}
-                        style={{ width: '100%' }}
-                        placeholder="Chọn thể loại kiểm tra"
-                        disabled
-                      >
-                        {SECTION_TYPE_OPTIONS_MAP.writing.map(opt => (
-                          <Option key={opt.value} value={opt.value}>{opt.label}</Option>
-                        ))}
-                      </Select>
-                    );
-                  }
-                  if (testType === 'Mix' || testType === 'Other') {
-                    return (
-                      <Select
-                        value={section.type || undefined}
-                        onChange={val => handleHeaderChange('type', val)}
-                        style={{ width: '100%' }}
-                        placeholder="Chọn thể loại kiểm tra"
-                        status={errors[`type_${idx}`] ? 'error' : undefined}
-                      >
-                        {SECTION_TYPE_OPTIONS_MAP.all.map(opt => (
-                          <Option key={opt.value} value={opt.value}>{opt.label}</Option>
-                        ))}
-                      </Select>
-                    );
-                  }
-                  return <Input value={section.type || ''} disabled />;
-                })()}
-                {errors[`type_${idx}`] && <div style={{ color: 'red', fontSize: 12 }}>Chưa chọn loại trang!</div>}
+                <div style={{ marginBottom: 4, fontWeight: 500 }}>
+                  Loại:
+                </div>
+                <Form.Item
+                  validateStatus={errors[`type_${idx}`] ? 'error' : ''}
+                  help={errors[`type_${idx}`] ? 'Chưa chọn loại trang!' : ''}
+                  style={{ marginBottom: 0 }}
+                >
+                  {(() => {
+                    const MULTIPLE_TYPES = ['Vocabulary', 'Grammar', 'Listening', 'Reading', 'MCQ'];
+                    if (MULTIPLE_TYPES.includes(testType)) {
+                      return (
+                        <Select
+                          value={section.type || undefined}
+                          onChange={val => handleHeaderChange('type', val)}
+                          style={{ width: '100%' }}
+                          placeholder="Chọn thể loại kiểm tra"
+                          status={errors[`type_${idx}`] ? 'error' : undefined}
+                        >
+                          {SECTION_TYPE_OPTIONS_MAP.default.map(opt => (
+                            <Option key={opt.value} value={opt.value}>{opt.label}</Option>
+                          ))}
+                        </Select>
+                      );
+                    }
+                    if (testType === 'Writing') {
+                      return (
+                        <Select
+                          value={section.type || undefined}
+                          onChange={val => handleHeaderChange('type', val)}
+                          style={{ width: '100%' }}
+                          placeholder="Chọn thể loại kiểm tra"
+                          disabled
+                        >
+                          {SECTION_TYPE_OPTIONS_MAP.writing.map(opt => (
+                            <Option key={opt.value} value={opt.value}>{opt.label}</Option>
+                          ))}
+                        </Select>
+                      );
+                    }
+                    if (testType === 'Mix' || testType === 'Other') {
+                      return (
+                        <Select
+                          value={section.type || undefined}
+                          onChange={val => handleHeaderChange('type', val)}
+                          style={{ width: '100%' }}
+                          placeholder="Chọn thể loại kiểm tra"
+                          status={errors[`type_${idx}`] ? 'error' : undefined}
+                        >
+                          {SECTION_TYPE_OPTIONS_MAP.all.map(opt => (
+                            <Option key={opt.value} value={opt.value}>{opt.label}</Option>
+                          ))}
+                        </Select>
+                      );
+                    }
+                    return <Input value={section.type || ''} disabled />;
+                  })()}
+                </Form.Item>
               </Col>
               {/* Upload ảnh/audio tổng cho section */}
               <Col span={24}>
@@ -417,17 +440,104 @@ const CreateAssessmentSection = ({
                         onChange && onChange(newSections);
                       }} />}
                     >
-                      <Input.TextArea
-                        placeholder="Nhập nội dung câu hỏi viết"
-                        value={q.content}
-                        onChange={e => {
-                          const newQuestions = section.questions.map((item, i) => i === qIdx ? { ...item, content: e.target.value } : item);
-                          const newSections = [...sectionList];
-                          newSections[Number(activeKey)] = { ...newSections[Number(activeKey)], questions: newQuestions };
-                          onChange && onChange(newSections);
-                        }}
+                      <Form.Item
+                        validateStatus={!q.content ? 'error' : ''}
+                        help={!q.content ? 'Chưa nhập nội dung câu hỏi!' : ''}
                         style={{ marginBottom: 16 }}
-                      />
+                      >
+                        <Input.TextArea
+                          placeholder="Nhập nội dung câu hỏi viết"
+                          value={q.content}
+                          onChange={e => {
+                            const newQuestions = section.questions.map((item, i) => i === qIdx ? { ...item, content: e.target.value } : item);
+                            const newSections = [...sectionList];
+                            newSections[Number(activeKey)] = { ...newSections[Number(activeKey)], questions: newQuestions };
+                            onChange && onChange(newSections);
+                          }}
+                        />
+                      </Form.Item>
+                      {/* Barem chấm điểm cho câu hỏi viết */}
+                      <div style={{ border: '1px solid #eee', borderRadius: 8, padding: 16, marginBottom: 8 }}>
+                        <div style={{ fontWeight: 500, marginBottom: 8 }}>Danh sách barem (tiêu chí chấm điểm):</div>
+                        {(q.criteriaList || []).map((c, cIdx) => (
+                          <div key={cIdx} style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+                            <Input
+                              placeholder="Tiêu chí"
+                              value={c.criteriaName}
+                              onChange={e => {
+                                const newCriteria = (q.criteriaList || []).map((item, i) => i === cIdx ? { ...item, criteriaName: e.target.value } : item);
+                                const newQuestions = section.questions.map((item, i) => i === qIdx ? { ...item, criteriaList: newCriteria } : item);
+                                const newSections = [...sectionList];
+                                newSections[Number(activeKey)] = { ...newSections[Number(activeKey)], questions: newQuestions };
+                                onChange && onChange(newSections);
+                              }}
+                              style={{ width: 140 }}
+                            />
+                            <Input
+                              placeholder="Điểm"
+                              type="number"
+                              min={0}
+                              value={c.maxScore}
+                              onChange={e => {
+                                let val = Number(e.target.value);
+                                if (val < 0) val = 0;
+                                // Tính tổng điểm các barem nếu thay đổi
+                                const otherScore = (q.criteriaList || []).reduce((sum, item, i) => i === cIdx ? sum : sum + (Number(item.maxScore) || 0), 0);
+                                if (otherScore + val > Number(section.score || 0)) return; // Không cho vượt quá điểm section
+                                const newCriteria = (q.criteriaList || []).map((item, i) => i === cIdx ? { ...item, maxScore: val } : item);
+                                const newQuestions = section.questions.map((item, i) => i === qIdx ? { ...item, criteriaList: newCriteria } : item);
+                                const newSections = [...sectionList];
+                                newSections[Number(activeKey)] = { ...newSections[Number(activeKey)], questions: newQuestions };
+                                onChange && onChange(newSections);
+                              }}
+                              style={{ width: 80 }}
+                            />
+                            <Input
+                              placeholder="Mô tả"
+                              value={c.description}
+                              onChange={e => {
+                                const newCriteria = (q.criteriaList || []).map((item, i) => i === cIdx ? { ...item, description: e.target.value } : item);
+                                const newQuestions = section.questions.map((item, i) => i === qIdx ? { ...item, criteriaList: newCriteria } : item);
+                                const newSections = [...sectionList];
+                                newSections[Number(activeKey)] = { ...newSections[Number(activeKey)], questions: newQuestions };
+                                onChange && onChange(newSections);
+                              }}
+                              style={{ width: 200 }}
+                            />
+                            <Button danger icon={<DeleteOutlined />} onClick={() => {
+                              const newCriteria = (q.criteriaList || []).filter((_, i) => i !== cIdx);
+                              const newQuestions = section.questions.map((item, i) => i === qIdx ? { ...item, criteriaList: newCriteria } : item);
+                              const newSections = [...sectionList];
+                              newSections[Number(activeKey)] = { ...newSections[Number(activeKey)], questions: newQuestions };
+                              onChange && onChange(newSections);
+                            }} />
+                          </div>
+                        ))}
+                        {/* Nút thêm barem */}
+                        <Button
+                          type="dashed"
+                          icon={<PlusOutlined />}
+                          onClick={() => {
+                            const totalScore = (q.criteriaList || []).reduce((sum, item) => sum + (Number(item.maxScore) || 0), 0);
+                            if (totalScore >= Number(section.score || 0)) return;
+                            const newCriteria = [...(q.criteriaList || []), { criteriaName: '', maxScore: 0, description: '' }];
+                            const newQuestions = section.questions.map((item, i) => i === qIdx ? { ...item, criteriaList: newCriteria } : item);
+                            const newSections = [...sectionList];
+                            newSections[Number(activeKey)] = { ...newSections[Number(activeKey)], questions: newQuestions };
+                            onChange && onChange(newSections);
+                          }}
+                          disabled={((q.criteriaList || []).reduce((sum, item) => sum + (Number(item.maxScore) || 0), 0) >= Number(section.score || 0))}
+                        >
+                          Thêm barem
+                        </Button>
+                        <div style={{ marginTop: 8 }}>
+                          Tổng điểm barem: <b>{(q.criteriaList || []).reduce((sum, item) => sum + (Number(item.maxScore) || 0), 0)}</b> / {section.score || 0}
+                          {((q.criteriaList || []).reduce((sum, item) => sum + (Number(item.maxScore) || 0), 0) > Number(section.score || 0)) && (
+                            <span style={{ color: 'red', marginLeft: 8 }}>Tổng điểm barem không được vượt quá điểm section!</span>
+                          )}
+                        </div>
+                      </div>
+                      {/* End barem */}
                     </Card>
                   ))}
                   {(!section.questions || section.questions.length === 0) && (
@@ -439,12 +549,14 @@ const CreateAssessmentSection = ({
                     type="dashed"
                     icon={<PlusOutlined />}
                     onClick={() => {
-                      const newQuestions = [...(section.questions || []), { content: '' }];
-                      const newSections = [...sectionList];
-                      newSections[Number(activeKey)] = { ...newSections[Number(activeKey)], questions: newQuestions };
-                      onChange && onChange(newSections);
+                      if ((section.questions || []).length < 1) {
+                        const newQuestions = [...(section.questions || []), { content: '' }];
+                        const newSections = [...sectionList];
+                        newSections[Number(activeKey)] = { ...newSections[Number(activeKey)], questions: newQuestions };
+                        onChange && onChange(newSections);
+                      }
                     }}
-                    style={{ width: '100%', marginTop: 24, height: 48, fontSize: 18 }}
+                    style={{ width: '100%', marginTop: 24, height: 48, fontSize: 18, display: (section.questions && section.questions.length >= 1) ? 'none' : undefined }}
                   >
                     Thêm câu hỏi
                   </Button>
@@ -472,6 +584,12 @@ const CreateAssessmentSection = ({
           </TabPane>
         ))}
       </Tabs>
+      {/* Cảnh báo tổng điểm các section phải bằng 10 */}
+      {totalScore !== 10 && (
+        <div style={{ color: 'red', fontWeight: 500, marginTop: 8 }}>
+          Tổng điểm các trang phải bằng 10 điểm!
+        </div>
+      )}
     </div>
   );
 };
