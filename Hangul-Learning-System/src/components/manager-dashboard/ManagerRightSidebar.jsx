@@ -21,7 +21,6 @@ const ManagerRightSidebar = () => {
       setLoading(true);
       try {
         const response = await axios.get(`${API_URL}${endpoints.dashboardManager.rightSidebar}`);
-        console.log(response.data);
         if (response.data && (response.data.success === undefined || response.data.success)) {
           setData(response.data.data || response.data); // tuỳ backend trả về
         } else {

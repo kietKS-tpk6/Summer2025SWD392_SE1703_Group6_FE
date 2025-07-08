@@ -1,39 +1,7 @@
-import React from 'react';
-import { List, Tag, Tooltip } from 'antd';
-
-export const managerAlertTasks = [
-    {
-      type: "class_approval",
-      message: "📌 Lớp 'Trung cấp 2B' đủ điều kiện mở, cần được duyệt.",
-      deadline: "2025-07-10",
-      severity: "warning", // warning / info / urgent
-    },
-    {
-      type: "low_enrollment",
-      message: "⚠️ Lớp 'Sơ cấp 1A' sắp tới ngày khai giảng nhưng chưa đủ học viên.",
-      deadline: "2025-07-12",
-      severity: "urgent",
-    },
-    {
-      type: "test_event_missing",
-      message: "📝 Đề kiểm tra 'Midterm' của lớp 'Cao cấp 3C' cần cập nhật thông tin.",
-      deadline: "2025-07-09",
-      severity: "info",
-    },
-    {
-      type: "test_not_reviewed",
-      message: "🧐 Có 14 đề kiểm tra đang chờ được phê duyệt.",
-      deadline: null,
-      severity: "warning",
-    },
-    {
-      type: "payment_pending",
-      message: "💰 Có 3 giao dịch thanh toán đang chờ xử lý hoàn tiền.",
-      deadline: null,
-      severity: "info",
-    }
-  ];
-  
+import React, { useEffect, useState } from 'react';
+import { List, Tag, Tooltip, Skeleton } from 'antd';
+import axios from 'axios';
+import { API_URL, endpoints } from '../../config/api';
 
 const severityColor = {
   info: 'blue',
@@ -41,7 +9,36 @@ const severityColor = {
   urgent: 'red',
 };
 
-const ManagerAlertTasksList = ({ data = managerAlertTasks }) => {
+const ManagerAlertTasksList = () => {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAlertTasks = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(API_URL + endpoints.dashboardManager.alertTask);
+        setData(response.data.data || []);
+      } catch (error) {
+        console.error("Error fetching alert tasks:", error);
+        setData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAlertTasks();
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px 0 rgba(24,144,255,0.04)', padding: 20, minHeight: 220 }}>
+        <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 16, color: '#1890ff' }}>Danh sách cảnh báo</div>
+        <Skeleton active paragraph={{ rows: 3 }} />
+      </div>
+    );
+  }
+
   return (
     <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px 0 rgba(24,144,255,0.04)', padding: 20, minHeight: 220 }}>
       <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 16, color: '#1890ff' }}>Danh sách cảnh báo</div>

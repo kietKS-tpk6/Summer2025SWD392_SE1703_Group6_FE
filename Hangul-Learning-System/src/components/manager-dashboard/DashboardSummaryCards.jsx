@@ -1,44 +1,64 @@
-import React from "react";
-import { Card, Row, Col } from "antd";
+import React, { useEffect, useState } from "react";
+import { Card, Row, Col, Skeleton } from "antd";
+import axios from "axios";
 import {
   UserOutlined,
   BookOutlined,
   TeamOutlined,
   DollarOutlined
 } from "@ant-design/icons";
+import { API_URL, endpoints } from "../../config/api";
 
 const formatter = new Intl.NumberFormat("vi-VN", {
   style: "currency",
   currency: "VND",
   minimumFractionDigits: 0,
 });
-const mockData = {
-    totalLecturers: 35,
-    totalSubjects: 18,
-    activeClasses: 24,
-    totalRevenue: 127500000,
-  };
 
-const DashboardSummaryCards = ({ data = mockData}) => {
+const DashboardSummaryCards = () => {
+  const [data, setData] = useState({
+    totalLecturers: 0,
+    totalSubjects: 0,
+    activeClasses: 0,
+    totalRevenue: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOverview = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(API_URL + endpoints.dashboardManager.overview);
+        setData(response.data.data);
+      } catch (error) {
+        console.error("Error fetching overview data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOverview();
+  }, []);
+
   const cards = [
     {
       title: "Tổng giảng viên",
-      value: data.totalLecturers,
+      value: loading ? <Skeleton.Input active size="small" style={{ width: 60 }} /> : data.totalLecturers,
       icon: <UserOutlined style={{ fontSize: 24 }} />,
     },
     {
       title: "Tổng môn học",
-      value: data.totalSubjects,
+      value: loading ? <Skeleton.Input active size="small" style={{ width: 60 }} /> : data.totalSubjects,
       icon: <BookOutlined style={{ fontSize: 24 }} />,
     },
     {
       title: "Lớp đang hoạt động",
-      value: data.activeClasses,
+      value: loading ? <Skeleton.Input active size="small" style={{ width: 60 }} /> : data.activeClasses,
       icon: <TeamOutlined style={{ fontSize: 24 }} />,
     },
     {
       title: "Tổng doanh thu",
-      value: formatter.format(data.totalRevenue),
+      value: loading ? <Skeleton.Input active size="small" style={{ width: 80 }} /> : formatter.format(data.totalRevenue),
       icon: <DollarOutlined style={{ fontSize: 24 }} />,
     },
   ];

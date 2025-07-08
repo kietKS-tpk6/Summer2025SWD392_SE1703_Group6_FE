@@ -1,15 +1,38 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
+import { Skeleton } from 'antd';
+import axios from 'axios';
+import { API_URL, endpoints } from '../../config/api';
 
-export const classCountBySubject = [
-  { subject: "TOPIK I", count: 8 },
-  { subject: "TOPIK II", count: 5 },
-  { subject: "Tiếng Hàn sơ cấp 1", count: 10 },
-  { subject: "Tiếng Hàn trung cấp 2", count: 7 },
-  { subject: "Tiếng Hàn tổng hợp", count: 12 }
-];
+const ClassCountBySubjectBarChart = () => {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-const ClassCountBySubjectBarChart = ({ data = classCountBySubject }) => {
+  useEffect(() => {
+    const fetchClassCountData = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(API_URL + endpoints.chart.classCountBySubject);
+        setData(response.data.data || []);
+      } catch (error) {
+        console.error("Error fetching class count by subject data:", error);
+        setData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchClassCountData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{ width: '100%', height: 340 }}>
+        <Skeleton active paragraph={{ rows: 8 }} />
+      </div>
+    );
+  }
+
   return (
     <div style={{ width: '100%', height: 340 }}>
       <ResponsiveContainer width="100%" height={320}>

@@ -1,17 +1,38 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
+import { Skeleton } from 'antd';
+import axios from 'axios';
+import { API_URL, endpoints } from '../../config/api';
 
-export const studentSignupMonthly = [
-  { month: "01/2025", count: 42 },
-  { month: "02/2025", count: 56 },
-  { month: "03/2025", count: 75 },
-  { month: "04/2025", count: 65 },
-  { month: "05/2025", count: 88 },
-  { month: "06/2025", count: 93 },
-  { month: "07/2025", count: 104 },
-];
+const StudentSignupMonthlyAreaChart = () => {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-const StudentSignupMonthlyAreaChart = ({ data = studentSignupMonthly }) => {
+  useEffect(() => {
+    const fetchStudentSignupData = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(API_URL + endpoints.chart.studentSignupMonthly);
+        setData(response.data.data || []);
+      } catch (error) {
+        console.error("Error fetching student signup monthly data:", error);
+        setData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudentSignupData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{ width: '100%', height: 340 }}>
+        <Skeleton active paragraph={{ rows: 8 }} />
+      </div>
+    );
+  }
+
   return (
     <div style={{ width: '100%', height: 340 }}>
       <ResponsiveContainer width="100%" height={320}>

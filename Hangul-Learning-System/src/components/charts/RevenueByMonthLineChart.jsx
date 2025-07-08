@@ -1,19 +1,40 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
-
-export const revenueByMonth = [
-  { month: "01/2025", revenue: 12000000 },
-  { month: "02/2025", revenue: 18000000 },
-  { month: "03/2025", revenue: 24000000 },
-  { month: "04/2025", revenue: 20000000 },
-  { month: "05/2025", revenue: 31000000 },
-  { month: "06/2025", revenue: 37000000 },
-  { month: "07/2025", revenue: 42000000 },
-];
+import { Skeleton } from 'antd';
+import axios from 'axios';
+import { API_URL, endpoints } from '../../config/api';
 
 const formatCurrency = (value) => value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 });
 
-const RevenueByMonthLineChart = ({ data = revenueByMonth }) => {
+const RevenueByMonthLineChart = () => {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRevenueData = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(API_URL + endpoints.chart.revenueByMonth);
+        setData(response.data.data || []);
+      } catch (error) {
+        console.error("Error fetching revenue by month data:", error);
+        setData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRevenueData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{ width: '100%', height: 340 }}>
+        <Skeleton active paragraph={{ rows: 8 }} />
+      </div>
+    );
+  }
+
   return (
     <div style={{ width: '100%', height: 340 }}>
       <ResponsiveContainer width="100%" height={320}>

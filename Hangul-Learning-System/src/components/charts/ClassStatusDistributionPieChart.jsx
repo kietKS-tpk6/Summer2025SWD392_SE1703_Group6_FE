@@ -1,32 +1,63 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Skeleton } from 'antd';
+import axios from 'axios';
+import { API_URL, endpoints } from '../../config/api';
 
-export const classStatusDistribution = [
-  { name: "Pending", value: 5 },
-  { name: "Open", value: 12 },
-  { name: "Ongoing", value: 18 },
-  { name: "Completed", value: 10 },
-  { name: "Cancelled", value: 4 },
-];
+const STATUS_COLORS = {
+  Deleted: '#f5222d', // đỏ
+  Pending: '#1890ff', // xanh dương
+  Open: '#91d5ff', // xanh dương nhạt
+  Ongoing: '#faad14', // vàng cam hợp lý
+  Completed: '#52c41a', // xanh lá
+  Cancelled: '#bfbfbf', // xám nhạt phù hợp
+};
 
-const COLORS = ["#1890ff", "#52c41a", "#faad14", "#13c2c2", "#f5222d"];
+const ClassStatusDistributionPieChart = () => {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-const ClassStatusDistributionPieChart = ({ data = classStatusDistribution }) => {
+  useEffect(() => {
+    const fetchClassStatusData = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(API_URL + endpoints.chart.classStatusDistribution);
+        setData(response.data.data || []);
+        console.log(response.data);
+      } catch (error) {
+        console.error("Error fetching class status distribution data:", error);
+        setData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchClassStatusData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{ width: '100%', height: 340 }}>
+        <Skeleton active paragraph={{ rows: 8 }} />
+      </div>
+    );
+  }
+
   return (
     <div style={{ width: '100%', height: 340 }}>
       <ResponsiveContainer width="100%" height={320}>
         <PieChart>
           <Pie
             data={data}
-            dataKey="value"
-            nameKey="name"
+            dataKey="count"
+            nameKey="status"
             cx="50%"
             cy="50%"
             outerRadius={100}
-            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+            label={({ status, percent }) => `${status}: ${(percent * 100).toFixed(0)}%`}
           >
             {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.status] || '#d9d9d9'} />
             ))}
           </Pie>
           <Tooltip formatter={(value) => `${value} lớp`} />
