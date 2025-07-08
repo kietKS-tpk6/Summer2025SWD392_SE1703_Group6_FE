@@ -227,35 +227,67 @@ const TakeTest = () => {
   };
 
   const renderQuestion = (question) => {
-    if (question.options && Array.isArray(question.options)) {
-      // Trắc nghiệm
-      return (
-        <Radio.Group
-          value={answers[question.questionID]}
-          onChange={(e) => handleAnswerChange(question.questionID, e.target.value)}
-          style={{ fontSize: questionFontSize }}
-        >
-          <Space direction="vertical" style={{ width: '100%' }}>
-            {question.options.map((option) => (
-              <Radio key={option.optionID} value={option.optionID} style={{ fontSize: questionFontSize }}>
-                {option.context}
-              </Radio>
-            ))}
-          </Space>
-        </Radio.Group>
-      );
-    } else {
-      // Tự luận
-      return (
-        <Input.TextArea
-          rows={6}
-          placeholder="Nhập câu trả lời"
-          value={answers[question.questionID] || ''}
-          onChange={(e) => handleAnswerChange(question.questionID, e.target.value)}
-          style={{ fontSize: questionFontSize }}
-        />
-      );
-    }
+    return (
+      <div>
+        {/* Hiển thị hình ảnh nếu có */}
+        {question.imageURL && question.imageURL.trim() !== "" && (
+          <div style={{ marginBottom: 12 }}>
+            <img
+              src={question.imageURL.startsWith('http') ? question.imageURL : `/public/images/${question.imageURL}`}
+              alt="question"
+              style={{ maxWidth: 300, maxHeight: 200 }}
+            />
+          </div>
+        )}
+        {/* Hiển thị audio nếu có */}
+        {question.audioURL && question.audioURL.trim() !== "" && (
+          <div style={{ marginBottom: 12 }}>
+            <audio controls src={question.audioURL.startsWith('http') ? question.audioURL : `/public/audio/${question.audioURL}`} />
+          </div>
+        )}
+        {/* Trắc nghiệm */}
+        {question.options && Array.isArray(question.options) ? (
+          <Radio.Group
+            value={answers[question.questionID]}
+            onChange={(e) => handleAnswerChange(question.questionID, e.target.value)}
+            style={{ fontSize: questionFontSize }}
+          >
+            <Space direction="vertical" style={{ width: '100%' }}>
+              {question.options.map((option) => (
+                <Radio key={option.optionID} value={option.optionID} style={{ fontSize: questionFontSize }}>
+                  {option.context}
+                  {/* Hiển thị hình ảnh option nếu có */}
+                  {option.imageURL && option.imageURL.trim() !== "" && (
+                    <div style={{ marginTop: 8 }}>
+                      <img
+                        src={option.imageURL.startsWith('http') ? option.imageURL : `/public/images/${option.imageURL}`}
+                        alt="option"
+                        style={{ maxWidth: 200, maxHeight: 100 }}
+                      />
+                    </div>
+                  )}
+                  {/* Hiển thị audio option nếu có */}
+                  {option.audioURL && option.audioURL.trim() !== "" && (
+                    <div style={{ marginTop: 8 }}>
+                      <audio controls src={option.audioURL.startsWith('http') ? option.audioURL : `/public/audio/${option.audioURL}`} />
+                    </div>
+                  )}
+                </Radio>
+              ))}
+            </Space>
+          </Radio.Group>
+        ) : (
+          // Tự luận
+          <Input.TextArea
+            rows={6}
+            placeholder="Nhập câu trả lời"
+            value={answers[question.questionID] || ''}
+            onChange={(e) => handleAnswerChange(question.questionID, e.target.value)}
+            style={{ fontSize: questionFontSize }}
+          />
+        )}
+      </div>
+    );
   };
 
   const getSectionIcon = (sectionName) => {
