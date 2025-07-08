@@ -74,7 +74,6 @@ const LessonCreator = React.forwardRef(({ formData = {}, onChange, maxDaysPerWee
   const fetchAvailableLecturers = async (values) => {
     setLecturerLoading(true);
     setAvailableLecturers([]);
-    console.log("hiii");
     try {
       const res = await axios.get(`${API_URL}api/Account/get-lecturer-free`, {
         params: {
@@ -84,7 +83,7 @@ const LessonCreator = React.forwardRef(({ formData = {}, onChange, maxDaysPerWee
           dayOfWeeks: values.weekDays, 
         }
       });
-      console.log( "Lecture free response: " + res.data.data);
+      console.log( "Lecture free response: " + res.data);
       setAvailableLecturers(res.data.data || []);
     } catch (e) {
       setAvailableLecturers([]);
@@ -94,6 +93,9 @@ const LessonCreator = React.forwardRef(({ formData = {}, onChange, maxDaysPerWee
   };
 
   const handleValuesChange = (_, allValues) => {
+    const teachingStartTimeISO = dayjs(allValues.teachingStartTime).format('YYYY-MM-DDTHH:mm:ss');
+    console.log('teachingStartTime ISO:', teachingStartTimeISO);
+  
     if (allValues.weekDays?.length > maxDaysPerWeek) {
       allValues.weekDays = allValues.weekDays.slice(0, maxDaysPerWeek);
     }
@@ -117,7 +119,9 @@ const LessonCreator = React.forwardRef(({ formData = {}, onChange, maxDaysPerWee
       layout="vertical"
       initialValues={{
         ...formData,
-        teachingStartTime: formData.teachingStartTime ? dayjs(formData.teachingStartTime) : null,
+        teachingStartTime: formData.teachingStartTime
+          ? dayjs(formData.teachingStartTime).format('YYYY-MM-DDTHH:mm:ss')
+          : null,
         lessonTime: initialLessonTime ? dayjs(initialLessonTime, 'HH:mm') : null,
       }}
       onValuesChange={handleValuesChange}

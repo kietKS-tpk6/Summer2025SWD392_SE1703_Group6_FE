@@ -179,4 +179,20 @@ export const endpoints = {
     getByStudentId: 'api/TestEvent/get-by-student-id/{studentId}',
     getAssignment: 'api/TestEvent/{testEventID}/assignment/',
   },
+  dashboardManager: {
+    rightSidebar: 'api/DashboardManager/right-sidebar',
+    overview: 'api/DashboardManager/overview',
+    alertTask: 'api/DashboardManager/alert-task',
+  },
+  chart: {
+    studentSignupMonthly: 'api/Chart/student-signup-monthly',
+    revenueByMonth: 'api/Chart/revenue-by-month',
+    classCountBySubject:'api/Chart/class-count-by-subject',
+    classStatusDistribution : 'api/Chart/class-status-distribution',
+    subjectIncome: 'api/Chart/subject-income',
+  },
+  analytic: {
+    paymentTable: 'api/DashboardAnalytics/payment-table',
+    lecturerStatistic: 'api/DashboardAnalytics/lecturer-statistic',
+  }
 };
