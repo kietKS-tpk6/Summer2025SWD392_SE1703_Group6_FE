@@ -44,6 +44,8 @@ import TestResult from './pages/student-portal/TestResult';
 import SystemConfig from './components/dashboard/pages/SystemConfig';
 import TestDetail from './pages/student-portal/TestDetail';
 import ViewEnrolledClassDetail from './pages/student-portal/ViewEnrolledClassDetail';
+import PaymentHistory from './pages/student-portal/PaymentHistory';
+import PaymentDetail from './pages/student-portal/PaymentDetail';
 import './App.css';
 import 'antd/dist/reset.css';
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -132,6 +134,8 @@ const studentRoutes = [
   { path: '/test-detail/:studentTestID', element: <TestDetail /> },
   { path: '/enroll', element: <EnrollClass/>},
   { path: '/enroll/:classId', element: <ViewEnrolledClassDetail/>},
+  { path: '/payment-history', element: <PaymentHistory /> },
+  { path: '/payment-history/:paymentID', element: <PaymentDetail /> },
   //{ path: '/weekly-time-table', element: <WeeklyTimeTable/>},
 ];
 
