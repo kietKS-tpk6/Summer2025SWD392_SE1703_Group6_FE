@@ -50,6 +50,7 @@ import './App.css';
 import 'antd/dist/reset.css';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import LecturerClassList from './components/class/LecturerClassList';
+import ViewClasses from './pages/viewer-portal/ViewClasses';
 
 const { Content } = Layout;
 
@@ -106,6 +107,7 @@ const publicRoutes = [
       { path: '/payment-failed', element: <PaymentFailed/>},
       { path: '/payment/:classId', element: <PaymentForm /> },
       { path: '/class-detail/:id', element: <ViewClassDetail/>},
+      { path: '/classes', element: <ViewClasses /> },
       // { path: 'about', element: <About /> },
       // { path: 'courses', element: <Courses /> },
       // { path: 'contact', element: <Contact /> },
