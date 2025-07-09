@@ -66,7 +66,7 @@ const TestSchedule = ({ classId }) => {
             </Button>
           ) : (
             <Button size="small" type="dashed" onClick={() => navigate(`/lecturer/create-test/${item.testEventID}`)}>
-              Tạo bài kiểm tra
+              Thêm bài kiểm tra
             </Button>
           )
         )
