@@ -32,6 +32,7 @@ import PaymentSuccess from './components/payment/PaymentSuccess';
 import PaymentFailed from './components/payment/PaymentFailed';
 import PaymentForm from './components/payment/PaymentForm';
 import LecturerDashboard from './components/dashboard/pages/LecturerDashboard';
+import DashboardOverview from './components/dashboard/pages/DashboardOverview';
 import ClassDetail from './components/classes/detail/ClassDetail';
 import LessonDetailPage from './components/classes/detail/lesson/LessonDetailPage';
 import AttendancePage from './components/classes/attendance/AttendancePage';
@@ -80,7 +81,8 @@ const dashboardRoutes = [
 
 // Lecturer routes configuration
 const lecturerRoutes = [
-  { path: '/', element: <LecturerDashboard /> },
+  // { path: '/', element: <LecturerDashboard /> },
+  { path: '/', element: <DashboardOverview /> },
   { path: '/class', element: <LecturerClassList /> },
   { path: '/class/:classId', element: <ViewEnrolledClassDetail /> },
   { path: '/check-attendance', element: <CheckAttendancePage /> },

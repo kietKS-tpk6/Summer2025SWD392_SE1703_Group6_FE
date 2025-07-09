@@ -18,13 +18,12 @@ const statusMap = {
 };
 
 const LecturerTestDetail = () => {
-  // Lấy testEventID và studentID từ params hoặc state
-  const { testEventID, studentID } = useParams();
+  // Lấy studentTestID từ params hoặc state
+  const { studentTestID } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   // Nếu không có params, thử lấy từ state (khi chuyển trang bằng navigate)
-  const testEventIdParam = testEventID || location.state?.testEventID;
-  const studentIdParam = studentID || location.state?.studentID;
+  const studentTestIdParam = studentTestID || location.state?.studentTestID;
 
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
@@ -37,13 +36,13 @@ const LecturerTestDetail = () => {
     setLoading(true);
     const fetchData = async () => {
       try {
-        // Gọi API lấy chi tiết bài làm theo testEventID và studentID
-        if (!testEventIdParam || !studentIdParam) {
+        // Gọi API lấy chi tiết bài làm theo studentTestID
+        if (!studentTestIdParam) {
           setData(null);
           setLoading(false);
           return;
         }
-        const res = await axios.get(`${API_URL}api/StudentTests/detail-by-event-student?testEventID=${testEventIdParam}&studentID=${studentIdParam}`);
+        const res = await axios.get(`${API_URL}api/StudentTests/result-by-student-test/${studentTestIdParam}`);
         if (res.data && res.data.success && res.data.data) {
           setData(res.data.data);
           // Khởi tạo state điểm và feedback cho các câu writing
@@ -74,7 +73,7 @@ const LecturerTestDetail = () => {
       }
     };
     fetchData();
-  }, [testEventIdParam, studentIdParam]);
+  }, [studentTestIdParam]);
 
   const handleScoreChange = (questionID, value) => {
     setWritingScores(prev => ({ ...prev, [questionID]: value }));
@@ -86,13 +85,48 @@ const LecturerTestDetail = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Gửi API chấm điểm và feedback cho từng câu writing
-      const payload = Object.keys(writingScores).map(qid => ({
-        questionID: qid,
-        writingScore: writingScores[qid],
-        feedback: feedbacks[qid]
-      }));
-      // await axios.post(`${API_URL}api/StudentTests/grade-writing`, { testEventID: testEventIdParam, studentID: studentIdParam, grades: payload });
+      // Lấy token và graderAccountID từ localStorage
+      const userStr = localStorage.getItem('user');
+      const token = localStorage.getItem('token') || (userStr ? JSON.parse(userStr).token : undefined);
+      const graderAccountID = userStr ? JSON.parse(userStr).accountId : undefined;
+      if (!token || !graderAccountID) {
+        message.error('Không tìm thấy thông tin người dùng hoặc token!');
+        setSaving(false);
+        return;
+      }
+      // Duyệt qua từng câu writing và gửi PUT
+      const writingQuestions = [];
+      if (data && Array.isArray(data.sections)) {
+        data.sections.forEach(section => {
+          if (Array.isArray(section.questions)) {
+            section.questions.forEach(q => {
+              if (q.type === 2 && q.studentAnswer?.writingAnswerID) {
+                writingQuestions.push({
+                  writingAnswerID: q.studentAnswer.writingAnswerID,
+                  studentTestID: data.studentTestID,
+                  writingScore: writingScores[q.questionID],
+                  feedback: feedbacks[q.questionID],
+                  graderAccountID,
+                  testSectionID: section.testSectionID
+                });
+              }
+            });
+          }
+        });
+      }
+      // Gửi tuần tự từng câu (có thể dùng Promise.all nếu muốn gửi song song)
+      for (const payload of writingQuestions) {
+        await axios.put(
+          `${API_URL}api/StudentTests/writing/grade`,
+          payload,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+      }
       message.success('Đã lưu/chấm điểm thành công!');
     } catch (err) {
       message.error('Có lỗi khi lưu/chấm điểm.');
@@ -175,11 +209,11 @@ const LecturerTestDetail = () => {
                       style={{ width: 80 }}
                       type="number"
                       min={0}
-                      max={q.score}
-                      value={writingScores[q.questionID]}
+                      max={section.sectionScore}
+                      value={writingScores[q.questionID] !== undefined ? Number(writingScores[q.questionID]) : ''}
                       onChange={e => handleScoreChange(q.questionID, e.target.value)}
                     />
-                    / {q.score}
+                    / {section.sectionScore}
                   </span>
                 )}
                 {q.type !== 2 && (

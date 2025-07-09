@@ -47,11 +47,11 @@ const LecturerSidebar = () => {
       icon: <DashboardOutlined />,
       label: 'Bảng điều khiển',
     },
-    {
-      key: '/lecturer/overview',
-      icon: <BarChartOutlined />,
-      label: 'Bảng báo cáo',
-    },
+    // {
+    //   key: '/lecturer/overview',
+    //   icon: <BarChartOutlined />,
+    //   label: 'Bảng ',
+    // },
     {
       key: '/lecturer/profile',
       icon: <IdcardOutlined />,
