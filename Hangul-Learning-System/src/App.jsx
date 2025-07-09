@@ -34,6 +34,7 @@ import PaymentSuccess from './components/payment/PaymentSuccess';
 import PaymentFailed from './components/payment/PaymentFailed';
 import PaymentForm from './components/payment/PaymentForm';
 import LecturerDashboard from './components/dashboard/pages/LecturerDashboard';
+import DashboardOverview from './components/dashboard/pages/DashboardOverview';
 import ClassDetail from './components/classes/detail/ClassDetail';
 import LessonDetailPage from './components/classes/detail/lesson/LessonDetailPage';
 import AttendancePage from './components/classes/attendance/AttendancePage';
@@ -46,11 +47,15 @@ import TestResult from './pages/student-portal/TestResult';
 import SystemConfig from './components/dashboard/pages/SystemConfig';
 import TestDetail from './pages/student-portal/TestDetail';
 import ViewEnrolledClassDetail from './pages/student-portal/ViewEnrolledClassDetail';
+import PaymentHistory from './pages/student-portal/PaymentHistory';
+import PaymentDetail from './pages/student-portal/PaymentDetail';
 import './App.css';
 import 'antd/dist/reset.css';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import LecturerClassList from './components/class/LecturerClassList';
 import ViewClasses from './pages/viewer-portal/ViewClasses';
+import ViewTestLecturer from './pages/lecturer-portal/ViewTest';
+import LecturerTestDetail from './pages/lecturer-portal/LecturerTestDetail';
 
 const { Content } = Layout;
 
@@ -80,7 +85,8 @@ const dashboardRoutes = [
 
 // Lecturer routes configuration
 const lecturerRoutes = [
-  { path: '/', element: <LecturerDashboard /> },
+  // { path: '/', element: <LecturerDashboard /> },
+  { path: '/', element: <DashboardOverview /> },
   { path: '/class', element: <LecturerClassList /> },
   { path: '/class/:classId', element: <ViewEnrolledClassDetail /> },
   { path: '/check-attendance', element: <CheckAttendancePage /> },
@@ -95,6 +101,9 @@ const lecturerRoutes = [
   { path: '/check-attendance', element: <CheckAttendancePage /> },
   { path: '/assessment', element: <AssessmentManagement /> },
   { path: '/assessment/:testID', element: <ViewDetailAssessment /> },
+  { path: '/attendance', element: <AttendancePage/>},
+  { path: '/view-test/:testEventID', element: <ViewTestLecturer /> },
+  { path: '/test-detail/:studentTestID', element: <LecturerTestDetail /> },
 ];
 
 // Public routes configuration
@@ -135,6 +144,8 @@ const studentRoutes = [
   { path: '/test-detail/:studentTestID', element: <TestDetail /> },
   { path: '/enroll', element: <EnrollClass/>},
   { path: '/enroll/:classId', element: <ViewEnrolledClassDetail/>},
+  { path: '/payment-history', element: <PaymentHistory /> },
+  { path: '/payment-history/:paymentID', element: <PaymentDetail /> },
   //{ path: '/weekly-time-table', element: <WeeklyTimeTable/>},
 ];
 

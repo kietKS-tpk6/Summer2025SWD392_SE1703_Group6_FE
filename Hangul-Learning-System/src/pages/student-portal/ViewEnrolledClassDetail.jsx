@@ -87,7 +87,11 @@ const ViewEnrolledClassDetail = () => {
                         )}
                     </div>
                     <div style={{ marginTop: 32 }}>
-                        <TestSchedule classId={classId} subjectId={classData.subjectID || classData.subjectId} />
+                    {userRole === 'Lecture' ? (
+                        <TestSchedule classId={classId} />
+                    ) : (
+                        <null/>
+                    )}
                     </div>
                 </Col>
                 {/* Bên phải: Nếu là giảng viên thì hiển thị danh sách bài học, nếu không thì hiển thị lịch kiểm tra */}

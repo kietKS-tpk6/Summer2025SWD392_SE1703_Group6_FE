@@ -14,6 +14,10 @@ function LecturerPage() {
           <li>Monitor student progress</li>
           <li>Schedule live sessions</li>
         </ul>
+        <p style={{color: '#888', marginTop: 16}}>
+          Để xem chi tiết bài kiểm tra, hãy truy cập đường dẫn:<br/>
+          <code>/lecturer/view-test/:testEventID</code>
+        </p>
       </div>
     </div>
   );

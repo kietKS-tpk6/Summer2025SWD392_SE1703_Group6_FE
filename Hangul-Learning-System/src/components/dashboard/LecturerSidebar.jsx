@@ -10,6 +10,7 @@ import {
   IdcardOutlined,
   SettingOutlined,
   LogoutOutlined,
+  BarChartOutlined,
 } from '@ant-design/icons';
 import logo from '../../../public/images/logoB.png'
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -46,6 +47,11 @@ const LecturerSidebar = () => {
       icon: <DashboardOutlined />,
       label: 'Bảng điều khiển',
     },
+    // {
+    //   key: '/lecturer/overview',
+    //   icon: <BarChartOutlined />,
+    //   label: 'Bảng ',
+    // },
     {
       key: '/lecturer/profile',
       icon: <IdcardOutlined />,
@@ -61,16 +67,16 @@ const LecturerSidebar = () => {
       icon: <CalendarOutlined />,
       label: 'Lịch giảng dạy',
     },
-    {
-      key: '/lecturer/students',
-      icon: <TeamOutlined />,
-      label: 'Học viên',
-    },
-    {
-      key: '/lecturer/settings',
-      icon: <SettingOutlined />,
-      label: 'Cài đặt',
-    },
+    // {
+    //   key: '/lecturer/students',
+    //   icon: <TeamOutlined />,
+    //   label: 'Học viên',
+    // },
+    // {
+    //   key: '/lecturer/settings',
+    //   icon: <SettingOutlined />,
+    //   label: 'Cài đặt',
+    // },
     {
       key: '/lecturer/assessment',
       icon: <FileTextOutlined />,

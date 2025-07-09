@@ -52,7 +52,7 @@ const TestSchedule = ({ classId, subjectId }) => {
     if (!startAt || !endAt) return { text: 'Chưa có thời gian kiểm tra', color: 'orange' };
     const start = new Date(startAt);
     const end = new Date(endAt);
-    if (now < start) return { text: 'Sắp diễn ra', color: 'yellow' };
+    if (now < start) return { text: 'Sắp diễn ra', color: 'orange' };
     if (now >= start && now <= end) return { text: 'Đang diễn ra', color: 'green' };
     if (now > end) return { text: 'Đã kết thúc', color: 'red' };
     return { text: 'Không xác định', color: 'default' };

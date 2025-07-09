@@ -136,16 +136,21 @@ const Sidebar = () => {
       icon: <CalendarOutlined />,
       label: 'Thời khóa biểu',
     },
-    {
-      key: '/student/certificate',
-      icon: <BookOutlined />, // icon chứng chỉ
-      label: 'Chứng chỉ',
-    },
+    // {
+    //   key: '/student/certificate',
+    //   icon: <BookOutlined />, // icon chứng chỉ
+    //   label: 'Chứng chỉ',
+    // },
     // {
     //   key: '/student/studying-class',
     //   icon: <ApartmentOutlined />, // icon lớp học
     //   label: 'Lớp đang học',
     // },
+    {
+      key: '/student/payment-history',
+      icon: <BarChartOutlined />, // icon lịch sử thanh toán
+      label: 'Lịch sử thanh toán',
+    },
     {
       key: '/',
       icon: <DashboardOutlined />, // icon dashboard

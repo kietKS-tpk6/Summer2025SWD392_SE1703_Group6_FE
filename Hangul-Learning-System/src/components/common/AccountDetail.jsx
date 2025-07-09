@@ -206,6 +206,8 @@ const AccountDetail = ({ accountID: propAccountID }) => {
             setStudentData(refreshedData);
             setAvatarUrl(refreshedData.img);
             message.success('Cập nhật ảnh đại diện thành công!');
+            setNotification({ visible: true, type: 'success', message: 'Cập nhật ảnh đại diện thành công!', description: '' });
+            window.location.reload();
           } catch (refreshError) {
             console.error('Lỗi khi load lại dữ liệu sau khi upload avatar:', refreshError);
             message.warning('Tải ảnh xong nhưng không thể làm mới thông tin người dùng');
