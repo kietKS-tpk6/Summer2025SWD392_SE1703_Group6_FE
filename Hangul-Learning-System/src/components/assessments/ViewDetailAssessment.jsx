@@ -59,7 +59,7 @@ const useWritingBarem = (sections) => {
   return baremMap;
 };
 
-const ViewDetailAssessment = ({ testID: propTestID }) => {
+const ViewDetailAssessment = ({ testID: propTestID, inModal }) => {
   // testID có thể lấy từ prop hoặc từ URL
   const params = useParams();
   const testID = propTestID || params.testID;
@@ -283,17 +283,90 @@ const ViewDetailAssessment = ({ testID: propTestID }) => {
           )}
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          {isOwnDraft && (
+          {/* MANAGER: Chỉ 1 nút duyệt khi nháp, 2 nút khi chờ duyệt */}
+          {isManager && testInfo.status === 0 && (
             <Button
               type="primary"
               icon={<CheckOutlined />}
-              onClick={handleApprove}
+              onClick={async () => {
+                setApproving(true);
+                try {
+                  await axios.put(`${API_URL}api/Test/update-status-fix`, { testID, testStatus: 3 });
+                  setTestStatus(3);
+                  message.success('Đã duyệt bài kiểm tra!');
+                  // Reload lại chi tiết
+                  const res = await axios.get(`${API_URL}api/Questions/by-test/${testID}`);
+                  setSections(res.data || []);
+                  // Chuyển hướng về trang danh sách assessment
+                  navigate('/dashboard/assessment');
+                } catch {
+                  message.error('Lỗi khi duyệt bài kiểm tra!');
+                } finally {
+                  setApproving(false);
+                }
+              }}
               loading={approving}
-              disabled={loading || approving || testStatus === 3}
+              disabled={loading || approving}
             >
               Duyệt bài kiểm tra
             </Button>
           )}
+          {isManager && testInfo.status === 1 && (
+            <>
+              <Button
+                type="primary"
+                icon={<CheckOutlined />}
+                onClick={async () => {
+                  setApproving(true);
+                  try {
+                    await axios.put(`${API_URL}api/Test/update-status-fix`, { testID, testStatus: 3 });
+                    setTestStatus(3);
+                    message.success('Đã duyệt bài kiểm tra!');
+                    // Reload lại chi tiết
+                    const res = await axios.get(`${API_URL}api/Questions/by-test/${testID}`);
+                    setSections(res.data || []);
+                    // Chuyển hướng về trang danh sách assessment
+                    navigate('/dashboard/assessment');
+                  } catch {
+                    message.error('Lỗi khi duyệt bài kiểm tra!');
+                  } finally {
+                    setApproving(false);
+                  }
+                }}
+                loading={approving}
+                disabled={loading || approving}
+                style={{ marginRight: 8 }}
+              >
+                Duyệt bài kiểm tra
+              </Button>
+              <Button
+                danger
+                icon={<CloseOutlined />}
+                onClick={async () => {
+                  setApproving(true);
+                  try {
+                    await axios.put(`${API_URL}api/Test/update-status-fix`, { testID, testStatus: 2 });
+                    setTestStatus(2);
+                    message.success('Đã từ chối bài kiểm tra!');
+                    // Reload lại chi tiết
+                    const res = await axios.get(`${API_URL}api/Questions/by-test/${testID}`);
+                    setSections(res.data || []);
+                    // Chuyển hướng về trang danh sách assessment
+                    navigate('/dashboard/assessment');
+                  } catch {
+                    message.error('Lỗi khi từ chối bài kiểm tra!');
+                  } finally {
+                    setApproving(false);
+                  }
+                }}
+                loading={approving}
+                disabled={loading || approving}
+              >
+                Từ chối bài kiểm tra
+              </Button>
+            </>
+          )}
+          {/* LECTURER: Chỉ hiện nút gửi duyệt nếu là bài nháp của mình */}
           {isOwnDraftLecture && (
             <Button
               type="primary"
@@ -305,6 +378,8 @@ const ViewDetailAssessment = ({ testID: propTestID }) => {
                   setTestStatus(1);
                   const res = await axios.get(`${API_URL}api/Questions/by-test/${testID}`);
                   setSections(res.data || []);
+                  // Sau khi gửi duyệt thành công, chuyển hướng về trang chờ duyệt
+                  navigate('/lecturer/assessment');
                 } catch {}
                 setApproving(false);
               }}
@@ -314,6 +389,7 @@ const ViewDetailAssessment = ({ testID: propTestID }) => {
               Gửi duyệt cho quản lí
             </Button>
           )}
+          {/* Nút cập nhật và quay lại giữ nguyên logic cũ */}
           {testInfo.status === 0 && (isOwnDraft || isOwnDraftLecture) && !isEditing && (
             <Button type="primary" icon={<EditOutlined />} onClick={() => setIsEditing(true)}>
               Cập nhật
@@ -324,9 +400,11 @@ const ViewDetailAssessment = ({ testID: propTestID }) => {
               Xác nhận
             </Button>
           )}
-          <Button onClick={() => navigate(-1)} icon={<CloseOutlined />}>
-            Quay lại
-          </Button>
+          {!inModal && (
+            <Button onClick={() => navigate(-1)} icon={<CloseOutlined />}>
+              Quay lại
+            </Button>
+          )}
         </div>
       </div>
       {/* Card thông tin test */}
