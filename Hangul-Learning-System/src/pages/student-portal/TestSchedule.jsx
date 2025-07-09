@@ -3,12 +3,20 @@ import { Card, Typography, List, Spin, Alert, Tag, Button, Table } from 'antd';
 import axios from 'axios';
 import { API_URL } from '../../config/api';
 import { useNavigate } from 'react-router-dom';
+import AddAssessmentToTestEventComponent from '../../components/classes/detail/AddAssessmentToTestEventComponent';
+import { Form } from 'antd';
 
-const TestSchedule = ({ classId }) => {
+const TestSchedule = ({ classId, subjectId }) => {
   const [tests, setTests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+
+  // Modal state
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalTestEvent, setModalTestEvent] = useState(null);
+  const [form] = Form.useForm();
+  const [modalLoading, setModalLoading] = useState(false);
 
   useEffect(() => {
     const fetchTests = async () => {
@@ -50,10 +58,44 @@ const TestSchedule = ({ classId }) => {
     return { text: 'Không xác định', color: 'default' };
   };
 
+  // Reload tests after add
+  const reloadTests = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await axios.get(`${API_URL}api/TestEvent/get-by-class-id/${classId}`);
+      setTests(res.data.data || []);
+    } catch (err) {
+      setError('Không thể tải lịch kiểm tra.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Enum mapping giống PendingAssessmentCardList
+  const TEST_TYPE_LABELS = {
+    0: 'Không xác định',
+    1: 'Từ vựng',
+    2: 'Ngữ pháp',
+    3: 'Nghe hiểu',
+    4: 'Đọc hiểu',
+    5: 'Viết',
+    6: 'Tổng hợp',
+    7: 'Trắc nghiệm',
+    8: 'Khác'
+  };
+  const CATEGORY_LABELS = {
+    0: 'Đề kiểm tra đánh giá',
+    2: 'Đề thi giữa kì',
+    3: 'Đề thi cuối kì',
+  };
+
   // Nếu là giảng viên, hiển thị tất cả bài kiểm tra ở dạng bảng
   if (userRole === 'Lecture') {
     const columns = [
       { title: 'Tên bài kiểm tra', dataIndex: 'description', key: 'description', render: (text) => <b>{text}</b> },
+      { title: 'Loại', dataIndex: 'assessmentCategory', key: 'assessmentCategory', render: (cat) => CATEGORY_LABELS[cat] || 'Không xác định' },
+      { title: 'Kĩ năng', dataIndex: 'testType', key: 'testType', render: (type) => TEST_TYPE_LABELS[type] || 'Không xác định' },
       { title: 'Tiết', dataIndex: 'lessonTitle', key: 'lessonTitle' },
       { title: 'Ngày', dataIndex: 'lessonStartTime', key: 'lessonStartTime', render: (date) => date ? new Date(date).toLocaleDateString('vi-VN') : '--' },
       { title: 'Giờ', dataIndex: 'lessonStartTime', key: 'lessonStartTime_time', render: (date) => date ? new Date(date).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '--' },
@@ -65,7 +107,7 @@ const TestSchedule = ({ classId }) => {
               Xem chi tiết
             </Button>
           ) : (
-            <Button size="small" type="dashed" onClick={() => navigate(`/lecturer/create-test/${item.testEventID}`)}>
+            <Button size="small" type="dashed" onClick={() => { setModalTestEvent(item); setModalOpen(true); }}>
               Thêm bài kiểm tra
             </Button>
           )
@@ -73,15 +115,68 @@ const TestSchedule = ({ classId }) => {
       },
     ];
     return (
-      <Card bordered style={{ borderRadius: 18 }}>
-        <Typography.Title level={4} style={{ marginBottom: 16 }}>Lịch kiểm tra</Typography.Title>
-        <Table
-          columns={columns}
-          dataSource={tests.map((t, idx) => ({ ...t, key: t.testEventID || idx }))}
-          pagination={false}
-          locale={{ emptyText: 'Chưa có lịch kiểm tra.' }}
+      <>
+        <Card bordered style={{ borderRadius: 18 }}>
+          <Typography.Title level={4} style={{ marginBottom: 16 }}>Lịch kiểm tra</Typography.Title>
+          <Table
+            columns={columns}
+            dataSource={tests.map((t, idx) => ({ ...t, key: t.testEventID || idx }))}
+            pagination={false}
+            locale={{ emptyText: 'Chưa có lịch kiểm tra.' }}
+          />
+        </Card>
+        <AddAssessmentToTestEventComponent
+          open={modalOpen}
+          onCancel={() => setModalOpen(false)}
+          onOk={async () => {
+            setModalLoading(true);
+            try {
+              const values = await form.validateFields();
+              // Lấy lessonStartTime từ modalTestEvent
+              const lessonStart = modalTestEvent?.lessonStartTime ? new Date(modalTestEvent.lessonStartTime) : null;
+              const lessonEnd = modalTestEvent?.lessonEndTime ? new Date(modalTestEvent.lessonEndTime) : null;
+              const date = lessonStart ? new Date(lessonStart.setHours(0,0,0,0)) : null;
+              // startAt = ngày lesson + giờ startTime
+              const startAt = date && values.startTime ? new Date(date.setHours(values.startTime.hour(), values.startTime.minute(), 0, 0)) : null;
+              // endAt = ngày lesson + giờ endTime
+              const endAt = date && values.endTime ? new Date(date.setHours(values.endTime.hour(), values.endTime.minute(), 0, 0)) : null;
+              const body = {
+                testEventIdToUpdate: modalTestEvent?.testEventID,
+                testID: values.testID,
+                description: values.description,
+                startAt: startAt ? startAt.toISOString() : null,
+                endAt: endAt ? endAt.toISOString() : null,
+                attemptLimit: values.attemptLimit,
+                password: values.password,
+              };
+              await axios.put(`${API_URL}api/TestEvent/configure`, body);
+              // Gọi API update status testEvent thành Actived (1)
+              if (modalTestEvent?.testEventID) {
+                await axios.put(`${API_URL}api/TestEvent/update-status`, {
+                  testEventIDToUpdate: modalTestEvent.testEventID,
+                  status: 1
+                });
+              }
+              setModalOpen(false);
+              await reloadTests();
+            } catch (err) {
+              // handle error nếu cần
+            } finally {
+              setModalLoading(false);
+            }
+          }}
+          form={form}
+          loading={modalLoading}
+          lessonStartTime={modalTestEvent?.lessonStartTime}
+          lessonEndTime={modalTestEvent?.lessonEndTime}
+          assessment={modalTestEvent}
+          subjectId={subjectId}
+          assessmentCategory={modalTestEvent?.assessmentCategory ?? modalTestEvent?.category}
+          testType={modalTestEvent?.testType}
+          API_URL={API_URL}
+          onSuccess={reloadTests}
         />
-      </Card>
+      </>
     );
   }
 

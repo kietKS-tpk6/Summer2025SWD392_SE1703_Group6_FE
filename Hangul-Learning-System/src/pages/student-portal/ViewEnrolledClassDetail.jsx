@@ -87,7 +87,7 @@ const ViewEnrolledClassDetail = () => {
                         )}
                     </div>
                     <div style={{ marginTop: 32 }}>
-                        <TestSchedule classId={classId} />
+                        <TestSchedule classId={classId} subjectId={classData.subjectID || classData.subjectId} />
                     </div>
                 </Col>
                 {/* Bên phải: Nếu là giảng viên thì hiển thị danh sách bài học, nếu không thì hiển thị lịch kiểm tra */}
@@ -95,7 +95,7 @@ const ViewEnrolledClassDetail = () => {
                     {userRole === 'Lecture' ? (
                         <ViewLessonsOfClass classId={classId} />
                     ) : (
-                        <TestSchedule classId={classId} />
+                        <TestSchedule classId={classId} subjectId={classData.subjectID || classData.subjectId} />
                     )}
                 </Col>
             </Row>

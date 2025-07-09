@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Select, Input, DatePicker, TimePicker, Spin, message } from 'antd';
+import { Modal, Form, Select, Input, DatePicker, TimePicker, Spin, message, Button } from 'antd';
 import dayjs from 'dayjs';
 import axios from 'axios';
+import ViewDetailAssessment from '../../assessments/ViewDetailAssessment';
 
 const AddAssessmentToTestEventComponent = ({
   open,
@@ -23,6 +24,9 @@ const AddAssessmentToTestEventComponent = ({
   subjectId,
   API_URL,
   onEndTimeChange,
+  assessmentCategory,
+  testType,
+  onSuccess,
 }) => {
   // State cho danh sách bài test
   const [availableTests, setAvailableTests] = useState([]);
@@ -32,32 +36,42 @@ const AddAssessmentToTestEventComponent = ({
   const [selectedStartTime, setSelectedStartTime] = useState(null);
   const [selectedEndTime, setSelectedEndTime] = useState(null);
 
+  // State cho modal xác nhận
+  const [confirmVisible, setConfirmVisible] = useState(false);
+  const [confirmValues, setConfirmValues] = useState(null);
+
+  // State cho modal xem chi tiết bài test
+  const [viewTestModalOpen, setViewTestModalOpen] = useState(false);
+  const [viewTestID, setViewTestID] = useState(null);
+
   // Fetch danh sách bài test khi modal open và assessment thay đổi
   useEffect(() => {
     const fetchTests = async () => {
-      if (!open || !assessment) {
+      if (!open) {
         setAvailableTests([]);
         return;
       }
       setTestLoading(true);
       try {
-        const res = await axios.get(`${API_URL}api/Test/advanced-search`, {
-          params: {
-            category: assessment.assessmentCategory,
-            subjectId: subjectId,
-            testType: assessment.testType,
-            status: 3,
-          }
-        });
-        setAvailableTests(Array.isArray(res.data) ? res.data : (res.data?.data || []));
-      } catch {
+        const params = {
+          category: assessmentCategory,
+          subjectId: subjectId,
+          testType: testType,
+          status: 3,
+        };
+        console.log('API advanced-search params:', params);
+        const res = await axios.get(`${API_URL}api/Test/advanced-search`, { params });
+        console.log('API advanced-search result:', res.data);
+        setAvailableTests(Array.isArray(res.data?.items) ? res.data.items : []);
+      } catch (err) {
         setAvailableTests([]);
+        console.log('API advanced-search error:', err);
       } finally {
         setTestLoading(false);
       }
     };
     fetchTests();
-  }, [open, assessment, subjectId, API_URL]);
+  }, [open, assessmentCategory, testType, subjectId, API_URL]);
 
   // Lấy ngày lesson (chỉ cho chọn đúng ngày này)
   const lessonDate = lessonStartTime ? dayjs(lessonStartTime).startOf('day') : null;
@@ -162,7 +176,8 @@ const AddAssessmentToTestEventComponent = ({
               return;
             }
           }
-          if (onOk) await onOk();
+          setConfirmValues(values);
+          setConfirmVisible(true);
         } catch (err) {
           // Form validate lỗi, không làm gì
         }
@@ -180,15 +195,28 @@ const AddAssessmentToTestEventComponent = ({
           {testLoading ? (
             <Spin size="small" style={{ display: 'block', margin: '8px auto' }} />
           ) : (
-            <Select
-              placeholder="Chọn bài test"
-              notFoundContent="Hiện tại không có bài kiểm tra phù hợp"
-              onChange={onTestChange}
-            >
-              {availableTests.map(test => (
-                <Select.Option key={test.testID} value={test.testID}>{test.testName}</Select.Option>
-              ))}
-            </Select>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Select
+                placeholder="Chọn bài test"
+                notFoundContent="Hiện tại không có bài kiểm tra phù hợp"
+                value={form.getFieldValue('testID')}
+                onChange={value => {
+                  onTestChange && onTestChange(value);
+                  setViewTestID(value);
+                  form.setFieldsValue({ testID: value });
+                }}
+                style={{ flex: 1 }}
+              >
+                {availableTests.map(test => (
+                  <Select.Option key={test.testID} value={test.testID}>{test.testName}</Select.Option>
+                ))}
+              </Select>
+              {viewTestID && (
+                <Button type="link" onClick={() => setViewTestModalOpen(true)} style={{ padding: 0 }}>
+                  Xem chi tiết bài test
+                </Button>
+              )}
+            </div>
           )}
         </Form.Item>
         <Form.Item label="Mô tả" name="description">
@@ -227,6 +255,45 @@ const AddAssessmentToTestEventComponent = ({
           <Input onChange={onPasswordChange} />
         </Form.Item>
       </Form>
+      {/* Modal xác nhận thông tin nhập */}
+      <Modal
+        open={confirmVisible}
+        title="Xác nhận thông tin bài kiểm tra"
+        onCancel={() => setConfirmVisible(false)}
+        onOk={async () => {
+          if (onOk) await onOk();
+          setConfirmVisible(false);
+          if (onCancel) onCancel(); // Đóng modal chính
+          if (onSuccess) onSuccess();
+        }}
+        okText="Xác nhận"
+        cancelText="Quay lại"
+      >
+        {confirmValues && (
+          <div style={{ lineHeight: 2 }}>
+            <div><b>Bài test:</b> {availableTests.find(t => t.testID === confirmValues.testID)?.testName || confirmValues.testID}</div>
+            <div><b>Mô tả:</b> {confirmValues.description}</div>
+            <div><b>Ngày kiểm tra:</b> {lessonDate ? lessonDate.format('DD/MM/YYYY') : ''}</div>
+            <div><b>Giờ bắt đầu:</b> {confirmValues.startTime ? dayjs(confirmValues.startTime).format('HH:mm') : ''}</div>
+            <div><b>Giờ kết thúc:</b> {confirmValues.endTime ? dayjs(confirmValues.endTime).format('HH:mm') : ''}</div>
+            <div><b>Số lần học sinh làm bài:</b> {confirmValues.attemptLimit}</div>
+            <div><b>Password:</b> {confirmValues.password}</div>
+          </div>
+        )}
+        <div style={{ marginTop: 16, fontWeight: 600, color: '#1677ff' }}>
+          Bạn có xác nhận thêm bài kiểm tra không?
+        </div>
+      </Modal>
+      {/* Modal xem chi tiết bài test */}
+      <Modal
+        open={viewTestModalOpen}
+        title="Chi tiết bài kiểm tra"
+        onCancel={() => setViewTestModalOpen(false)}
+        footer={null}
+        width={900}
+      >
+        {viewTestID && <ViewDetailAssessment testID={viewTestID} inModal />}
+      </Modal>
     </Modal>
   );
 };

@@ -267,6 +267,9 @@ const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, s
         assessment={modalTestEvent}
         subjectId={subjectId}
         API_URL={API_URL}
+        assessmentCategory={modalTestEvent?.assessmentCategory ?? modalTestEvent?.category}
+        testType={modalTestEvent?.testType}
+        onSuccess={reloadAssessments}
       />
     </div>
   );
