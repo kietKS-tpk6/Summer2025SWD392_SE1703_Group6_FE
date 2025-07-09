@@ -9,10 +9,19 @@ import { API_URL, endpoints } from '../../config/api';
 const { Title } = Typography;
 const { Option } = Select;
 
-const statusMap = {
-  0: 'Sắp diễn ra',
-  1: 'Đang diễn ra',
-  2: 'Đã hoàn thành',
+
+const getStatusFromTime = (startAt, endAt) => {
+  const now = dayjs();
+  if (startAt && now.isBefore(dayjs(startAt))) {
+    return 'Sắp diễn ra';
+  }
+  if (startAt && endAt && now.isAfter(dayjs(startAt)) && now.isBefore(dayjs(endAt))) {
+    return 'Đang diễn ra';
+  }
+  if (endAt && now.isAfter(dayjs(endAt))) {
+    return 'Đã kết thúc';
+  }
+  return 'Không xác định';
 };
 
 const StudentTestSchedule = () => {
@@ -47,7 +56,7 @@ const StudentTestSchedule = () => {
                   subject: subjectName,
                   date: event.startAt ? dayjs(event.startAt).format('YYYY-MM-DD') : '',
                   time: event.startAt ? dayjs(event.startAt).format('HH:mm') : '',
-                  status: statusMap[event.status] || 'Không xác định',
+                  status: getStatusFromTime(event.startAt, event.endAt),
                 });
               });
             }
@@ -116,7 +125,7 @@ const StudentTestSchedule = () => {
         let color = 'default';
         if (status === 'Sắp diễn ra') color = 'blue';
         else if (status === 'Đang diễn ra') color = 'orange';
-        else if (status === 'Đã hoàn thành') color = 'green';
+        else if (status === 'Đã kết thúc') color = 'red';
         return <Tag color={color}>{status}</Tag>;
       },
     },
@@ -142,6 +151,12 @@ const StudentTestSchedule = () => {
     const matchClass = classFilter ? item.className === classFilter : true;
     const matchDate = dateFilter ? dayjs(item.date).isSame(dateFilter, 'day') : true;
     return matchClass && matchDate;
+  });
+
+  const sortedData = [...filteredData].sort((a, b) => {
+    if (!a.date) return 1;
+    if (!b.date) return -1;
+    return dayjs(a.date).isBefore(dayjs(b.date)) ? 1 : -1;
   });
 
   return (
@@ -172,7 +187,7 @@ const StudentTestSchedule = () => {
         </Col>
       </Row>
       <Spin spinning={loading} tip="Đang tải...">
-        <Table columns={columns} dataSource={filteredData} pagination={false} />
+        <Table columns={columns} dataSource={sortedData} pagination={false} />
       </Spin>
     </div>
   );

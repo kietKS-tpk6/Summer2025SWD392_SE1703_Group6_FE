@@ -146,14 +146,14 @@ const Sidebar = () => {
     //   label: 'Lớp đang học',
     // },
     {
-      key: '/',
-      icon: <DashboardOutlined />, // icon dashboard
-      label: 'Về Trang Chủ',
-    },
-    {
       key: '/student/payment-history',
       icon: <BarChartOutlined />, // icon lịch sử thanh toán
       label: 'Lịch sử thanh toán',
+    },
+    {
+      key: '/',
+      icon: <DashboardOutlined />, // icon dashboard
+      label: 'Về Trang Chủ',
     },
     {
       key: '/logout',
