@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Card, Button, Modal, Select, Input, DatePicker, TimePicker, Form } from 'antd';
+import { Card, Button, Form } from 'antd';
 import dayjs from 'dayjs';
 import axios from 'axios';
 import { API_URL } from '../../../config/api';
+import AddAssessmentToTestEventComponent from './AddAssessmentToTestEventComponent';
 
 // Enum mapping from AssessmentBasicForm
 const TEST_CONTENT_OPTIONS = [
@@ -51,19 +52,12 @@ const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, s
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState(null);
   const [startTime, setStartTime] = useState(null);
+  const [endTime, setEndTime] = useState(null);
   const [attemptLimit, setAttemptLimit] = useState();
   const [password, setPassword] = useState('');
   const [form] = Form.useForm();
   const [modalAvailableTests, setModalAvailableTests] = useState([]);
 
-  const durationMinutes = modalTestEvent ? modalTestEvent.durationMinutes : 0;
-  let endAt = null;
-  if (startDate && startTime && durationMinutes) {
-    const start = dayjs(startDate).hour(dayjs(startTime).hour()).minute(dayjs(startTime).minute());
-    endAt = start.add(durationMinutes, 'minute');
-  }
-
-  // Sửa hàm mở modal để gọi API động lấy danh sách bài test
   const handleOpenModal = async (assessment) => {
     setModalTestEvent(assessment);
     setModalOpen(true);
@@ -76,34 +70,19 @@ const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, s
       const lessonStart = dayjs(assessment.lessonStartTime);
       setStartDate(lessonStart);
       setStartTime(lessonStart);
+      setEndTime(assessment.lessonEndTime ? dayjs(assessment.lessonEndTime) : null);
       form.setFieldsValue({
         startDate: lessonStart,
-        startTime: lessonStart
+        startTime: lessonStart,
+        endTime: assessment.lessonEndTime ? dayjs(assessment.lessonEndTime) : null,
       });
     } else {
       setStartDate(null);
       setStartTime(null);
-      form.resetFields(["startDate", "startTime"]);
+      setEndTime(null);
+      form.resetFields(["startDate", "startTime", "endTime"]);
     }
     form.resetFields(["testID", "description", "attemptLimit", "password"]);
-    // Gọi API động lấy danh sách bài test phù hợp
-    if (assessment) {
-      try {
-        const res = await axios.get(`${API_URL}api/Test/advanced-search`, {
-          params: {
-            category: assessment.assessmentCategory,
-            subjectId: subjectId, // lấy từ props
-            testType: assessment.testType,
-            status: 3,
-          }
-        });
-        setModalAvailableTests(Array.isArray(res.data) ? res.data : (res.data?.data || []));
-      } catch {
-        setModalAvailableTests([]);
-      }
-    } else {
-      setModalAvailableTests([]);
-    }
   };
 
   // Hàm reload lại assessments sau khi thêm đề kiểm tra
@@ -116,6 +95,7 @@ const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, s
     }
   };
 
+  // Sửa lại phần Modal:
   return (
     <div>
       {/* <div style={{ textAlign: 'center', fontSize: 18, marginBottom: 12, fontWeight: 700, color: '#222' }}>
@@ -232,23 +212,22 @@ const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, s
           })}
         </div>
       )}
-      <Modal
+      <AddAssessmentToTestEventComponent
         open={modalOpen}
-        title="Thêm đề kiểm tra"
         onCancel={() => setModalOpen(false)}
         onOk={async () => {
           try {
             const values = await form.validateFields();
             // Lấy lessonStartTime từ assessment
             const lessonStart = modalTestEvent?.lessonStartTime ? dayjs(modalTestEvent.lessonStartTime) : null;
-            let startAt = lessonStart;
-            // Nếu lessonStartTime có, lấy ngày và giờ từ đó, nếu không thì fallback về form
-            if (!startAt) {
-              // fallback: lấy từ form
-              startAt = dayjs(values.startDate).hour(dayjs(values.startTime).hour()).minute(dayjs(values.startTime).minute());
-            }
-            // endAt = startAt + durationMinutes
-            const endAt = startAt && modalTestEvent?.durationMinutes ? startAt.add(modalTestEvent.durationMinutes, 'minute') : null;
+            // Lấy lessonEndTime từ assessment
+            const lessonEnd = modalTestEvent?.lessonEndTime ? dayjs(modalTestEvent.lessonEndTime) : null;
+            // Ngày kiểm tra là lessonStart (chỉ 1 ngày)
+            const date = lessonStart ? lessonStart.startOf('day') : null;
+            // startAt = ngày lesson + giờ startTime
+            const startAt = date && values.startTime ? date.hour(values.startTime.hour()).minute(values.startTime.minute()) : null;
+            // endAt = ngày lesson + giờ endTime
+            const endAt = date && values.endTime ? date.hour(values.endTime.hour()).minute(values.endTime.minute()) : null;
             const body = {
               testEventIdToUpdate: modalTestEvent?.testEventID,
               testID: values.testID,
@@ -268,73 +247,27 @@ const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, s
             }
             setModalOpen(false);
             await reloadAssessments();
-            // TODO: Có thể thêm thông báo thành công nếu muốn
           } catch (err) {
             // handle error nếu cần
           }
         }}
-        okText="Xác nhận"
-        cancelText="Hủy"
-      >
-        <Form form={form} layout="vertical">
-          <Form.Item
-            label="Chọn bài test"
-            name="testID"
-            rules={[{ required: true, message: 'Vui lòng chọn bài test' }]}
-          >
-            <Select
-              placeholder="Chọn bài test"
-              onChange={tid => setSelectedTestID(tid)}
-            >
-              {modalAvailableTests.map(test => (
-                <Select.Option key={test.testID} value={test.testID}>{test.testName}</Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item label="Mô tả" name="description">
-            <Input.TextArea rows={2} onChange={e => setDescription(e.target.value)} />
-          </Form.Item>
-          <Form.Item
-            label="Thời gian bắt đầu"
-            required
-            style={{ marginBottom: 0 }}
-          >
-            <Form.Item
-              name="startDate"
-              rules={[{ required: true, message: 'Chọn ngày' }]}
-              style={{ display: 'inline-block', width: 'calc(50% - 8px)' }}
-            >
-              <DatePicker
-                style={{ width: '100%' }}
-                onChange={date => setStartDate(date)}
-                format="DD/MM/YYYY"
-              />
-            </Form.Item>
-            <Form.Item
-              name="startTime"
-              rules={[{ required: true, message: 'Chọn giờ' }]}
-              style={{ display: 'inline-block', width: 'calc(50% - 8px)', marginLeft: 16 }}
-            >
-              <TimePicker
-                style={{ width: '100%' }}
-                onChange={time => setStartTime(time)}
-                format="HH:mm"
-              />
-            </Form.Item>
-          </Form.Item>
-          <Form.Item label="Số lần học sinh làm bài" name="attemptLimit" rules={[{ required: true, message: 'Nhập số lượng học sinh' }]}> 
-            <Input type="number" min={1} onChange={e => setAttemptLimit(e.target.value)} />
-          </Form.Item>
-          <Form.Item label="Password cho bài test" name="password" rules={[{ required: true, message: 'Nhập password' }]}> 
-            <Input onChange={e => setPassword(e.target.value)} />
-          </Form.Item>
-          {endAt && (
-            <Form.Item label="Thời gian kết thúc">
-              <Input value={endAt.format('DD/MM/YYYY HH:mm')} disabled />
-            </Form.Item>
-          )}
-        </Form>
-      </Modal>
+        availableTests={modalAvailableTests}
+        form={form}
+        endAt={endTime}
+        loading={false}
+        onTestChange={tid => setSelectedTestID(tid)}
+        onDescriptionChange={e => setDescription(e.target.value)}
+        onStartDateChange={date => setStartDate(date)}
+        onStartTimeChange={time => setStartTime(time)}
+        onEndTimeChange={time => setEndTime(time)}
+        onAttemptLimitChange={e => setAttemptLimit(e.target.value)}
+        onPasswordChange={e => setPassword(e.target.value)}
+        lessonStartTime={modalTestEvent?.lessonStartTime}
+        lessonEndTime={modalTestEvent?.lessonEndTime}
+        assessment={modalTestEvent}
+        subjectId={subjectId}
+        API_URL={API_URL}
+      />
     </div>
   );
 };
