@@ -82,6 +82,14 @@ const bulkUpdateSyllabusSchedule = async (payload) => {
   }
 };
 
+export const publishSubject = async (subjectID) => {
+  console.log(subjectID);
+  return axios.put(`${API_URL}api/Subject/update-status`, {
+    subjectID,
+    status: 1 // 1 là active/công khai
+  });
+};
+
 export const subjectService = {
   createSubject,
   getSubjectById,
@@ -90,4 +98,5 @@ export const subjectService = {
   createAssessmentCriteriaMany,
   updateAssessmentCriteriaList,
   bulkUpdateSyllabusSchedule,
+  publishSubject,
 }; 

@@ -25,6 +25,9 @@ const ConfirmationStep = ({ form, classSlots = [], assessmentInfo = [] }) => {
   const testSlots = form.getFieldValue('testSlots') || [];
   const criteria = form.getFieldValue('criteria') || assessmentInfo || [];
 
+  // Tính tổng số tuần dựa trên classSlots
+  const totalWeeks = classSlots.length > 0 ? Math.max(...classSlots.map(item => item.week)) : 0;
+
   // Columns for class slots
   const classColumns = [
     {
@@ -143,10 +146,10 @@ const ConfirmationStep = ({ form, classSlots = [], assessmentInfo = [] }) => {
             {form.getFieldValue('description')}
           </Descriptions.Item>
           <Descriptions.Item label="Tổng số tuần" span={2}>
-            {form.getFieldValue('totalWeeks')}
+            {totalWeeks}
           </Descriptions.Item>
-          <Descriptions.Item label="Số slot mỗi tuần">
-            {form.getFieldValue('slotsPerWeek')}
+          <Descriptions.Item label="Số slot">
+            {classSlots.length}
           </Descriptions.Item>
           {/* <Descriptions.Item label="Tổng số bài kiểm tra">
             {form.getFieldValue('totalTests')}

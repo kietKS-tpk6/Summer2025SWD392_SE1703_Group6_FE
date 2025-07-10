@@ -104,24 +104,12 @@ const SystemConfig = () => {
   };
 
   const columns = [
-    // {
-    //   title: 'Key',
-    //   dataIndex: 'key',
-    //   key: 'key',
-    //   width: 120,
-    // },
     {
       title: 'Mô tả',
       dataIndex: 'description',
       key: 'description',
       width: 300,
     },
-    // {
-    //   title: 'Kiểu dữ liệu',
-    //   dataIndex: 'dataType',
-    //   key: 'dataType',
-    //   width: 100,
-    // },
     {
       title: 'Giá trị',
       dataIndex: 'value',
@@ -129,13 +117,6 @@ const SystemConfig = () => {
       width: 180,
       render: (_, record) => renderEditableCell(record),
     },
-    // {
-    //   title: 'Đã kích hoạt',
-    //   dataIndex: 'isActive',
-    //   key: 'isActive',
-    //   width: 100,
-    //   render: (val) => val ? 'Có' : 'Không',
-    // },
     {
       title: 'Hành động',
       key: 'action',
