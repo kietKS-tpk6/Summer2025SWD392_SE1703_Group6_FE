@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Card, Typography, Button, Spin, Alert, Descriptions, Divider, Tag, Input, message } from 'antd';
-import { ArrowLeftOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, CheckCircleFilled, CloseCircleFilled, ExclamationCircleFilled, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import axios from 'axios';
 import { API_URL } from '../../config/api';
+import Notification from '../../components/common/Notification';
 
 const { Title, Text } = Typography;
 
@@ -31,6 +32,11 @@ const LecturerTestDetail = () => {
   const [writingScores, setWritingScores] = useState({});
   const [feedbacks, setFeedbacks] = useState({});
   const [saving, setSaving] = useState(false);
+  const [showEssay, setShowEssay] = useState(true);
+  const [showMCQ, setShowMCQ] = useState(true);
+  const [mcqSectionVisibility, setMcqSectionVisibility] = useState({});
+  const [essaySectionVisibility, setEssaySectionVisibility] = useState({});
+  const [notification, setNotification] = useState({ visible: false, type: 'success', message: '', description: '' });
 
   useEffect(() => {
     setLoading(true);
@@ -89,8 +95,9 @@ const LecturerTestDetail = () => {
       const userStr = localStorage.getItem('user');
       const token = localStorage.getItem('token') || (userStr ? JSON.parse(userStr).token : undefined);
       const graderAccountID = userStr ? JSON.parse(userStr).accountId : undefined;
+      console.log('Token gửi lên:', token);
       if (!token || !graderAccountID) {
-        message.error('Không tìm thấy thông tin người dùng hoặc token!');
+        setNotification({ visible: true, type: 'error', message: 'Lỗi xác thực', description: 'Không tìm thấy thông tin người dùng hoặc token!' });
         setSaving(false);
         return;
       }
@@ -114,9 +121,17 @@ const LecturerTestDetail = () => {
           }
         });
       }
+      // Kiểm tra có câu nào chưa nhập điểm không
+      const missingScore = writingQuestions.some(q => q.writingScore === '' || q.writingScore === undefined || q.writingScore === null);
+      if (writingQuestions.length === 0 || missingScore) {
+        setNotification({ visible: true, type: 'error', message: 'Chưa nhập đủ điểm', description: 'Vui lòng nhập điểm cho tất cả câu tự luận trước khi lưu!' });
+        setSaving(false);
+        return;
+      }
       // Gửi tuần tự từng câu (có thể dùng Promise.all nếu muốn gửi song song)
       for (const payload of writingQuestions) {
-        await axios.put(
+        console.log('Payload gửi lên:', payload);
+        const response = await axios.put(
           `${API_URL}api/StudentTests/writing/grade`,
           payload,
           {
@@ -126,10 +141,15 @@ const LecturerTestDetail = () => {
             },
           }
         );
+        console.log('Kết quả trả về:', response?.data);
       }
-      message.success('Đã lưu/chấm điểm thành công!');
+      setNotification({ visible: true, type: 'success', message: 'Chấm điểm thành công', description: 'Đã lưu/chấm điểm thành công!' });
+      setTimeout(() => {
+        navigate(-1);
+      }, 1200);
     } catch (err) {
-      message.error('Có lỗi khi lưu/chấm điểm.');
+      console.error('Lỗi khi gọi API chấm điểm:', err);
+      setNotification({ visible: true, type: 'error', message: 'Lỗi khi lưu/chấm điểm', description: err?.message || 'Có lỗi khi lưu/chấm điểm.' });
     } finally {
       setSaving(false);
     }
@@ -147,8 +167,23 @@ const LecturerTestDetail = () => {
     ? data.sections.reduce((sum, s) => sum + (s.sectionScore || 0), 0)
     : '';
 
+  // Tách câu hỏi tự luận và trắc nghiệm
+  const essaySections = Array.isArray(data.sections)
+    ? data.sections.map(section => ({
+        ...section,
+        questions: section.questions.filter(q => q.type === 2)
+      })).filter(section => section.questions.length > 0)
+    : [];
+  const mcqSections = Array.isArray(data.sections)
+    ? data.sections.map(section => ({
+        ...section,
+        questions: section.questions.filter(q => q.type !== 2)
+      })).filter(section => section.questions.length > 0)
+    : [];
+
   return (
     <div style={{ background: '#fff', borderRadius: 20, padding: 32, margin: 24, minHeight: 600 }}>
+      <Notification {...notification} onClose={() => setNotification(n => ({ ...n, visible: false }))} />
       <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)} style={{ marginBottom: 16 }}>
         Quay lại
       </Button>
@@ -172,39 +207,94 @@ const LecturerTestDetail = () => {
         <Button size="small" onClick={() => setFontSize(f => Math.min(32, f + 2))}>A+</Button>
         <span style={{ fontSize: 14, color: '#888' }}>{fontSize}px</span>
       </div>
-      {Array.isArray(data.sections) && data.sections.map((section, idx) => (
-        <Card
-          key={section.testSectionID || idx}
-          style={{ marginBottom: 32, borderRadius: 16, boxShadow: '0 2px 8px #f0f1f2' }}
-          bodyStyle={{ background: '#fafdff', borderRadius: 16 }}
-          title={<span style={{ fontWeight: 600, fontSize: 18 }}>{section.context}</span>}
-          extra={<Text type="secondary">Điểm phần này: <b>{section.studentGetScore} / {section.sectionScore}</b></Text>}
-        >
-          <Divider />
-          {section.questions.map((q, qIdx) => (
-            <div
-              key={q.questionID}
-              style={{
-                marginBottom: 24,
-                padding: 16,
-                border: '1px solid #e6f4ff',
-                borderRadius: 10,
-                background: '#fff',
-                fontSize: fontSize
-              }}
-            >
-              <div style={{ 
-                marginBottom: 8, 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center' 
-              }}>
-                <div>
-                  <Text strong style={{ fontSize: fontSize }}>Câu {qIdx + 1}:</Text> <span style={{ fontSize: fontSize }}>{q.context}</span>
-                </div>
-                {/* Chỉ cho phép nhập điểm ở câu tự luận */}
-                {q.type === 2 && (
-                  <span style={{ fontWeight: 600, fontSize: fontSize - 2 }}>
+      {/* Toggle Essay Section */}
+      <div style={{ marginBottom: 12 }}>
+        <Button onClick={() => setShowEssay(v => !v)} type="default" style={{ marginRight: 8 }}>
+          {showEssay ? 'Ẩn phần tự luận' : 'Hiện phần tự luận'}
+        </Button>
+        <Button onClick={() => setShowMCQ(v => !v)} type="default">
+          {showMCQ ? 'Ẩn phần trắc nghiệm' : 'Hiện phần trắc nghiệm'}
+        </Button>
+      </div>
+      {/* ESSAY SECTIONS */}
+      {essaySections.length > 0 && (
+        <div style={{ marginBottom: 8 }}>
+          {/* <span style={{ fontWeight: 600, fontSize: 18, marginRight: 8 }}>Phần tự luận</span> */}
+          <span
+            style={{ cursor: 'pointer', fontSize: 20 }}
+            onClick={() => setShowEssay(v => !v)}
+            title={showEssay ? 'Ẩn phần tự luận' : 'Hiện phần tự luận'}
+          >
+            {/* {showEssay ? <EyeOutlined /> : <EyeInvisibleOutlined />} */}
+          </span>
+        </div>
+      )}
+      {showEssay && essaySections.map((section, idx) => {
+        const sectionKey = section.testSectionID || idx;
+        const isVisible = essaySectionVisibility[sectionKey] !== false; // mặc định hiện
+        return (
+          <Card
+            key={sectionKey}
+            style={{ marginBottom: 32, borderRadius: 16, boxShadow: '0 2px 8px #f0f1f2' }}
+            bodyStyle={{ background: '#fafdff', borderRadius: 16 }}
+            title={<span style={{ fontWeight: 600, fontSize: 18 }}>{section.context}</span>}
+            extra={
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                {section.questions.length === 1 && section.questions[0].type === 2 ? (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <Text type="secondary">Điểm phần này:</Text>
+                    <Input
+                      style={{ width: 80 }}
+                      type="number"
+                      min={0}
+                      max={section.sectionScore}
+                      value={writingScores[section.questions[0].questionID] !== undefined ? Number(writingScores[section.questions[0].questionID]) : ''}
+                      onChange={e => handleScoreChange(section.questions[0].questionID, e.target.value)}
+                    />
+                    <span>/ {section.sectionScore}</span>
+                  </span>
+                ) : (
+                  <Text type="secondary">Điểm phần này: <b>{section.studentGetScore} / {section.sectionScore}</b></Text>
+                )}
+                <span
+                  style={{ cursor: 'pointer', fontSize: 20 }}
+                  onClick={e => {
+                    e.stopPropagation();
+                    setEssaySectionVisibility(prev => ({
+                      ...prev,
+                      [sectionKey]: !isVisible
+                    }));
+                  }}
+                  title={isVisible ? 'Ẩn phần này' : 'Hiện phần này'}
+                >
+                  {isVisible ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+                </span>
+              </div>
+            }
+          >
+            <Divider />
+            {isVisible && section.questions.map((q, qIdx) => (
+              <div
+                key={q.questionID}
+                style={{
+                  marginBottom: 24,
+                  padding: 16,
+                  border: '1px solid #e6f4ff',
+                  borderRadius: 10,
+                  background: '#fff',
+                  fontSize: fontSize
+                }}
+              >
+                <div style={{ 
+                  marginBottom: 8, 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center' 
+                }}>
+                  <div>
+                    <Text strong style={{ fontSize: fontSize }}>Câu {qIdx + 1}:</Text> <span style={{ fontSize: fontSize }}>{q.context}</span>
+                  </div>
+                  {/* <span style={{ fontWeight: 600, fontSize: fontSize - 2 }}>
                     Điểm: <Input
                       style={{ width: 80 }}
                       type="number"
@@ -214,15 +304,8 @@ const LecturerTestDetail = () => {
                       onChange={e => handleScoreChange(q.questionID, e.target.value)}
                     />
                     / {section.sectionScore}
-                  </span>
-                )}
-                {q.type !== 2 && (
-                  <span style={{ fontWeight: 600, fontSize: fontSize - 2 }}>
-                    Điểm: {typeof q.score === 'number' ? q.score : 0} / {q.score}
-                  </span>
-                )}
-              </div>
-              {q.type === 2 && (
+                  </span> */}
+                </div>
                 <div style={{ marginBottom: 8 }}>
                   <Text>Đáp án của học sinh: </Text>
                   <div style={{ background: '#f5f5f5', padding: 12, borderRadius: 6, fontSize: fontSize, minHeight: 100 }}>
@@ -239,19 +322,150 @@ const LecturerTestDetail = () => {
                     />
                   </div>
                 </div>
-              )}
-              {q.type !== 2 && (
+              </div>
+            ))}
+          </Card>
+        );
+      })}
+      {/* MCQ SECTIONS */}
+      {mcqSections.length > 0 && (
+        <div style={{ marginBottom: 8 }}>
+          {/* <span style={{ fontWeight: 600, fontSize: 18, marginRight: 8 }}>Phần trắc nghiệm</span> */}
+          <span
+            style={{ cursor: 'pointer', fontSize: 20 }}
+            onClick={() => setShowMCQ(v => !v)}
+            title={showMCQ ? 'Ẩn phần trắc nghiệm' : 'Hiện phần trắc nghiệm'}
+          >
+            {/* {showMCQ ? <EyeOutlined /> : <EyeInvisibleOutlined />} */}
+          </span>
+        </div>
+      )}
+      {showMCQ && mcqSections.map((section, idx) => {
+        const sectionKey = section.testSectionID || idx;
+        const isVisible = mcqSectionVisibility[sectionKey] !== false; // mặc định hiện
+        return (
+          <Card
+            key={sectionKey}
+            style={{ marginBottom: 32, borderRadius: 16, boxShadow: '0 2px 8px #f0f1f2' }}
+            bodyStyle={{ background: '#fafdff', borderRadius: 16 }}
+            title={<span style={{ fontWeight: 600, fontSize: 18 }}>{section.context}</span>}
+            extra={
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <Text type="secondary">Điểm phần này: <b>{section.studentGetScore} / {section.sectionScore}</b></Text>
+                <span
+                  style={{ cursor: 'pointer', fontSize: 20 }}
+                  onClick={e => {
+                    e.stopPropagation();
+                    setMcqSectionVisibility(prev => ({
+                      ...prev,
+                      [sectionKey]: !isVisible
+                    }));
+                  }}
+                  title={isVisible ? 'Ẩn phần này' : 'Hiện phần này'}
+                >
+                  {isVisible ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+                </span>
+              </div>
+            }
+          >
+            <Divider />
+            {isVisible && section.questions.map((q, qIdx) => (
+              <div
+                key={q.questionID}
+                style={{
+                  marginBottom: 24,
+                  padding: 16,
+                  border: '1px solid #e6f4ff',
+                  borderRadius: 10,
+                  background: '#fff',
+                  fontSize: fontSize
+                }}
+              >
+                <div style={{ 
+                  marginBottom: 8, 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center' 
+                }}>
+                  <div>
+                    <Text strong style={{ fontSize: fontSize }}>Câu {qIdx + 1}:</Text> <span style={{ fontSize: fontSize }}>{q.context}</span>
+                  </div>
+                  {/* <span style={{ fontWeight: 600, fontSize: fontSize - 2 }}>
+                    Điểm: {typeof q.score === 'number' ? q.score : 0} / {q.score}
+                  </span> */}
+                </div>
+                {/* Đáp án và lựa chọn của sinh viên */}
+                {Array.isArray(q.options) && (
+                  <div style={{ marginBottom: 8 }}>
+                    <Text type="secondary">Tất cả đáp án:</Text>
+                    <div style={{ marginTop: 8 }}>
+                      {q.options.map(opt => {
+                        const isSelected = q.studentAnswer?.selectedOptionIDs?.includes(opt.mcqOptionID);
+                        const isCorrect = opt.isCorrect;
+                        let icon = null;
+                        if (isSelected) {
+                          if (isCorrect) {
+                            icon = <CheckCircleFilled style={{ color: '#52c41a', fontSize: 18 }} />;
+                          } else {
+                            icon = <CloseCircleFilled style={{ color: '#ff4d4f', fontSize: 18 }} />;
+                          }
+                        }
+                        return (
+                          <div
+                            key={opt.mcqOptionID}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              marginBottom: 6,
+                              padding: '6px 10px',
+                              borderRadius: 8,
+                              background: isSelected ? (isCorrect ? '#f6ffed' : '#fff1f0') : undefined,
+                              fontSize: fontSize
+                            }}
+                          >
+                            <span style={{ marginRight: 8 }}>{String.fromCharCode(65 + (q.options.findIndex(o => o.mcqOptionID === opt.mcqOptionID)))}</span>
+                            <span>{opt.context}</span>
+                            {isSelected && (
+                              <span style={{ marginLeft: 10 }}>{icon}</span>
+                            )}
+                            {isCorrect && (
+                              <span style={{ marginLeft: 10, color: '#389e0d', fontWeight: 600 }}>(Đáp án đúng)</span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {/* Hiển thị đáp án sinh viên đã chọn */}
+                    <div style={{ marginTop: 4, marginBottom: 4, border: '1.5px solid #1890ff', background: '#e6f7ff', borderRadius: 8, padding: '6px 12px', display: 'inline-block' }}>
+                      <span style={{ fontWeight: 500 }}><strong>Đáp án sinh viên chọn:</strong> </span>
+                      {Array.isArray(q.options) && Array.isArray(q.studentAnswer?.selectedOptionIDs) && q.options.filter(opt => q.studentAnswer.selectedOptionIDs.includes(opt.mcqOptionID)).length > 0 ? (
+                        q.options.filter(opt => q.studentAnswer.selectedOptionIDs.includes(opt.mcqOptionID)).map(opt => (
+                          <span key={opt.mcqOptionID} style={{ color: '#1890ff', fontWeight: 600, marginRight: 12 }}>{opt.context}</span>
+                        ))
+                      ) : (
+                        <span style={{ color: '#888' }}><i>Chưa chọn đáp án</i></span>
+                      )}
+                    </div>
+                    {/* Hiển thị đáp án đúng dưới mỗi câu */}
+                    <div style={{ marginTop: 4, marginBottom: 4, border: '1.5px solid #52c41a', background: '#f6ffed', borderRadius: 8, padding: '6px 12px', display: 'inline-block' }}>
+                      <span style={{ fontWeight: 500 }}><strong>Đáp án đúng:</strong> </span>
+                      {q.options.filter(opt => opt.isCorrect).map(opt => (
+                        <span key={opt.mcqOptionID} style={{ color: '#389e0d', fontWeight: 600, marginRight: 12 }}>{opt.context}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div style={{ marginBottom: 8 }}>
                   <Text type="secondary">(Không phải câu tự luận)</Text>
                 </div>
-              )}
-            </div>
-          ))}
-        </Card>
-      ))}
+              </div>
+            ))}
+          </Card>
+        );
+      })}
       <div style={{ textAlign: 'right', marginTop: 24 }}>
         <Button type="primary" size="large" loading={saving} onClick={handleSave}>
-          Lưu / Chấm điểm
+          Chấm điểm
         </Button>
       </div>
     </div>
