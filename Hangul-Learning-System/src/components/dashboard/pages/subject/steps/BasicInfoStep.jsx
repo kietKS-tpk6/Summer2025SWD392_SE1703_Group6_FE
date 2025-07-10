@@ -36,7 +36,6 @@ const BasicInfoStep = ({ onNext, form, subjectId, isEditing }) => {
         const updateData = {
           ...subjectData,
           subjectID: subjectId,
-          isActive: true,
           createAt: new Date().toISOString()
         };
         const response = await subjectService.updateSubject(updateData);

@@ -33,7 +33,6 @@ const AssessmentCriteria = ({
   onAdd, 
   onEdit, 
   onDelete,
-  subject
 }) => {
   const columns = [
     {
@@ -91,13 +90,11 @@ const AssessmentCriteria = ({
             type="primary"
             icon={<EditOutlined />}
             onClick={() => onEdit(record)}
-            disabled={!subject.isActive}
           />
           {/* <Button
             danger
             icon={<DeleteOutlined />}
             onClick={() => onDelete(record.assessmentCriteriaID)}
-            disabled={!subject.isActive}
           /> */}
         </Space>
       ),
@@ -112,7 +109,6 @@ const AssessmentCriteria = ({
           type="primary"
           icon={<PlusOutlined />}
           onClick={onAdd}
-          disabled={!subject.isActive}
         >
           Thêm tiêu chí
         </Button>

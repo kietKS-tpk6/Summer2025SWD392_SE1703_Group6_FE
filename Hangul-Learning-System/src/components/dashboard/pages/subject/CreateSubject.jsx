@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Steps, Button, Form, Typography, message } from 'antd';
+import { Steps, Button, Form, Typography, message, Modal } from 'antd';
 import { ArrowLeftOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { subjectService } from '../../../../services/subjectService';
@@ -37,6 +37,8 @@ const CreateSubject = () => {
   const [classSlots, setClassSlots] = useState([]);
   const [editingSlot, setEditingSlot] = useState(null);
   const [editForm] = Form.useForm();
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [createdSubjectId, setCreatedSubjectId] = useState(null);
 
   const handleCloseNotification = () => {
     setNotificationConfig(prev => ({ ...prev, visible: false }));
@@ -128,10 +130,10 @@ const CreateSubject = () => {
         return;
       }
 
-      // Lấy configuration từ values hoặc subjectData
+      // Lấy configuration từ subjectData hoặc values
       const configuration = {
-        totalWeeks: values.totalWeeks || subjectData.configuration?.totalWeeks,
-        slotsPerWeek: values.slotsPerWeek || subjectData.configuration?.slotsPerWeek,
+        totalWeeks: subjectData.configuration?.totalWeeks || values.totalWeeks,
+        slotsPerWeek: subjectData.configuration?.slotsPerWeek || values.slotsPerWeek,
       };
 
       // 1. Tạo môn học mới
@@ -222,7 +224,8 @@ const CreateSubject = () => {
         message: 'Tạo môn học và cấu hình hoàn tất!',
         description: '',
       });
-      setTimeout(() => navigate('/dashboard/subject'), 2000);
+      setCreatedSubjectId(subjectID);
+      setShowPublishModal(true);
     } catch (error) {
       console.log('Error object:', error);
       console.log('Error response:', error.response);
@@ -285,11 +288,15 @@ const CreateSubject = () => {
             defaultDuration: values.defaultDuration
           }
         }));
-        if (!values.totalWeeks || !values.slotsPerWeek) {
+        // Chỉ validate nếu chưa có dữ liệu import từ Excel
+        if (classSlots.length === 0 && (!values.totalWeeks || !values.slotsPerWeek)) {
           message.error('Vui lòng nhập đầy đủ thông tin cấu hình');
           return;
         }
-        generateClassSlots(values.totalWeeks, values.slotsPerWeek, values.defaultDuration);
+        // Chỉ generateClassSlots nếu chưa có dữ liệu import từ Excel
+        if (classSlots.length === 0) {
+          generateClassSlots(values.totalWeeks, values.slotsPerWeek, values.defaultDuration);
+        }
       }
 
       if (current === 2) {
@@ -333,7 +340,6 @@ const CreateSubject = () => {
               subjectName: data.subjectName,
               description: data.description,
               minAverageScoreToPass: data.minAverageScoreToPass,
-              isActive: data.isActive,
               createAt: data.createAt,
             }
           }));
@@ -394,17 +400,43 @@ const CreateSubject = () => {
       });
       return;
     }
-    // Lưu lại thông tin vào state nếu cần
+    setClassSlots(importedSlots);
+
+    // Tính lại số tuần và số slot mỗi tuần từ importedSlots
+    const weeks = [...new Set(importedSlots.map(slot => slot.week))];
+    const slotsPerWeek = Math.max(...weeks.map(week =>
+      importedSlots.filter(slot => slot.week === week).length
+    ));
     setSubjectData(prev => ({
       ...prev,
-      basicInfo
+      basicInfo,
+      configuration: {
+        ...prev.configuration,
+        totalWeeks: weeks.length,
+        slotsPerWeek: slotsPerWeek,
+        totalSlots: importedSlots.length
+      }
     }));
-    setClassSlots(importedSlots);
+
     setCurrent(1); // Chuyển sang bước 2
   };
 
+  // Hàm xử lý công khai môn học (placeholder, cần tích hợp API nếu có)
+  const handlePublishSubject = async (subjectId) => {
+    try {
+      console.log(subjectId);
+      await subjectService.publishSubject(subjectId);
+      message.success('Môn học đã được công khai!');
+    } catch (err) {
+      message.error('Không thể công khai môn học!');
+    } finally {
+      setShowPublishModal(false);
+      navigate('/dashboard/subject');
+    }
+  };
+
   const steps = [
-    { title: 'Thông tin & cấu hình môn học', content: (<><Title level={4}>Thông tin môn học</Title><BasicInfoStep form={form} subjectId={subjectId} isEditing={isEditing} /><Title level={4}>Cấu hình môn học</Title><ConfigurationStep onGenerateClassSlots={handleImportExcelClassSlots} /></>) },
+    { title: 'Thông tin & cấu hình môn học', content: (<><Title level={4}>Thông tin môn học</Title><BasicInfoStep form={form} subjectId={subjectId} isEditing={isEditing} /><Title level={4}>Cấu hình môn học</Title><ConfigurationStep onGenerateClassSlots={handleImportExcelClassSlots} hasImportedClassSlots={classSlots.length > 0} /></>) },
     { title: 'Thông tin buổi học', content: <ClassInfoStep classSlots={classSlots} editingSlot={editingSlot} setEditingSlot={setEditingSlot} handleEditSlot={handleEditSlot} handleUpdateSlot={handleUpdateSlot} editForm={editForm} /> },
     { title: 'Thông tin đánh giá', content: <AssessmentStep form={form} configuration={subjectData.configuration} /> },
     { title: 'Chọn slot kiểm tra', content: <TestSlotsStep classSlots={classSlots} form={form} assessmentInfo={subjectData.assessmentInfo} /> },
@@ -430,6 +462,27 @@ const CreateSubject = () => {
           )}
         </div>
       </Form>
+      <Modal
+        visible={showPublishModal}
+        title="Công khai môn học"
+        onCancel={() => {
+          setShowPublishModal(false);
+          navigate('/dashboard/subject');
+        }}
+        footer={[
+          <Button key="no" onClick={() => {
+            setShowPublishModal(false);
+            navigate('/dashboard/subject');
+          }}>
+            Không
+          </Button>,
+          <Button key="yes" type="primary" onClick={() => handlePublishSubject(createdSubjectId)}>
+            Có
+          </Button>
+        ]}
+      >
+        Bạn có muốn công khai môn học để mở lớp không?
+      </Modal>
     </div>
   );
 };
