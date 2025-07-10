@@ -168,6 +168,8 @@ const CreateClassStepper = ({
     try {
       setLoading(true);
       const { basicInfo, lessons } = formData;
+      const teachingStartTime = new Date(lessons.teachingStartTime);
+      teachingStartTime.setHours(teachingStartTime.getHours() + 7);
       const classResponse = await axios.post(`${API_URL}api/Class/create`, {
         lecturerID: lessons.accountID,
         subjectID: basicInfo.subjectID,
@@ -175,7 +177,7 @@ const CreateClassStepper = ({
         minStudentAcp: basicInfo.minStudentAcp,
         maxStudentAcp: basicInfo.maxStudentAcp,
         priceOfClass: basicInfo.priceOfClass,
-        teachingStartTime: lessons.teachingStartTime,
+        teachingStartTime: teachingStartTime.toISOString(),
         imageURL: basicInfo.imageURL
       });
       const classId = classResponse.data.data;
