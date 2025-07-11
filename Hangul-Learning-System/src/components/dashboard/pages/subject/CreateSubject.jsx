@@ -418,6 +418,12 @@ const CreateSubject = () => {
       }
     }));
 
+    // Cập nhật lại form values cho step 2
+    form.setFieldsValue({
+      totalWeeks: weeks.length,
+      slotsPerWeek: slotsPerWeek,
+    });
+
     setCurrent(1); // Chuyển sang bước 2
   };
 
@@ -453,7 +459,15 @@ const CreateSubject = () => {
       <Form form={form} layout="vertical">
         {steps[current].content}
         <div style={{ marginTop: 24, display: 'flex', justifyContent: 'space-between' }}>
-          <Button icon={<ArrowLeftOutlined />} onClick={prev} disabled={current === 0}>Quay lại</Button>
+          <div>
+            <Button icon={<ArrowLeftOutlined />} onClick={prev} disabled={current === 0}>Quay lại</Button>
+            <Button 
+              style={{ marginLeft: 8 }} 
+              onClick={() => navigate('/dashboard/subject')}
+            >
+              Về trang lớp học
+            </Button>
+          </div>
           {current < steps.length - 1 && (
             <Button type="primary" icon={<ArrowRightOutlined />} onClick={next}>Tiếp theo</Button>
           )}

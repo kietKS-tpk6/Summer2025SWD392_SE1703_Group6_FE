@@ -89,7 +89,7 @@ const ConfigurationStep = ({ onGenerateClassSlots, hasImportedClassSlots }) => {
             }),
           ].filter(Boolean)}
         >
-          <InputNumber min={1} placeholder="VD: 10" style={{ width: '100%' }} />
+          <InputNumber min={1} placeholder="VD: 10" style={{ width: '100%' }} disabled={hasImportedClassSlots} />
         </Form.Item>
 
         <Form.Item
@@ -111,7 +111,7 @@ const ConfigurationStep = ({ onGenerateClassSlots, hasImportedClassSlots }) => {
             }),
           ].filter(Boolean)}
         >
-          <InputNumber min={1} placeholder="VD: 3" style={{ width: '100%' }} />
+          <InputNumber min={1} placeholder="VD: 3" style={{ width: '100%' }} disabled={hasImportedClassSlots} />
         </Form.Item>
 
         <Form.Item
@@ -129,7 +129,7 @@ const ConfigurationStep = ({ onGenerateClassSlots, hasImportedClassSlots }) => {
                 if (
                   maxTotalMinutes !== null &&
                   slots &&
-                  value * slots > maxTotalMinutes
+                  value > maxTotalMinutes
                 ) {
                   return Promise.reject(
                     new Error(`Tổng thời lượng không vượt quá ${maxTotalMinutes} phút`)
@@ -140,7 +140,7 @@ const ConfigurationStep = ({ onGenerateClassSlots, hasImportedClassSlots }) => {
             }),
           ].filter(Boolean)}
         >
-          <InputNumber min={1} placeholder="VD: 45" style={{ width: '100%' }} />
+          <InputNumber min={1} placeholder="VD: 45" style={{ width: '100%' }} disabled={hasImportedClassSlots} />
         </Form.Item>
       </Card>
     </>

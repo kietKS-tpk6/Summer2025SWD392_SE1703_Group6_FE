@@ -126,6 +126,10 @@ const BasicInfoStep = ({ onNext, form, subjectId, isEditing }) => {
                 return Promise.reject(new Error('Mô tả không được trùng với tên môn học'));
               }
 
+              if (trimmedDescription.length > 255) {
+                return Promise.reject(new Error('Mô tả không được vượt quá 255 ký tự'));
+              }
+
               return Promise.resolve();
             },
           },

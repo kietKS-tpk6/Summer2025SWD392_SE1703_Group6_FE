@@ -69,15 +69,6 @@ const Subjects = () => {
     navigate('/dashboard/subject/create');
   };
 
-  const handleEdit = (record) => {
-    navigate(`/dashboard/subject/edit/${record.code}`);
-  };
-
-  const handleDelete = (record) => {
-    setSelectedSubject(record);
-    setDeleteModalVisible(true);
-  };
-
   const handleDeleteConfirm = async () => {
     if (!selectedSubject) return;
 
@@ -118,6 +109,8 @@ const Subjects = () => {
       title: 'Tên môn học',
       dataIndex: 'name',
       key: 'name',
+      sorter: (a, b) => a.name.localeCompare(b.name),
+      sortDirections: ['descend', 'ascend'],
     },
     {
       title: 'Mô tả',
@@ -137,6 +130,8 @@ const Subjects = () => {
       dataIndex: 'createAt',
       key: 'createAt',
       width: '8%',
+      sorter: (a, b) => new Date(a.createAt) - new Date(b.createAt),
+      sortDirections: ['descend', 'ascend'],
     },
     {
       title: 'Trạng thái',
@@ -171,6 +166,7 @@ const Subjects = () => {
 
   const filteredSubjects = subjects.filter(subject =>
     subject.name.toLowerCase().includes(searchText.toLowerCase()) ||
+    subject.code.toLowerCase().includes(searchText.toLowerCase()) ||
     subject.description.toLowerCase().includes(searchText.toLowerCase())
   );
 
@@ -191,7 +187,7 @@ const Subjects = () => {
         </div>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
           <Search
-            placeholder="Nhập mã môn học để tìm kiếm"
+            placeholder="Nhập mã hoặc tên môn học để tìm kiếm"
             allowClear
             enterButton={<SearchOutlined />}
             onSearch={handleSearch}
