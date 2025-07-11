@@ -153,10 +153,22 @@ const StudentTestSchedule = () => {
     return matchClass && matchDate;
   });
 
+  const statusOrder = {
+    'Đang diễn ra': 0,
+    'Sắp diễn ra': 1,
+    'Đã kết thúc': 2,
+    'Không xác định': 3,
+  };
+
   const sortedData = [...filteredData].sort((a, b) => {
+    // So sánh theo trạng thái trước
+    const statusDiff = statusOrder[a.status] - statusOrder[b.status];
+    if (statusDiff !== 0) return statusDiff;
+
+    // Nếu cùng trạng thái, sắp xếp theo ngày tăng dần (gần nhất lên trước)
     if (!a.date) return 1;
     if (!b.date) return -1;
-    return dayjs(a.date).isBefore(dayjs(b.date)) ? 1 : -1;
+    return dayjs(a.date).isAfter(dayjs(b.date)) ? 1 : -1;
   });
 
   return (
