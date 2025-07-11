@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Statistic, List, Badge, Typography, Alert, Spin, Tag } from 'antd';
+import { Card, Row, Col, Statistic, List, Badge, Typography, Alert, Spin, Tag, Button, Modal, Divider } from 'antd';
 import { 
   UserOutlined, 
   BookOutlined, 
@@ -8,12 +8,15 @@ import {
   ClockCircleOutlined,
   BellOutlined,
   CheckCircleOutlined,
-  ExclamationCircleOutlined
+  ExclamationCircleOutlined,
+  LinkOutlined,
+  EyeOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import axios from 'axios';
 import { API_URL } from '../../../config/api';
 import { getUser } from '../../../utils/auth';
+import { endpoints } from '../../../config/api';
 
 const { Title, Text } = Typography;
 
@@ -28,6 +31,8 @@ const DashboardOverview = () => {
     notifications: []
   });
   const [tasks, setTasks] = useState([]);
+  // State cho modal chi tiết task
+  const [detailModal, setDetailModal] = useState({ open: false, task: null });
 
   const user = getUser();
   const lecturerId = user?.accountId;
@@ -43,16 +48,36 @@ const DashboardOverview = () => {
       setLoading(true);
       
       // Fetch lecturer's classes
-      const classesResponse = await axios.get(`${API_URL}api/Class/get-by-lecturer?lecturerID=${lecturerId}`);
-      const classes = classesResponse.data.data || [];
+      const classesResponse = await axios.get(`${API_URL}api/Class/get-by-teacher?teacherId=${lecturerId}&page=1&pageSize=100`);
+      const classes = classesResponse.data.items || [];
+      
+      // Fetch active student count (new API)
+      const activeStudentCountUrl = API_URL + endpoints.class.activeStudentCount.replace('{lecturerId}', lecturerId);
+      const activeStudentCountResponse = await axios.get(activeStudentCountUrl);
+      const totalStudents = activeStudentCountResponse.data.data || 0;
+      
+      // Fetch ongoing class count (new API)
+      const ongoingCountUrl = API_URL + endpoints.class.ongoingCount.replace('{lecturerId}', lecturerId);
+      const ongoingCountResponse = await axios.get(ongoingCountUrl);
+      const totalClasses = ongoingCountResponse.data.data || 0;
+      
+      // Fetch pending writing assignments count (new API)
+      const pendingWritingCountUrl = API_URL + endpoints.class.pendingWritingCount.replace('{lecturerId}', lecturerId);
+      const pendingWritingCountResponse = await axios.get(pendingWritingCountUrl);
+      const ungradedAssignments = pendingWritingCountResponse.data.data || 0;
+      
+      // Fetch upcoming tests count (new API)
+      const upcomingTestCountUrl = API_URL + endpoints.class.upcomingTestCount.replace('{lecturerId}', lecturerId);
+      const upcomingTestCountResponse = await axios.get(upcomingTestCountUrl);
+      const upcomingTests = upcomingTestCountResponse.data.data || 0;
       
       // Fetch lessons for today's schedule
       const lessonsResponse = await axios.get(`${API_URL}api/Lesson/get-by-lecturer?lecturerID=${lecturerId}`);
       const allLessons = lessonsResponse.data.data || [];
       
       // Calculate statistics
-      const totalClasses = classes.length;
-      const totalStudents = classes.reduce((sum, cls) => sum + (cls.studentCount || 0), 0);
+      // const totalClasses = classes.length; // Đã thay bằng ongoingCount
+      // const totalStudents = classes.reduce((sum, cls) => sum + (cls.studentCount || 0), 0);
       
       // Get today's lessons
       const today = dayjs().format('YYYY-MM-DD');
@@ -61,8 +86,7 @@ const DashboardOverview = () => {
       ).sort((a, b) => dayjs(a.startTime) - dayjs(b.startTime));
 
       // Mock data for upcoming tests and ungraded assignments (replace with actual API calls)
-      const upcomingTests = 3; // Mock data
-      const ungradedAssignments = 5; // Mock data
+      // const upcomingTests = 3; // Mock data
 
       // Mock notifications
       const notifications = [
@@ -91,7 +115,14 @@ const DashboardOverview = () => {
 
       // Fetch lecturer tasks
       const tasksResponse = await axios.get(`${API_URL}api/Task/lecturer/${lecturerId}`);
-      const tasksData = tasksResponse.data.data || [];
+      let tasksData = [];
+      if (Array.isArray(tasksResponse.data)) {
+        tasksData = tasksResponse.data;
+      } else if (Array.isArray(tasksResponse.data.data)) {
+        tasksData = tasksResponse.data.data;
+      } else if (Array.isArray(tasksResponse.data.tasks)) {
+        tasksData = tasksResponse.data.tasks;
+      }
 
       setStats({
         totalClasses,
@@ -122,18 +153,18 @@ const DashboardOverview = () => {
     }
   };
 
-  const getNotificationColor = (type) => {
-    switch (type) {
-      case 'info':
-        return '#e6f7ff';
-      case 'warning':
-        return '#fff7e6';
-      case 'success':
-        return '#f6ffed';
-      default:
-        return '#f5f5f5';
-    }
-  };
+  // const getNotificationColor = (type) => {
+  //   switch (type) {
+  //     case 'info':
+  //       return '#e6f7ff';
+  //     case 'warning':
+  //       return '#fff7e6';
+  //     case 'success':
+  //       return '#f6ffed';
+  //     default:
+  //       return '#f5f5f5';
+  //   }
+  // };
 
   // Mapping helpers
   const mapTaskType = (type) => {
@@ -146,6 +177,20 @@ const DashboardOverview = () => {
       case 'PrepareLesson': return 'Chuẩn bị bài giảng';
       case 'Other': return 'Khác';
       default: return type;
+    }
+  };
+
+  // Icon cho từng loại task
+  const getTaskIcon = (type) => {
+    switch (type) {
+      case 'GradeAssignment': return <FileTextOutlined style={{ color: '#faad14' }} />;
+      case 'CreateExam': return <CalendarOutlined style={{ color: '#1890ff' }} />;
+      case 'UpdateTestEvent': return <ExclamationCircleOutlined style={{ color: '#faad14' }} />;
+      case 'Meeting': return <BellOutlined style={{ color: '#1890ff' }} />;
+      case 'ReviewContent': return <CheckCircleOutlined style={{ color: '#52c41a' }} />;
+      case 'PrepareLesson': return <BookOutlined style={{ color: '#52c41a' }} />;
+      case 'Other': return <BellOutlined style={{ color: '#bfbfbf' }} />;
+      default: return <BellOutlined />;
     }
   };
   const mapTaskStatus = (status) => {
@@ -253,50 +298,8 @@ const DashboardOverview = () => {
         </Col>
       </Row>
 
-      {/* Today's Schedule and Notifications */}
+      {/* Thông báo quan trọng & Công việc cần làm */}
       <Row gutter={[24, 24]}>
-        <Col xs={24} lg={12}>
-          <Card
-            title={
-              <span style={{ fontSize: '18px', fontWeight: 600 }}>
-                <ClockCircleOutlined style={{ marginRight: 8 }} />
-                Lịch dạy hôm nay
-              </span>
-            }
-            style={{
-              borderRadius: '15px',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
-            }}
-          >
-            {stats.todaySchedule.length > 0 ? (
-              <List
-                dataSource={stats.todaySchedule}
-                renderItem={(lesson) => (
-                  <List.Item>
-                    <List.Item.Meta
-                      title={lesson.className || 'Lớp học'}
-                      description={
-                        <div>
-                          <Text type="secondary">
-                            {dayjs(lesson.startTime).format('HH:mm')} - {dayjs(lesson.endTime).format('HH:mm')}
-                          </Text>
-                          <br />
-                          <Text type="secondary">{lesson.roomName || 'Phòng học'}</Text>
-                        </div>
-                      }
-                    />
-                    <Tag color="blue">Hôm nay</Tag>
-                  </List.Item>
-                )}
-              />
-            ) : (
-              <div style={{ textAlign: 'center', padding: '20px' }}>
-                <Text type="secondary">Không có lịch dạy nào hôm nay</Text>
-              </div>
-            )}
-          </Card>
-        </Col>
-
         <Col xs={24} lg={12}>
           <Card
             title={
@@ -332,11 +335,7 @@ const DashboardOverview = () => {
             />
           </Card>
         </Col>
-      </Row>
-
-      {/* Tasks To Do */}
-      <Row style={{ marginTop: 32, marginBottom: 24 }}>
-        <Col span={24}>
+        <Col xs={24} lg={12}>
           <Card
             title={<span style={{ fontSize: '18px', fontWeight: 600 }}><FileTextOutlined style={{ marginRight: 8 }} />Công việc cần làm</span>}
             style={{ borderRadius: '15px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
@@ -349,15 +348,43 @@ const DashboardOverview = () => {
                 renderItem={task => (
                   <List.Item>
                     <List.Item.Meta
+                      avatar={getTaskIcon(task.type)}
                       title={<span>{mapTaskType(task.type)}</span>}
                       description={
                         <>
                           <div><b>Nội dung:</b> {task.content}</div>
                           <div><b>Thời gian:</b> {dayjs(task.dateStart).format('DD/MM/YYYY HH:mm')}</div>
+                          {task.note && <div><b>Ghi chú:</b> {task.note}</div>}
+                          {task.resourcesURL && (
+                            <div>
+                              <Button
+                                type="primary"
+                                icon={<LinkOutlined />}
+                                size="small"
+                                href={task.resourcesURL}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ marginTop: 4 }}
+                              >
+                                Tài liệu
+                              </Button>
+                            </div>
+                          )}
+                          {/* Status và nút chi tiết nằm cùng hàng, căn phải */}
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                            <div>{mapTaskStatus(task.status)}</div>
+                            <Button
+                              key="detail"
+                              type="default"
+                              size="small"
+                              onClick={() => setDetailModal({ open: true, task })}
+                            >
+                              Xem chi tiết
+                            </Button>
+                          </div>
                         </>
                       }
                     />
-                    {mapTaskStatus(task.status)}
                   </List.Item>
                 )}
               />
@@ -425,6 +452,65 @@ const DashboardOverview = () => {
           </Card>
         </Col>
       </Row>
+
+      {/* Modal chi tiết task */}
+      <Modal
+        open={detailModal.open}
+        title={detailModal.task ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {detailModal.task && getTaskIcon(detailModal.task.type)}
+            <span style={{ fontWeight: 700, fontSize: 20 }}>
+              {mapTaskType(detailModal.task.type)}
+            </span>
+          </div>
+        ) : ''}
+        onCancel={() => setDetailModal({ open: false, task: null })}
+        footer={null}
+        width={500}
+      >
+        {detailModal.task && (
+          <div style={{ lineHeight: 2, padding: 8 }}>
+            <div style={{ display: 'flex', marginBottom: 8 }}>
+              <div style={{ width: 120, color: '#888' }}>Nội dung:</div>
+              <div style={{ fontWeight: 500 }}>{detailModal.task.content}</div>
+            </div>
+            <Divider style={{ margin: '8px 0' }} />
+            <div style={{ display: 'flex', marginBottom: 8 }}>
+              <div style={{ width: 120, color: '#888' }}>Thời gian bắt đầu:</div>
+              <div>{dayjs(detailModal.task.dateStart).format('DD/MM/YYYY HH:mm')}</div>
+            </div>
+            <div style={{ display: 'flex', marginBottom: 8 }}>
+              <div style={{ width: 120, color: '#888' }}>Deadline:</div>
+              <div>{detailModal.task.deadline ? dayjs(detailModal.task.deadline).format('DD/MM/YYYY HH:mm') : <span style={{ color: '#aaa' }}>Không có</span>}</div>
+            </div>
+            <Divider style={{ margin: '8px 0' }} />
+            <div style={{ display: 'flex', marginBottom: 8, alignItems: 'center' }}>
+              <div style={{ width: 120, color: '#888' }}>Trạng thái:</div>
+              <div>{mapTaskStatus(detailModal.task.status)}</div>
+            </div>
+            {detailModal.task.note && (
+              <>
+                <Divider style={{ margin: '8px 0' }} />
+                <div style={{ display: 'flex', marginBottom: 8 }}>
+                  <div style={{ width: 120, color: '#888' }}>Ghi chú:</div>
+                  <div>{detailModal.task.note}</div>
+                </div>
+              </>
+            )}
+            {detailModal.task.resourcesURL && (
+              <>
+                <Divider style={{ margin: '8px 0' }} />
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
+                  <div style={{ width: 120, color: '#888' }}>Tài liệu:</div>
+                  <Button type="primary" icon={<LinkOutlined />} size="small" href={detailModal.task.resourcesURL} target="_blank" rel="noopener noreferrer" style={{ marginLeft: 0 }}>
+                    Xem tài liệu
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };
