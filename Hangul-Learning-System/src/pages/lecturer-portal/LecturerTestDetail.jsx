@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Card, Typography, Button, Spin, Alert, Descriptions, Divider, Tag, Input, message } from 'antd';
+import { Card, Typography, Button, Spin, Alert, Descriptions, Divider, Tag, Input, message, Modal, Table } from 'antd';
 import { ArrowLeftOutlined, CheckCircleFilled, CloseCircleFilled, ExclamationCircleFilled, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import axios from 'axios';
@@ -37,6 +37,9 @@ const LecturerTestDetail = () => {
   const [mcqSectionVisibility, setMcqSectionVisibility] = useState({});
   const [essaySectionVisibility, setEssaySectionVisibility] = useState({});
   const [notification, setNotification] = useState({ visible: false, type: 'success', message: '', description: '' });
+  const [showGuide, setShowGuide] = useState(false);
+  const [barems, setBarems] = useState({});
+  const [baremLoading, setBaremLoading] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -181,6 +184,29 @@ const LecturerTestDetail = () => {
       })).filter(section => section.questions.length > 0)
     : [];
 
+  // Lấy danh sách questionID tự luận
+  const essayQuestionIDs = essaySections.flatMap(section => section.questions.map(q => q.questionID));
+
+  // Fetch barem khi mở modal hướng dẫn
+  useEffect(() => {
+    if (showGuide && essayQuestionIDs.length > 0) {
+      setBaremLoading(true);
+      Promise.all(
+        essayQuestionIDs.map(qid =>
+          axios.get(`https://localhost:7201/WritingBarem/${qid}`)
+            .then(res => ({ qid, data: res.data?.data || [] }))
+            .catch(() => ({ qid, data: null }))
+        )
+      ).then(results => {
+        const baremMap = {};
+        results.forEach(({ qid, data }) => {
+          baremMap[qid] = data;
+        });
+        setBarems(baremMap);
+      }).finally(() => setBaremLoading(false));
+    }
+  }, [showGuide, essayQuestionIDs.join(",")]);
+
   return (
     <div style={{ background: '#fff', borderRadius: 20, padding: 32, margin: 24, minHeight: 600 }}>
       <Notification {...notification} onClose={() => setNotification(n => ({ ...n, visible: false }))} />
@@ -212,10 +238,47 @@ const LecturerTestDetail = () => {
         <Button onClick={() => setShowEssay(v => !v)} type="default" style={{ marginRight: 8 }}>
           {showEssay ? 'Ẩn phần tự luận' : 'Hiện phần tự luận'}
         </Button>
-        <Button onClick={() => setShowMCQ(v => !v)} type="default">
+        <Button onClick={() => setShowMCQ(v => !v)} type="default" style={{ marginRight: 8 }}>
           {showMCQ ? 'Ẩn phần trắc nghiệm' : 'Hiện phần trắc nghiệm'}
         </Button>
+        <Button onClick={() => setShowGuide(true)} type="dashed">
+          Hướng dẫn chấm điểm
+        </Button>
       </div>
+      {/* Modal hướng dẫn chấm điểm */}
+      <Modal
+        title="Hướng dẫn chấm điểm bài tự luận"
+        open={showGuide}
+        onCancel={() => setShowGuide(false)}
+        footer={null}
+        width={700}
+      >
+        {baremLoading ? (
+          <Spin />
+        ) : essayQuestionIDs.length === 0 ? (
+          <div>Không có câu hỏi tự luận nào trong bài này.</div>
+        ) : (
+          essayQuestionIDs.map((qid, idx) => (
+            <div key={qid} style={{ marginBottom: 24 }}>
+              <div style={{ fontWeight: 600, marginBottom: 6 }}>Câu {idx + 1}:</div>
+              {barems[qid] && Array.isArray(barems[qid]) && barems[qid].length > 0 ? (
+                <Table
+                  dataSource={barems[qid].map((item, i) => ({ ...item, key: item.writingBaremID || i }))}
+                  pagination={false}
+                  size="small"
+                  columns={[
+                    { title: 'Tiêu chí', dataIndex: 'criteriaName', key: 'criteriaName', width: 120 },
+                    { title: 'Mô tả', dataIndex: 'description', key: 'description', width: 300 },
+                    { title: 'Điểm tối đa', dataIndex: 'maxScore', key: 'maxScore', width: 100 },
+                  ]}
+                />
+              ) : (
+                <div style={{ color: '#888' }}>Không có barem chấm điểm cho câu hỏi này.</div>
+              )}
+            </div>
+          ))
+        )}
+      </Modal>
       {/* ESSAY SECTIONS */}
       {essaySections.length > 0 && (
         <div style={{ marginBottom: 8 }}>
