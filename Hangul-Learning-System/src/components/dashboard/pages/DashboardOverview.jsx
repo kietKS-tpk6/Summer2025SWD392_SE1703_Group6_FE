@@ -42,9 +42,17 @@ const DashboardOverview = () => {
   const [completeTaskLoading, setCompleteTaskLoading] = useState(false);
   // State cho modal xác nhận hoàn thành task
   const [confirmModal, setConfirmModal] = useState(false);
+  const user = getUser();
+  const lecturerId = user?.accountId;
   // Hàm hoàn thành task
   const handleCompleteTask = async () => {
     if (!detailModal.task) return;
+    // Nếu là Meeting thì không cho hoàn thành
+    if (detailModal.task.type === 'Meeting') {
+      message.warning('Không thể hoàn thành công việc loại Meeting!');
+      setConfirmModal(false);
+      return;
+    }
     setCompleteTaskLoading(true);
     try {
       await axios.put(`${API_URL}api/Task/${detailModal.task.taskID}/complete`, {
@@ -61,8 +69,7 @@ const DashboardOverview = () => {
     }
   };
 
-  const user = getUser();
-  const lecturerId = user?.accountId;
+  
 
   useEffect(() => {
     if (lecturerId) {
@@ -573,7 +580,7 @@ const DashboardOverview = () => {
           <Button key="back" onClick={() => setDetailModal({ open: false, task: null })}>
             Quay lại
           </Button>,
-          detailModal.task && detailModal.task.status !== 1 && (
+          detailModal.task && detailModal.task.status !== 1 && detailModal.task.type !== 'Meeting' && (
             <Button
               key="complete"
               type="primary"
