@@ -199,28 +199,36 @@ const Classes = () => {
     const numberStudentEnroll = record.numberStudentEnroll;
     const minStudent = record.minStudentAcp;
     const maxStudent = record.maxStudentAcp;
-    if (numberStudentEnroll === 0) {
-      setInfoModal({ open: true, content: 'Sĩ số hiện tại là 0. Không được phép chốt danh sách lớp!' });
+    // Nếu sĩ số hiện tại bé hơn min thì báo lỗi
+    if (numberStudentEnroll < minStudent) {
+      setInfoModal({ open: true, content: `Sĩ số hiện tại bé hơn ${minStudent} số học sinh tối thiểu để mở lớp. Không được phép chốt danh sách lớp!` });
       return;
     }
-    let content = '';
-    let allowConfirm = true;
-    if (numberStudentEnroll < minStudent || numberStudentEnroll > maxStudent) {
-      content = `Lớp hiện tại có ${numberStudentEnroll} học viên, không nằm trong sĩ số đề ra ban đầu (${minStudent} - ${maxStudent}). Bạn có chắc chắn muốn mở lớp không?`;
-    } else {
-      content = 'Bạn có chắc chắn muốn chốt danh sách và bắt đầu lớp học này?';
-    }
-    setFinalizeModal({ open: true, record, content, allowConfirm });
+    setFinalizeModal({ open: true, record, content: 'Bạn có chắc chắn muốn chốt danh sách và bắt đầu lớp học này?', allowConfirm: true });
   };
 
   const handleFinalizeConfirm = async () => {
     const record = finalizeModal.record;
-    if (!record || finalizeModal.allowConfirm === false) return;
+    setFinalizeModal({ open: false, record: null, content: '', allowConfirm: true });
+    if (!record) {
+      fetchData();
+      return;
+    }
+    const numberStudentEnroll = record.numberStudentEnroll;
+    const minStudent = record.minStudentAcp;
+    const maxStudent = record.maxStudentAcp;
+    if (numberStudentEnroll < minStudent || numberStudentEnroll > maxStudent) {
+      setInfoModal({ open: true, content: `Chỉ được phép chốt danh sách khi sĩ số nằm trong khoảng từ ${minStudent} đến ${maxStudent} học viên.` });
+      fetchData();
+      return;
+    }
     try {
       await axios.put(`${API_URL}api/Class/update-status`, {
         classId: record.classID,
         classStatus: 2
       });
+      await axios.post(`${API_URL}api/StudentMarks/setup-by-class-id/${record.classID}`)
+      await axios.post(`${API_URL}api/Attendance/setup-attendace-by-class-id/${record.classID}`)
       showNotify({
         type: 'success',
         message: 'Cập nhật thành công',
@@ -241,16 +249,14 @@ const Classes = () => {
           description: notiEmail.data?.message || 'Không thể gửi thông báo đến học viên. Vui lòng kiểm tra lại cấu hình.'
         });
       }
-      fetchData();
     } catch (err) {
       showNotify({
         type: 'error',
         message: 'Cập nhật thất bại',
         description: 'Không thể thay đổi trạng thái lớp học. Vui lòng thử lại.'
       });
-      fetchData();
     } finally {
-      setFinalizeModal({ open: false, record: null, content: '', allowConfirm: true });
+      fetchData();
     }
   };
 
