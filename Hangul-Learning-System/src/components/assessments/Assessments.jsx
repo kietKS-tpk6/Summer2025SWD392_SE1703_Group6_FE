@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import ViewDetailAssessment from './ViewDetailAssessment';
 import * as XLSX from 'xlsx';
 import AssessmentsTable from './AssessmentsTableComponent';
+import Notification from '../common/Notification';
 
 
 const statusOptions = [
@@ -57,7 +58,7 @@ const CATEGORY_ENUM_REVERSE_MAP = {
 
 const Assessments = () => {
   const [data, setData] = useState([]);
-  const [statusFilter, setStatusFilter] = useState('Drafted');
+  const [statusFilter, setStatusFilter] = useState('Actived');
   const [searchText, setSearchText] = useState('');
   const [subjects, setSubjects] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
@@ -82,6 +83,8 @@ const Assessments = () => {
   // Modal cho Lecturer
   const [lecturerModal, setLecturerModal] = useState(false);
   const [lecturerLoading, setLecturerLoading] = useState(false);
+
+  const [notification, setNotification] = useState({ visible: false, type: 'success', message: '', description: '' });
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -166,7 +169,12 @@ const Assessments = () => {
       content: `Bạn có chắc chắn muốn xóa bài kiểm tra "${record.testName}"?`,
       onOk: () => {
         setData(prev => prev.filter(item => item.testID !== record.testID));
-        message.success('Đã xóa bài kiểm tra!');
+        setNotification({
+          visible: true,
+          type: 'success',
+          message: 'Xóa bài kiểm tra thành công!',
+          description: `Bài kiểm tra "${record.testName}" đã được xóa khỏi hệ thống.`
+        });
       },
     });
   };
@@ -186,7 +194,12 @@ const Assessments = () => {
     ]);
     setShowCreate(false);
     setFormData({ basicInfo: {}, sections: [] });
-    message.success('Đã tạo bài kiểm tra!');
+    setNotification({
+      visible: true,
+      type: 'success',
+      message: 'Tạo bài kiểm tra thành công!',
+      description: `Bài kiểm tra "${values.TestName || 'Không tên'}" đã được lưu vào hệ thống.`
+    });
   };
 
   // Handler khi hoàn thành stepper
@@ -293,12 +306,27 @@ const Assessments = () => {
       // 4. Cập nhật trạng thái test
       if (statusType === 'Actived') {
         await axios.put(`${API_URL}api/Test/update-status-fix`, { testID: newTestID, testStatus: 3 });
-        message.success('Đã tạo và chuyển sang Actived!');
+        setNotification({
+          visible: true,
+          type: 'success',
+          message: 'Tạo bài kiểm tra thành công!',
+          description: `Bài kiểm tra "${basicInfo.TestName || 'Không tên'}" đã được tạo và chuyển sang trạng thái Đang hoạt động.`
+        });
       } else if (statusType === 'Pending') {
         await axios.put(`${API_URL}api/Test/update-status-fix`, { testID: newTestID, testStatus: 1 });
-        message.success('Đã tạo và chuyển sang Pending!');
+        setNotification({
+          visible: true,
+          type: 'success',
+          message: 'Gửi duyệt thành công!',
+          description: `Bài kiểm tra "${basicInfo.TestName || 'Không tên'}" đã được gửi cho quản lý duyệt.`
+        });
       } else {
-        message.success('Đã tạo bài kiểm tra (Drafted)!');
+        setNotification({
+          visible: true,
+          type: 'success',
+          message: 'Tạo bài kiểm tra thành công!',
+          description: `Bài kiểm tra "${basicInfo.TestName || 'Không tên'}" đã được lưu dưới dạng bản nháp.`
+        });
       }
       setShowCreate(false);
       setFormData({ basicInfo: {}, sections: [] });
@@ -316,7 +344,12 @@ const Assessments = () => {
       }
     } catch (error) {
       console.error(error);
-      message.error('Lỗi khi tạo bài kiểm tra!');
+      setNotification({
+        visible: true,
+        type: 'error',
+        message: 'Tạo bài kiểm tra thất bại!',
+        description: 'Đã xảy ra lỗi khi tạo bài kiểm tra. Vui lòng kiểm tra lại thông tin hoặc thử lại sau.'
+      });
       setModalLoading(false);
       setLecturerLoading(false);
     }
@@ -433,6 +466,13 @@ const Assessments = () => {
 
   return (
     <div>
+      <Notification
+        visible={notification.visible}
+        type={notification.type}
+        message={notification.message}
+        description={notification.description}
+        onClose={() => setNotification(n => ({ ...n, visible: false }))}
+      />
       {!showCreate ? (
         <>
           <AssessmentsTable
