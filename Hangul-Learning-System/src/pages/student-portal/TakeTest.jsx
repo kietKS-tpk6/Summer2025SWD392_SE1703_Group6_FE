@@ -211,7 +211,7 @@ const TakeTest = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       message.success('Nộp bài thành công!');
-      navigate(`/student/test-result/${testEventID}`);
+      navigate(`/student/view-test/${testEventID}`);
     } catch (error) {
       console.error('Lỗi khi nộp bài:', error);
       message.error('Có lỗi xảy ra khi nộp bài.');
