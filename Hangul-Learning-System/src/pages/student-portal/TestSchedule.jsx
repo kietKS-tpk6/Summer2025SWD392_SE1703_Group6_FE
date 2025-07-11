@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Typography, List, Spin, Alert, Tag, Button, Table } from 'antd';
+import { Card, Typography, List, Spin, Alert, Tag, Button, Table, message } from 'antd';
 import axios from 'axios';
 import { API_URL } from '../../config/api';
 import { useNavigate } from 'react-router-dom';
@@ -101,8 +101,19 @@ const TestSchedule = ({ classId, subjectId }) => {
       { title: 'Giờ', dataIndex: 'lessonStartTime', key: 'lessonStartTime_time', render: (date) => date ? new Date(date).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '--' },
       { title: 'Thời gian kiểm tra', key: 'testTime', render: (_, item) => item.startAt && item.endAt ? `${new Date(item.startAt).toLocaleString('vi-VN')} - ${new Date(item.endAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}` : 'Chưa có thời gian kiểm tra' },
       { title: 'Trạng thái', key: 'status', render: (_, item) => { const status = getVirtualStatus(item.startAt, item.endAt); return <Tag color={status.color}>{status.text}</Tag>; } },
-      { title: 'Thao tác', key: 'actions', align: 'center', render: (_, item) => (
-          item.testID ? (
+      { title: 'Thao tác', key: 'actions', align: 'center', render: (_, item) => {
+          if (item.assessmentCategory === 2 || item.assessmentCategory === 3) {
+            // Giữa kì hoặc cuối kì: chỉ cho xem
+            return item.testID ? (
+              <Button size="small" type="primary" onClick={() => navigate(`/lecturer/view-test/${item.testEventID}`)}>
+                Xem chi tiết
+              </Button>
+            ) : (
+              <span style={{ color: '#aaa' }}>Chỉ xem</span>
+            );
+          }
+          // Đề kiểm tra đánh giá: cho thêm hoặc xem
+          return item.testID ? (
             <Button size="small" type="primary" onClick={() => navigate(`/lecturer/view-test/${item.testEventID}`)}>
               Xem chi tiết
             </Button>
@@ -110,8 +121,8 @@ const TestSchedule = ({ classId, subjectId }) => {
             <Button size="small" type="dashed" onClick={() => { setModalTestEvent(item); setModalOpen(true); }}>
               Thêm bài kiểm tra
             </Button>
-          )
-        )
+          );
+        }
       },
     ];
     return (
@@ -140,6 +151,20 @@ const TestSchedule = ({ classId, subjectId }) => {
               const startAt = date && values.startTime ? new Date(date.setHours(values.startTime.hour(), values.startTime.minute(), 0, 0)) : null;
               // endAt = ngày lesson + giờ endTime
               const endAt = date && values.endTime ? new Date(date.setHours(values.endTime.hour(), values.endTime.minute(), 0, 0)) : null;
+              // Kiểm tra durationMinutes
+              const testEventRes = await axios.get(`${API_URL}api/TestEvent/get-by-class-id/${modalTestEvent.classID}`);
+              const testEvent = Array.isArray(testEventRes.data?.data)
+                ? testEventRes.data.data.find(ev => ev.testEventID === modalTestEvent.testEventID)
+                : null;
+              const durationMinutes = testEvent?.durationMinutes;
+              if (durationMinutes && startAt && endAt) {
+                const diff = Math.round((endAt - startAt) / 60000);
+                if (diff > durationMinutes) {
+                  message.error(`Thời gian kiểm tra của tiết học này chỉ được phép trong ${durationMinutes} phút`);
+                  setModalLoading(false);
+                  return;
+                }
+              }
               const body = {
                 testEventIdToUpdate: modalTestEvent?.testEventID,
                 testID: values.testID,
@@ -159,8 +184,9 @@ const TestSchedule = ({ classId, subjectId }) => {
               }
               setModalOpen(false);
               await reloadTests();
+              message.success('Thêm đề kiểm tra thành công!');
             } catch (err) {
-              // handle error nếu cần
+              message.error('Thêm đề kiểm tra thất bại!');
             } finally {
               setModalLoading(false);
             }

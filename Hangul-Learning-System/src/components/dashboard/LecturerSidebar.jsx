@@ -83,6 +83,11 @@ const LecturerSidebar = () => {
       label: 'Quản lí đề kiểm tra',
     },
     {
+      key: '/lecturer/tasks',
+      icon: <BarChartOutlined />,
+      label: 'Quản lí công việc',
+    },
+    {
       key: '/logout',
       icon: <LogoutOutlined />,
       label: 'Đăng xuất ',
