@@ -35,7 +35,7 @@ const ClassDetail = (props) => {
           <BasicInfoSection classId={classId} />
         </div>
         <div style={{ marginBottom: 24 }}>
-          <StudentListSection classId={classId} />
+          <StudentListSection classId={classId} subjectId={subjectId} />
         </div>
         <div>
           <MonthlyTimetableSection classId={classId} reload={reloadTimetable} onLessonClick={handleOpenLessonDetail} />

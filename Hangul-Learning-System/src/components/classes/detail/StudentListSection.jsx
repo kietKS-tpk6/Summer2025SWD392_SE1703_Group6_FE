@@ -63,7 +63,7 @@ const columns = [
   },
 ];
 
-const StudentListSection = ({ classId }) => {
+const StudentListSection = ({ classId, subjectId }) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -77,6 +77,15 @@ const StudentListSection = ({ classId }) => {
     else if (user?.role === 'Lecture') prefix = '/lecturer';
     else prefix = '';
     navigate(`${prefix}/attendance`, { state: { classId } });
+  };
+
+  const handleGradeClick = () => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    let prefix = '';
+    if (user?.role === 'Manager') prefix = '/dashboard';
+    else if (user?.role === 'Lecture') prefix = '/lecturer';
+    else prefix = '';
+    navigate(`${prefix}/grades`, { state: { classId, subjectId } });
   };
 
   useEffect(() => {
@@ -100,10 +109,13 @@ const StudentListSection = ({ classId }) => {
         <div
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span>Danh sách học sinh</span>
             <Button type="primary" onClick={handleAttendanceClick} disabled={!classId} size="small">
               Tình trạng điểm danh
+            </Button>
+            <Button type="primary" onClick={handleGradeClick} disabled={!classId} size="small">
+              Bảng điểm
             </Button>
           </div>
           <span
