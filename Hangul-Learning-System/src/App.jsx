@@ -56,6 +56,7 @@ import LecturerClassList from './components/class/LecturerClassList';
 import ViewClasses from './pages/viewer-portal/ViewClasses';
 import ViewTestLecturer from './pages/lecturer-portal/ViewTest';
 import LecturerTestDetail from './pages/lecturer-portal/LecturerTestDetail';
+import Tasks from './components/tasks/Tasks';
 
 const { Content } = Layout;
 
@@ -104,6 +105,7 @@ const lecturerRoutes = [
   { path: '/attendance', element: <AttendancePage/>},
   { path: '/view-test/:testEventID', element: <ViewTestLecturer /> },
   { path: '/test-detail/:studentTestID', element: <LecturerTestDetail /> },
+  { path: '/tasks', element: <Tasks /> },
 ];
 
 // Public routes configuration
