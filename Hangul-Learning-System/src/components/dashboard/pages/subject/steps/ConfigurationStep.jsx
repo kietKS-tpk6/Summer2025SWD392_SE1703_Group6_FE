@@ -4,7 +4,7 @@ import { UploadOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { API_URL, endpoints } from '../../../../../config/api';
 
-const ConfigurationStep = ({ onGenerateClassSlots }) => {
+const ConfigurationStep = ({ onGenerateClassSlots, hasImportedClassSlots }) => {
   const [maxWeeks, setMaxWeeks] = useState(null);
   const [maxSlotsPerWeek, setMaxSlotsPerWeek] = useState(null);
   const [maxTotalMinutes, setMaxTotalMinutes] = useState(null);
@@ -78,7 +78,7 @@ const ConfigurationStep = ({ onGenerateClassSlots }) => {
               : 'Tổng số tuần'
           }
           rules={[
-            { required: true, message: 'Vui lòng nhập tổng số tuần' },
+            !hasImportedClassSlots && { required: true, message: 'Vui lòng nhập tổng số tuần' },
             ({ getFieldValue }) => ({
               validator(_, value) {
                 if (maxWeeks !== null && value > maxWeeks) {
@@ -87,9 +87,9 @@ const ConfigurationStep = ({ onGenerateClassSlots }) => {
                 return Promise.resolve();
               },
             }),
-          ]}
+          ].filter(Boolean)}
         >
-          <InputNumber min={1} placeholder="VD: 10" style={{ width: '100%' }} />
+          <InputNumber min={1} placeholder="VD: 10" style={{ width: '100%' }} disabled={hasImportedClassSlots} />
         </Form.Item>
 
         <Form.Item
@@ -100,7 +100,7 @@ const ConfigurationStep = ({ onGenerateClassSlots }) => {
               : 'Số slot mỗi tuần'
           }
           rules={[
-            { required: true, message: 'Vui lòng nhập số slot mỗi tuần' },
+            !hasImportedClassSlots && { required: true, message: 'Vui lòng nhập số slot mỗi tuần' },
             ({ getFieldValue }) => ({
               validator(_, value) {
                 if (maxSlotsPerWeek !== null && value > maxSlotsPerWeek) {
@@ -109,9 +109,9 @@ const ConfigurationStep = ({ onGenerateClassSlots }) => {
                 return Promise.resolve();
               },
             }),
-          ]}
+          ].filter(Boolean)}
         >
-          <InputNumber min={1} placeholder="VD: 3" style={{ width: '100%' }} />
+          <InputNumber min={1} placeholder="VD: 3" style={{ width: '100%' }} disabled={hasImportedClassSlots} />
         </Form.Item>
 
         <Form.Item
@@ -122,14 +122,14 @@ const ConfigurationStep = ({ onGenerateClassSlots }) => {
               : 'Thời lượng mặc định mỗi tiết'
           }
           rules={[
-            { required: true, message: 'Vui lòng nhập thời lượng mặc định cho mỗi tiết' },
+            !hasImportedClassSlots && { required: true, message: 'Vui lòng nhập thời lượng mặc định cho mỗi tiết' },
             ({ getFieldValue }) => ({
               validator(_, value) {
                 const slots = getFieldValue('slotsPerWeek');
                 if (
                   maxTotalMinutes !== null &&
                   slots &&
-                  value * slots > maxTotalMinutes
+                  value > maxTotalMinutes
                 ) {
                   return Promise.reject(
                     new Error(`Tổng thời lượng không vượt quá ${maxTotalMinutes} phút`)
@@ -138,9 +138,9 @@ const ConfigurationStep = ({ onGenerateClassSlots }) => {
                 return Promise.resolve();
               },
             }),
-          ]}
+          ].filter(Boolean)}
         >
-          <InputNumber min={1} placeholder="VD: 45" style={{ width: '100%' }} />
+          <InputNumber min={1} placeholder="VD: 45" style={{ width: '100%' }} disabled={hasImportedClassSlots} />
         </Form.Item>
       </Card>
     </>

@@ -291,7 +291,6 @@ const Syllabus = () => {
       name: subject.name,
       description: subject.description,
       minAverageScoreToPass: subject.minAverageScoreToPass,
-      isActive: subject.isActive
     });
     setIsSubjectModalVisible(true);
   };

@@ -55,7 +55,8 @@ const Users = () => {
 
         setUsers(formattedData);
         setPagination({
-          ...pagination,
+          current: page,
+          pageSize: pageSize,
           total: response.data.data.totalItems || formattedData.length
         });
       } else {
@@ -120,35 +121,42 @@ const Users = () => {
       title: 'ID',
       dataIndex: 'accountID',
       key: 'accountID',
+      width: 100,
     },
     {
       title: 'Họ tên',
       dataIndex: 'name',
       key: 'name',
+      width: 180,
     },
     {
       title: 'Email',
       dataIndex: 'email',
       key: 'email',
+      width: 220,
     },
     {
       title: 'Số điện thoại',
       dataIndex: 'phoneNumber',
       key: 'phoneNumber',
+      width: 140,
     },
     {
       title: 'Vai trò',
       dataIndex: 'role',
       key: 'role',
+      width: 120,
     },
     {
       title: 'Trạng thái',
       dataIndex: 'status',
       key: 'status',
+      width: 140,
     },
     {
       title: 'Thao tác',
       key: 'actions',
+      width: 160,
       render: (_, record) => (
         <Space>
           <Button type="primary" size="small" onClick={() => {

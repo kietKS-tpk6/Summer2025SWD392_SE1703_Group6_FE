@@ -56,7 +56,8 @@ import LecturerClassList from './components/class/LecturerClassList';
 import ViewClasses from './pages/viewer-portal/ViewClasses';
 import ViewTestLecturer from './pages/lecturer-portal/ViewTest';
 import LecturerTestDetail from './pages/lecturer-portal/LecturerTestDetail';
-import Tasks from './components/tasks/Tasks';
+import GradesPage from './pages/GradesPage';
+// import ManagerGradesPage from './pages/manager-portal/GradesPage';
 
 const { Content } = Layout;
 
@@ -82,6 +83,7 @@ const dashboardRoutes = [
   { path: '/attendance', element: <AttendancePage/>},
   { path: '/check-attendance', element: <CheckAttendancePage /> },
   { path: '/system-config', element: <SystemConfig /> },
+  { path: '/grades', element: <GradesPage /> },
 ];
 
 // Lecturer routes configuration
@@ -105,7 +107,7 @@ const lecturerRoutes = [
   { path: '/attendance', element: <AttendancePage/>},
   { path: '/view-test/:testEventID', element: <ViewTestLecturer /> },
   { path: '/test-detail/:studentTestID', element: <LecturerTestDetail /> },
-  { path: '/tasks', element: <Tasks /> },
+  { path: '/grades', element: <GradesPage /> },
 ];
 
 // Public routes configuration

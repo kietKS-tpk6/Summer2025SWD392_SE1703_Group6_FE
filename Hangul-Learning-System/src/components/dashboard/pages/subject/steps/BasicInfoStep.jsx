@@ -36,7 +36,6 @@ const BasicInfoStep = ({ onNext, form, subjectId, isEditing }) => {
         const updateData = {
           ...subjectData,
           subjectID: subjectId,
-          isActive: true,
           createAt: new Date().toISOString()
         };
         const response = await subjectService.updateSubject(updateData);
@@ -125,6 +124,10 @@ const BasicInfoStep = ({ onNext, form, subjectId, isEditing }) => {
 
               if (trimmedDescription === nameValue) {
                 return Promise.reject(new Error('Mô tả không được trùng với tên môn học'));
+              }
+
+              if (trimmedDescription.length > 255) {
+                return Promise.reject(new Error('Mô tả không được vượt quá 255 ký tự'));
               }
 
               return Promise.resolve();

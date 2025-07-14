@@ -88,6 +88,10 @@ export const endpoints = {
 
   class: {
     checkName: 'api/Class/check-name',
+    ongoingCount: 'api/Class/ongoing-count/{lecturerId}',
+    pendingWritingCount: 'api/StudentTests/pending-writing-count/{lecturerId}',
+    upcomingTestCount: 'api/TestEvent/upcoming-count/{lecturerId}',
+    activeStudentCount: 'api/Enrollment/active-student-count/{lecturerId}',
   },
 
   cloudinary: {

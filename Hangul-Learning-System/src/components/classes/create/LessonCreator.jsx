@@ -4,7 +4,6 @@ import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import axios from 'axios';
 import { API_URL } from '../../../config/api';
-dayjs.extend(isSameOrAfter);
 
 const { Text } = Typography;
 
@@ -75,17 +74,25 @@ const LessonCreator = React.forwardRef(({ formData = {}, onChange, maxDaysPerWee
     setLecturerLoading(true);
     setAvailableLecturers([]);
     try {
-      const res = await axios.get(`${API_URL}api/Account/get-lecturer-free`, {
-        params: {
-          SubjectID: subjectID,
-          DateStart: dayjs(values.teachingStartTime).format('YYYY-MM-DD HH:mm:ss'),
-          Time: dayjs(values.lessonTime).format('HH:mm:ss'),
-          dayOfWeeks: values.weekDays, 
-        }
-      });
-      console.log( "Lecture free response: " + res.data);
+      const teachingStartTime = new Date(values.teachingStartTime);
+      teachingStartTime.setHours(teachingStartTime.getHours() + 7);
+      const params = new URLSearchParams();
+      params.append('SubjectID', subjectID);
+      params.append('DateStart', teachingStartTime.toISOString());
+      params.append('Time', dayjs(values.lessonTime).format('HH:mm:ss'));
+      values.weekDays.forEach(day => params.append('dayOfWeeks', day));
+
+      const res = await axios.get(
+        `${API_URL}api/Account/get-lecturer-free?${params.toString()}`
+      );
       setAvailableLecturers(res.data.data || []);
     } catch (e) {
+      // Log lỗi
+      if (e.response) {
+        console.log("Lecture free response (error):", JSON.stringify(e.response.data, null, 2));
+      } else {
+        console.log("Lecture free response (error):", e);
+      }
       setAvailableLecturers([]);
     } finally {
       setLecturerLoading(false);
@@ -120,7 +127,7 @@ const LessonCreator = React.forwardRef(({ formData = {}, onChange, maxDaysPerWee
       initialValues={{
         ...formData,
         teachingStartTime: formData.teachingStartTime
-          ? dayjs(formData.teachingStartTime).format('YYYY-MM-DDTHH:mm:ss')
+          ? dayjs(formData.teachingStartTime)
           : null,
         lessonTime: initialLessonTime ? dayjs(initialLessonTime, 'HH:mm') : null,
       }}

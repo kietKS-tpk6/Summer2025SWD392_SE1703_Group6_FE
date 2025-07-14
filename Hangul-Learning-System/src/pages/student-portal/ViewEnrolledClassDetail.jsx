@@ -81,7 +81,7 @@ const ViewEnrolledClassDetail = () => {
                     </Card>
                     <div style={{ marginTop: 32 }}>
                         {userRole === 'Lecture' ? (
-                            <StudentListSection classId={classId} />
+                            <StudentListSection classId={classId} subjectId={classData.subjectID || classData.subjectId} />
                         ) : (
                             <Syllabus classId={classId} />
                         )}
