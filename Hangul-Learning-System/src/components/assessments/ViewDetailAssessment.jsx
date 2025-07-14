@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Descriptions, Card, Collapse, List, Spin, Alert, Button, Tag, Typography, Row, Col, Input, InputNumber, message } from 'antd';
+import { Descriptions, Card, Collapse, List, Spin, Alert, Button, Tag, Typography, Row, Col, Input, InputNumber, message, Modal, notification } from 'antd';
 import axios from 'axios';
 import { API_URL } from '../../config/api';
 import { UserOutlined, FileTextOutlined, InfoCircleOutlined, CheckCircleOutlined, PlusOutlined, DeleteOutlined, EditOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import ActionConfirm from '../common/ActionConfirm';
+import Notification from '../common/Notification';
 
 const { Panel } = Collapse;
 
@@ -94,12 +96,6 @@ const ViewDetailAssessment = ({ testID: propTestID, inModal }) => {
   const isOwnDraft = isManager && testInfo.status === 0 && testInfo.account?.accountID === currentUser.accountId;
   const isLecture = userRole === 'Lecture';
   const isOwnDraftLecture = isLecture && testInfo.status === 0 && createBy === currentUser.accountId;
-
-  console.log('Current user:', currentUser);
-  console.log('Test info:', testInfo);
-  console.log('Params:', params);
-  console.log('createBy:', createBy, 'accountId:', currentUser.accountId, 'status:', testInfo.status);
-  console.log('isOwnDraftLecture:', isOwnDraftLecture);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -239,23 +235,87 @@ const ViewDetailAssessment = ({ testID: propTestID, inModal }) => {
     }));
   };
 
+  // Thêm state notification cho Notification.tsx custom
+  const [notification, setNotification] = useState({ visible: false, type: 'success', message: '', description: '' });
+
   // Hàm xác nhận lưu
   const handleSave = async () => {
     try {
       // Lấy accountId từ localStorage
       const user = JSON.parse(localStorage.getItem('user'));
       const accountId = user?.accountId;
-      // Gọi API update testName
-      await axios.put(`${API_URL}api/Test/${testID}`, {
+      // 1. Gọi API update testName
+      console.time('updateTest');
+      const resTest = await axios.put(`${API_URL}api/Test/${testID}`, {
         testID,
         testName: editTestName,
         requestingAccountID: accountId
       });
-      // TODO: Gọi API update questions nếu có thay đổi
+      console.timeEnd('updateTest');
+      if (resTest.data && resTest.data.success === false) {
+        setNotification({
+          visible: true,
+          type: 'error',
+          message: 'Cập nhật thất bại',
+          description: resTest.data.message || 'Cập nhật tên bài kiểm tra thất bại!'
+        });
+        setIsEditing(false);
+        return;
+      }
+      // 2. Chuẩn bị dữ liệu cho API bulk-update questions
+      const questionsPayload = [];
+      for (const section of editSections) {
+        for (const q of section.questions || []) {
+          questionsPayload.push({
+            questionID: q.questionID,
+            context: q.context,
+            imageURL: q.imageURL || '',
+            audioURL: q.audioURL || '',
+            options: Array.isArray(q.options) ? q.options.map(a => ({
+              context: a.context,
+              imageURL: a.imageURL || '',
+              audioURL: a.audioURL || '',
+              isCorrect: !!a.isCorrect
+            })) : []
+          });
+        }
+      }
+      // 3. Gọi API bulk-update questions nếu có câu hỏi
+      if (questionsPayload.length > 0) {
+        console.time('bulkUpdateQuestions');
+        const resQuestions = await axios.put(`${API_URL}api/Questions/questions/bulk-update`, {
+          questions: questionsPayload
+        });
+        console.timeEnd('bulkUpdateQuestions');
+        if (resQuestions.data && resQuestions.data.success === false) {
+          setNotification({
+            visible: true,
+            type: 'error',
+            message: 'Cập nhật thất bại',
+            description: resQuestions.data.message || 'Cập nhật câu hỏi thất bại!'
+          });
+          setIsEditing(false);
+          return;
+        }
+      }
       setTestInfo(prev => ({ ...prev, testName: editTestName }));
-      message.success('Đã cập nhật tên bài kiểm tra!');
+      setNotification({
+        visible: true,
+        type: 'success',
+        message: 'Thành công',
+        description: 'Đã cập nhật bài kiểm tra!'
+      });
     } catch (e) {
-      message.error('Cập nhật tên bài kiểm tra thất bại!');
+      let msg = 'Cập nhật bài kiểm tra thất bại!';
+      if (e.response && e.response.data && e.response.data.message) {
+        msg = e.response.data.message;
+      }
+      setNotification({
+        visible: true,
+        type: 'error',
+        message: 'Cập nhật thất bại',
+        description: msg
+      });
     }
     setIsEditing(false);
   };
@@ -263,8 +323,20 @@ const ViewDetailAssessment = ({ testID: propTestID, inModal }) => {
   // Kiểm tra testType là Writing (6)
   const isWritingTest = testInfo.testType === 6;
 
+  const [showApproveConfirm, setShowApproveConfirm] = useState(false);
+  // Thêm state cho xác nhận cập nhật
+  const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
+
   return (
     <div style={{ maxWidth: 950, margin: '0 auto', padding: 24 }}>
+      {/* Notification */}
+      <Notification
+        visible={notification.visible}
+        type={notification.type}
+        message={notification.message}
+        description={notification.description}
+        onClose={() => setNotification(n => ({ ...n, visible: false }))}
+      />
       {/* Thanh tiêu đề & nút thao tác */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -285,85 +357,70 @@ const ViewDetailAssessment = ({ testID: propTestID, inModal }) => {
         <div style={{ display: 'flex', gap: 8 }}>
           {/* MANAGER: Chỉ 1 nút duyệt khi nháp, 2 nút khi chờ duyệt */}
           {isManager && testInfo.status === 0 && (
-            <Button
-              type="primary"
-              icon={<CheckOutlined />}
-              onClick={async () => {
-                setApproving(true);
-                try {
-                  await axios.put(`${API_URL}api/Test/update-status-fix`, { testID, testStatus: 3 });
-                  setTestStatus(3);
-                  message.success('Đã duyệt bài kiểm tra!');
-                  // Reload lại chi tiết
-                  const res = await axios.get(`${API_URL}api/Questions/by-test/${testID}`);
-                  setSections(res.data || []);
-                  // Chuyển hướng về trang danh sách assessment
-                  navigate('/dashboard/assessment');
-                } catch {
-                  message.error('Lỗi khi duyệt bài kiểm tra!');
-                } finally {
-                  setApproving(false);
-                }
-              }}
-              loading={approving}
-              disabled={loading || approving}
-            >
-              Duyệt bài kiểm tra
-            </Button>
+            <>
+              <Button
+                type="primary"
+                icon={<CheckOutlined />}
+                onClick={() => setShowApproveConfirm(true)}
+                loading={approving}
+                disabled={loading || approving}
+              >
+                Duyệt bài kiểm tra
+              </Button>
+              <ActionConfirm
+                open={showApproveConfirm}
+                title="Xác nhận duyệt bài kiểm tra"
+                content="Bạn xác nhận muốn duyệt bài kiểm này?"
+                onOk={async () => {
+                  setShowApproveConfirm(false);
+                  setApproving(true);
+                  try {
+                    await axios.put(`${API_URL}api/Test/update-status-fix`, { testID, testStatus: 3 });
+                    setTestStatus(3);
+                    notification.success({ message: 'Thành công', description: 'Đã duyệt bài kiểm tra!' });
+                    navigate('/dashboard/assessment');
+                  } catch {
+                    notification.error({ message: 'Lỗi', description: 'Lỗi khi duyệt bài kiểm tra!' });
+                  } finally {
+                    setApproving(false);
+                  }
+                }}
+                onCancel={() => setShowApproveConfirm(false)}
+              />
+            </>
           )}
           {isManager && testInfo.status === 1 && (
             <>
               <Button
                 type="primary"
                 icon={<CheckOutlined />}
-                onClick={async () => {
-                  setApproving(true);
-                  try {
-                    await axios.put(`${API_URL}api/Test/update-status-fix`, { testID, testStatus: 3 });
-                    setTestStatus(3);
-                    message.success('Đã duyệt bài kiểm tra!');
-                    // Reload lại chi tiết
-                    const res = await axios.get(`${API_URL}api/Questions/by-test/${testID}`);
-                    setSections(res.data || []);
-                    // Chuyển hướng về trang danh sách assessment
-                    navigate('/dashboard/assessment');
-                  } catch {
-                    message.error('Lỗi khi duyệt bài kiểm tra!');
-                  } finally {
-                    setApproving(false);
-                  }
-                }}
+                onClick={() => setShowApproveConfirm(true)}
                 loading={approving}
                 disabled={loading || approving}
                 style={{ marginRight: 8 }}
               >
                 Duyệt bài kiểm tra
               </Button>
-              <Button
-                danger
-                icon={<CloseOutlined />}
-                onClick={async () => {
+              <ActionConfirm
+                open={showApproveConfirm}
+                title="Xác nhận duyệt bài kiểm tra"
+                content="Bạn xác nhận muốn duyệt bài kiểm này?"
+                onOk={async () => {
+                  setShowApproveConfirm(false);
                   setApproving(true);
                   try {
-                    await axios.put(`${API_URL}api/Test/update-status-fix`, { testID, testStatus: 2 });
-                    setTestStatus(2);
-                    message.success('Đã từ chối bài kiểm tra!');
-                    // Reload lại chi tiết
-                    const res = await axios.get(`${API_URL}api/Questions/by-test/${testID}`);
-                    setSections(res.data || []);
-                    // Chuyển hướng về trang danh sách assessment
+                    await axios.put(`${API_URL}api/Test/update-status-fix`, { testID, testStatus: 3 });
+                    setTestStatus(3);
+                    notification.success({ message: 'Thành công', description: 'Đã duyệt bài kiểm tra!' });
                     navigate('/dashboard/assessment');
                   } catch {
-                    message.error('Lỗi khi từ chối bài kiểm tra!');
+                    notification.error({ message: 'Lỗi', description: 'Lỗi khi duyệt bài kiểm tra!' });
                   } finally {
                     setApproving(false);
                   }
                 }}
-                loading={approving}
-                disabled={loading || approving}
-              >
-                Từ chối bài kiểm tra
-              </Button>
+                onCancel={() => setShowApproveConfirm(false)}
+              />
             </>
           )}
           {/* LECTURER: Chỉ hiện nút gửi duyệt nếu là bài nháp của mình */}
@@ -396,9 +453,23 @@ const ViewDetailAssessment = ({ testID: propTestID, inModal }) => {
             </Button>
           )}
           {isEditing && (
-            <Button type="primary" icon={<CheckOutlined />} onClick={handleSave}>
-              Xác nhận
-            </Button>
+            <>
+              <Button type="primary" icon={<CheckOutlined />} onClick={() => setShowUpdateConfirm(true)}>
+                Xác nhận
+              </Button>
+              <ActionConfirm
+                open={showUpdateConfirm}
+                title="Xác nhận cập nhật bài kiểm tra"
+                content="Bạn có chắc chắn muốn cập nhật bài kiểm tra này?"
+                onOk={async () => {
+                  setShowUpdateConfirm(false);
+                  await handleSave();
+                }}
+                onCancel={() => setShowUpdateConfirm(false)}
+                okText="Xác nhận"
+                cancelText="Hủy"
+              />
+            </>
           )}
           {!inModal && (
             <Button onClick={() => navigate(-1)} icon={<CloseOutlined />}>
@@ -496,6 +567,7 @@ const ViewDetailAssessment = ({ testID: propTestID, inModal }) => {
                     ) : (
                       <span style={{ color: '#222' }}>{q.context}</span>
                     )}
+                    {/* Hiển thị ảnh/audio cho câu hỏi */}
                     {q.imageURL && (
                       <img src={q.imageURL} alt="img" style={{ maxWidth: 120, marginLeft: 8, verticalAlign: 'middle', borderRadius: 4, border: '1px solid #eee' }} />
                     )}
