@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Form, Input, Select, InputNumber, Upload, Button, Row, Col, Radio, Space, Card, Tabs, Alert, message } from 'antd';
 import { UploadOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import CreateQuestion from './CreateQuestion';
+import axios from 'axios';
+import { API_URL } from '../../../config/api';
 
 const { Option } = Select;
 const { TabPane } = Tabs;
@@ -357,15 +359,19 @@ const CreateAssessmentSection = ({
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                     <Upload
-                      customRequest={e => {
+                      customRequest={async (e) => {
                         const file = e.file;
-                        const reader = new FileReader();
-                        reader.onload = ev => {
+                        try {
+                          const formData = new FormData();
+                          formData.append('file', file);
+                          const res = await axios.post(`${API_URL}api/Cloudinary/upload-image-test-section`, formData, {
+                            headers: { 'Content-Type': 'multipart/form-data' }
+                          });
+                          const url = res.data.url || res.data;
                           const newSections = [...sectionList];
-                          newSections[idx] = { ...newSections[idx], imageURL: ev.target.result, audioURL: undefined };
+                          newSections[idx] = { ...newSections[idx], imageURL: url, audioURL: undefined };
                           onChange && onChange(newSections);
-                        };
-                        reader.readAsDataURL(file);
+                        } catch (err) {}
                       }}
                       showUploadList={false}
                       accept="image/*"
@@ -388,15 +394,19 @@ const CreateAssessmentSection = ({
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                     <Upload
-                      customRequest={e => {
+                      customRequest={async (e) => {
                         const file = e.file;
-                        const reader = new FileReader();
-                        reader.onload = ev => {
+                        try {
+                          const formData = new FormData();
+                          formData.append('file', file);
+                          const res = await axios.post(`${API_URL}api/Cloudinary/upload-audio-test-section`, formData, {
+                            headers: { 'Content-Type': 'multipart/form-data' }
+                          });
+                          const url = res.data.url || res.data;
                           const newSections = [...sectionList];
-                          newSections[idx] = { ...newSections[idx], audioURL: ev.target.result, imageURL: undefined };
+                          newSections[idx] = { ...newSections[idx], audioURL: url, imageURL: undefined };
                           onChange && onChange(newSections);
-                        };
-                        reader.readAsDataURL(file);
+                        } catch (err) {}
                       }}
                       showUploadList={false}
                       accept="audio/*"
