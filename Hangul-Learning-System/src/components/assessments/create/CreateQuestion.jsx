@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Input, Button, Card, Upload, Radio, Space, message } from 'antd';
 import { PlusOutlined, DeleteOutlined, UploadOutlined } from '@ant-design/icons';
 import * as XLSX from 'xlsx';
+import axios from 'axios';
+import { API_URL } from '../../../config/api';
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
@@ -170,44 +172,66 @@ const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score, onImpor
     onChange && onChange(newQuestions);
   };
 
-  // Upload ảnh/audio cho từng câu hỏi (MCQ)
-  const handleQuestionUpload = (qIdx, file, type) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const newQuestions = questions.map((q, i) => {
-        if (i !== qIdx) return q;
-        if (type === 'image') {
-          return { ...q, imageURL: e.target.result, audioURL: undefined };
-        } else if (type === 'audio') {
-          return { ...q, audioURL: e.target.result, imageURL: undefined };
-        }
-        return q;
-      });
-      onChange && onChange(newQuestions);
-    };
-    reader.readAsDataURL(file);
+  // Upload ảnh/audio cho từng câu hỏi (MCQ, Writing)
+  const handleQuestionUpload = async (qIdx, file, type) => {
+    if (type === 'image') {
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await axios.post(`${API_URL}api/Cloudinary/upload-image-question`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        const url = res.data.url || res.data;
+        const newQuestions = questions.map((q, i) => i === qIdx ? { ...q, imageURL: url, audioURL: undefined } : q);
+        onChange && onChange(newQuestions);
+      } catch (err) {}
+    } else if (type === 'audio') {
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await axios.post(`${API_URL}api/Cloudinary/upload-audio-question`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        const url = res.data.url || res.data;
+        const newQuestions = questions.map((q, i) => i === qIdx ? { ...q, audioURL: url, imageURL: undefined } : q);
+        onChange && onChange(newQuestions);
+      } catch (err) {}
+    }
   };
 
   // Upload ảnh/audio cho từng đáp án (MCQ)
-  const handleAnswerUpload = (qIdx, aIdx, file, type) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const newQuestions = questions.map((q, i) => {
-        if (i !== qIdx) return q;
-        const newAnswers = q.answers.map((a, j) => {
-          if (j !== aIdx) return a;
-          if (type === 'image') {
-            return { ...a, imageURL: e.target.result, audioURL: undefined };
-          } else if (type === 'audio') {
-            return { ...a, audioURL: e.target.result, imageURL: undefined };
-          }
-          return a;
+  const handleAnswerUpload = async (qIdx, aIdx, file, type) => {
+    if (type === 'image') {
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await axios.post(`${API_URL}api/Cloudinary/upload-image-mcq-option`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
         });
-        return { ...q, answers: newAnswers };
-      });
-      onChange && onChange(newQuestions);
-    };
-    reader.readAsDataURL(file);
+        const url = res.data.url || res.data;
+        const newQuestions = questions.map((q, i) => {
+          if (i !== qIdx) return q;
+          const newAnswers = q.answers.map((a, j) => j === aIdx ? { ...a, imageURL: url, audioURL: undefined } : a);
+          return { ...q, answers: newAnswers };
+        });
+        onChange && onChange(newQuestions);
+      } catch (err) {}
+    } else if (type === 'audio') {
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await axios.post(`${API_URL}api/Cloudinary/upload-audio-mcq-option`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        const url = res.data.url || res.data;
+        const newQuestions = questions.map((q, i) => {
+          if (i !== qIdx) return q;
+          const newAnswers = q.answers.map((a, j) => j === aIdx ? { ...a, audioURL: url, imageURL: undefined } : a);
+          return { ...q, answers: newAnswers };
+        });
+        onChange && onChange(newQuestions);
+      } catch (err) {}
+    }
   };
 
   // Xóa file ảnh/audio của đáp án
