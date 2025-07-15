@@ -23,7 +23,7 @@ const statusViMap = {
 };
 // const statusMap = { 0: <Tag color="green">Đang hoạt động</Tag>, 1: <Tag color="red">Ngưng hoạt động</Tag> };
 
-const AccountDetail = ({ accountID: propAccountID }) => {
+const AccountDetail = ({ accountID: propAccountID, hideFields = [] }) => {
   const params = useParams();
   const navigate = useNavigate();
   const [studentData, setStudentData] = useState(null);
@@ -416,35 +416,42 @@ const AccountDetail = ({ accountID: propAccountID }) => {
                     studentData.email
                   )}
                 </Descriptions.Item>
-                <Descriptions.Item label="Ngày sinh">
-                  {isEditing ? (
-                    <DatePicker value={editValues.birthDate ? dayjs(editValues.birthDate) : null} onChange={d => handleChange('birthDate', d)} format="YYYY-MM-DD" style={{ width: '100%' }} />
-                  ) : (
-                    studentData.birthDate
-                  )}
-                </Descriptions.Item>
-                <Descriptions.Item label="Vai trò">
-                  {isEditing && isCurrentUserManager ? (
-                    <Select value={editValues.role} onChange={v => handleChange('role', v)} style={{ width: '100%' }}>
-                      <Option value="Manager">Quản lý</Option>
-                      <Option value="Lecture">Giảng viên</Option>
-                      <Option value="Student">Học sinh</Option>
-                    </Select>
-                  ) : (
-                    roleViMap[studentData.role] || studentData.role
-                  )}
-                </Descriptions.Item>
-                <Descriptions.Item label="Trạng thái">
-                  {isEditing && isCurrentUserManager ? (
-                    <Select value={editValues.status} onChange={v => handleChange('status', v)} style={{ width: '100%' }}>
-                      <Option value="Active">Đang hoạt động</Option>
-                      <Option value="Blocked">Đã bị khóa</Option>
-                      <Option value="Deleted">Đã xóa</Option>
-                    </Select>
-                  ) : (
-                    statusViMap[studentData.status] || studentData.status
-                  )}
-                </Descriptions.Item>
+                {/* Ẩn các trường dưới đây nếu có trong hideFields */}
+                {!hideFields.includes('birthDate') && (
+                  <Descriptions.Item label="Ngày sinh">
+                    {isEditing ? (
+                      <DatePicker value={editValues.birthDate ? dayjs(editValues.birthDate) : null} onChange={d => handleChange('birthDate', d)} format="YYYY-MM-DD" style={{ width: '100%' }} />
+                    ) : (
+                      studentData.birthDate
+                    )}
+                  </Descriptions.Item>
+                )}
+                {!hideFields.includes('role') && (
+                  <Descriptions.Item label="Vai trò">
+                    {isEditing && isCurrentUserManager ? (
+                      <Select value={editValues.role} onChange={v => handleChange('role', v)} style={{ width: '100%' }}>
+                        <Option value="Manager">Quản lý</Option>
+                        <Option value="Lecture">Giảng viên</Option>
+                        <Option value="Student">Học sinh</Option>
+                      </Select>
+                    ) : (
+                      roleViMap[studentData.role] || studentData.role
+                    )}
+                  </Descriptions.Item>
+                )}
+                {!hideFields.includes('status') && (
+                  <Descriptions.Item label="Trạng thái">
+                    {isEditing && isCurrentUserManager ? (
+                      <Select value={editValues.status} onChange={v => handleChange('status', v)} style={{ width: '100%' }}>
+                        <Option value="Active">Đang hoạt động</Option>
+                        <Option value="Blocked">Đã bị khóa</Option>
+                        <Option value="Deleted">Đã xóa</Option>
+                      </Select>
+                    ) : (
+                      statusViMap[studentData.status] || studentData.status
+                    )}
+                  </Descriptions.Item>
+                )}
               </Descriptions>
               {isEditing ? (
                 <div style={{ marginTop: 24 }}>
