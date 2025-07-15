@@ -57,6 +57,7 @@ import ViewClasses from './pages/viewer-portal/ViewClasses';
 import ViewTestLecturer from './pages/lecturer-portal/ViewTest';
 import LecturerTestDetail from './pages/lecturer-portal/LecturerTestDetail';
 import GradesPage from './pages/GradesPage';
+import IncomeManagement from './pages/manager-portal/IncomeManagement';
 // import ManagerGradesPage from './pages/manager-portal/GradesPage';
 
 const { Content } = Layout;
@@ -84,6 +85,7 @@ const dashboardRoutes = [
   { path: '/check-attendance', element: <CheckAttendancePage /> },
   { path: '/system-config', element: <SystemConfig /> },
   { path: '/grades', element: <GradesPage /> },
+  { path: '/income', element: <IncomeManagement /> },
 ];
 
 // Lecturer routes configuration
