@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Card, Button, Select, Input, Space, Tag, Typography, Row, Col, Statistic, Progress, message, Form, Alert, Modal } from 'antd';
-import { SearchOutlined, DownloadOutlined, FilterOutlined, EditOutlined, EyeOutlined } from '@ant-design/icons';
+import { Table, Card, Button, Select, Input, Space, Typography, Form, Alert, Modal } from 'antd';
+import { DownloadOutlined, FilterOutlined, EditOutlined } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import dayjs from 'dayjs';
-import EditGradeModal from '../components/common/EditGradeModal';
 import StudentGradeDetailModal from '../components/common/StudentGradeDetailModal';
 import { API_URL, endpoints } from '../config/api';
+import Notification from '../components/common/Notification';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -39,6 +38,7 @@ const GradesPage = () => {
   const [dynamicData, setDynamicData] = useState([]);
   const [criteriaList, setCriteriaList] = useState([]);
   const [criteriaWeightMap, setCriteriaWeightMap] = useState({}); // <--- NEW
+  const [studentMarkIdMap, setStudentMarkIdMap] = useState({}); // <--- NEW: { [studentName]: { [criteriaKey]: studentMarkID } }
 
   // State for modals
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -49,6 +49,9 @@ const GradesPage = () => {
   // State for editing mode
   const [isEditing, setIsEditing] = useState(false);
   const [editTableData, setEditTableData] = useState([]);
+
+  // State for notifications
+  const [notification, setNotification] = useState({ visible: false, type: 'success', message: '', description: '' });
 
   // Fetch API data when classId or subjectId changes
   useEffect(() => {
@@ -73,9 +76,10 @@ const GradesPage = () => {
     axios.get(`${API_URL}api/StudentMarks/get-student-mark-detail-by-class/${classId}`)
       .then((marksRes) => {
         const apiData = marksRes.data.data;
-        const { criteria, dataSource } = buildDynamicTable(apiData);
+        const { criteria, dataSource, markIdMap } = buildDynamicTable(apiData);
         setCriteriaList(criteria);
         setDynamicData(dataSource);
+        setStudentMarkIdMap(markIdMap); // <--- NEW
       })
       .catch(() => setApiError('Không thể tải bảng điểm từ hệ thống!'))
       .finally(() => setApiLoading(false));
@@ -83,9 +87,10 @@ const GradesPage = () => {
 
   // Build columns and dataSource from API data
   function buildDynamicTable(apiData) {
-    if (!Array.isArray(apiData) || apiData.length === 0) return { criteria: [], dataSource: [] };
+    if (!Array.isArray(apiData) || apiData.length === 0) return { criteria: [], dataSource: [], markIdMap: {} };
     // 1. Gom tất cả học sinh từ mọi tiêu chí (dựa vào studentName)
     const studentMap = {};
+    const markIdMap = {}; // { [studentName]: { [criteriaKey]: studentMarkID } }
     apiData.forEach(item => {
       item.studentMarks.forEach(s => {
         if (!studentMap[s.studentName]) {
@@ -94,6 +99,10 @@ const GradesPage = () => {
             studentName: s.studentName,
           };
         }
+        // Build markIdMap
+        const colKey = `${item.assessmentCategory}_${item.assessmentIndex}`;
+        if (!markIdMap[s.studentName]) markIdMap[s.studentName] = {};
+        markIdMap[s.studentName][colKey] = s.studentMarkID;
       });
     });
     const students = Object.values(studentMap);
@@ -134,7 +143,7 @@ const GradesPage = () => {
       });
       return row;
     });
-    return { criteria: criteriaList, dataSource };
+    return { criteria: criteriaList, dataSource, markIdMap };
   }
 
   // Modal handlers
@@ -176,8 +185,39 @@ const GradesPage = () => {
     setDetailModalVisible(true);
   };
 
-  const handleExportGrades = () => {
-    message.info('Tính năng xuất bảng điểm sẽ được cập nhật sau!');
+  const handleExportGrades = async () => {
+    if (!classId) {
+      message.error('Không tìm thấy mã lớp!');
+      return;
+    }
+    try {
+      const userStr = localStorage.getItem('user');
+      const token = localStorage.getItem('token') || (userStr ? JSON.parse(userStr).token : undefined);
+      const response = await axios.get(
+        `${API_URL}api/ExportExcel/export-student-mark/${classId}`,
+        {
+          responseType: 'blob',
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        }
+      );
+      // Lấy tên file từ header nếu có
+      let filename = `BangDiem_Lop_${classId}.xlsx`;
+      const disposition = response.headers['content-disposition'];
+      if (disposition && disposition.indexOf('filename=') !== -1) {
+        filename = decodeURIComponent(disposition.split('filename=')[1].replace(/['\"]/g, ''));
+      }
+      // Tạo link tải file
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      message.success('Đã xuất file bảng điểm!');
+    } catch (err) {
+      message.error('Không thể xuất bảng điểm!');
+    }
   };
   const handleBack = () => {
     navigate(-1);
@@ -194,11 +234,94 @@ const GradesPage = () => {
     setEditTableData([]);
   };
   // Khi bấm Lưu
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
+    // Validate all marks in editTableData are between 0 and 10 and only 1 decimal place
+    for (const row of editTableData) {
+      for (const c of criteriaList) {
+        const colKey = c.key;
+        const mark = row[colKey];
+        if (
+          mark !== null &&
+          mark !== undefined &&
+          (
+            isNaN(mark) ||
+            mark < 0 ||
+            mark > 10 ||
+            !/^\d+(\.\d{1})?$/.test(mark.toString())
+          )
+        ) {
+          setNotification({
+            visible: true,
+            type: 'error',
+            message: 'Lỗi nhập điểm',
+            description: 'Vui lòng nhập điểm từ 0 đến 10 và chỉ tối đa 1 số sau dấu phẩy!',
+          });
+          return;
+        }
+      }
+    }
     setDynamicData(editTableData);
     setIsEditing(false);
     setEditTableData([]);
-    message.success('Cập nhật bảng điểm thành công (chỉ trên UI)!');
+
+    // Build inputMarks array for API
+    const inputMarks = [];
+    for (const row of editTableData) {
+      const studentName = row.studentName;
+      for (const c of criteriaList) {
+        const colKey = c.key;
+        const mark = row[colKey];
+        const studentMarkID = studentMarkIdMap?.[studentName]?.[colKey];
+        if (studentMarkID !== undefined && mark !== null && mark !== undefined) {
+          inputMarks.push({
+            studentMarkID,
+            mark,
+            comment: '', // You can add comment support if needed
+          });
+        }
+      }
+    }
+    // Get lecturerId and token
+    const userStr = localStorage.getItem('user');
+    const lecturerId = userStr ? JSON.parse(userStr).accountId : undefined;
+    const token = localStorage.getItem('token') || (userStr ? JSON.parse(userStr).token : undefined);
+    if (!lecturerId || !token) {
+      setNotification({
+        visible: true,
+        type: 'error',
+        message: 'Lỗi xác thực',
+        description: 'Không tìm thấy thông tin giảng viên hoặc token!',
+      });
+      return;
+    }
+    try {
+      await axios.put(
+        `${API_URL}api/StudentMarks/input-marks-by-lecturer`,
+        {
+          lecturerId,
+          inputMarks,
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      setNotification({
+        visible: true,
+        type: 'success',
+        message: 'Lưu điểm thành công',
+        description: 'Đã lưu bảng điểm lên hệ thống!',
+      });
+    } catch (err) {
+      setNotification({
+        visible: true,
+        type: 'error',
+        message: 'Lưu điểm thất bại',
+        description: 'Lỗi khi lưu bảng điểm lên hệ thống!',
+      });
+    }
   };
 
   // Render cell editable
@@ -276,7 +399,6 @@ const GradesPage = () => {
   function calculateAverages(dataRows) {
     return dataRows.map(row => {
       let total = 0;
-      let totalWeight = 0;
       criteriaList.forEach(c => {
         let weight = null;
         if (criteriaWeightMap[c.category]) {
@@ -287,11 +409,10 @@ const GradesPage = () => {
         const mark = row[c.key];
         if (mark !== null && mark !== undefined && weight !== null) {
           total += mark * weight;
-          totalWeight += weight;
         }
       });
-      // Nếu tổng weight = 0 thì trả về null
-      const avg = totalWeight > 0 ? (total / totalWeight).toFixed(2) : null;
+      // Chỉ cộng các điểm có nhập × % (không chia lại), sau đó chia cho 100 để ra thang điểm đúng
+      const avg = total > 0 ? (total / 100).toFixed(2) : null;
       return { ...row, average: avg };
     });
   }
@@ -380,6 +501,7 @@ const GradesPage = () => {
         studentRecord={selectedRecord}
         showClassInfo={isManager}
       />
+      <Notification {...notification} onClose={() => setNotification(n => ({ ...n, visible: false }))} />
     </div>
   );
 };

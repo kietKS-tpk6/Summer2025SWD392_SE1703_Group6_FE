@@ -290,7 +290,12 @@ const CreateSubject = () => {
         }));
         // Chỉ validate nếu chưa có dữ liệu import từ Excel
         if (classSlots.length === 0 && (!values.totalWeeks || !values.slotsPerWeek)) {
-          message.error('Vui lòng nhập đầy đủ thông tin cấu hình');
+          setNotificationConfig({
+            visible: true,
+            type: 'error',
+            message: 'Thiếu thông tin!',
+            description: 'Vui lòng nhập đầy đủ thông tin cấu hình.',
+          });
           return;
         }
         // Chỉ generateClassSlots nếu chưa có dữ liệu import từ Excel
@@ -384,47 +389,66 @@ const CreateSubject = () => {
   };
 
   const handleImportExcelClassSlots = async (importedSlots) => {
-    // Chỉ kiểm tra đã có thông tin môn học
-    const values = form.getFieldsValue();
-    const basicInfo = {
-      name: values.name || subjectData.basicInfo?.name,
-      description: values.description || subjectData.basicInfo?.description,
-      minAverageScoreToPass: values.minAverageScoreToPass || subjectData.basicInfo?.minAverageScoreToPass
-    };
-    if (!basicInfo.name || !basicInfo.description || !basicInfo.minAverageScoreToPass) {
+    try {
+      // Chỉ kiểm tra đã có thông tin môn học
+      const values = form.getFieldsValue();
+      const basicInfo = {
+        name: values.name || subjectData.basicInfo?.name,
+        description: values.description || subjectData.basicInfo?.description,
+        minAverageScoreToPass: values.minAverageScoreToPass || subjectData.basicInfo?.minAverageScoreToPass
+      };
+      if (!basicInfo.name || !basicInfo.description || !basicInfo.minAverageScoreToPass) {
+        setNotificationConfig({
+          visible: true,
+          type: 'error',
+          message: 'Thiếu thông tin!',
+          description: 'Vui lòng nhập đầy đủ thông tin môn học trước khi import file Excel.',
+        });
+        return;
+      }
+      setClassSlots(importedSlots);
+
+      // Tính lại số tuần và số slot mỗi tuần từ importedSlots
+      const weeks = [...new Set(importedSlots.map(slot => slot.week))];
+      const slotsPerWeek = Math.max(...weeks.map(week =>
+        importedSlots.filter(slot => slot.week === week).length
+      ));
+      setSubjectData(prev => ({
+        ...prev,
+        basicInfo,
+        configuration: {
+          ...prev.configuration,
+          totalWeeks: weeks.length,
+          slotsPerWeek: slotsPerWeek,
+          totalSlots: importedSlots.length
+        }
+      }));
+
+      // Cập nhật lại form values cho step 2
+      form.setFieldsValue({
+        totalWeeks: weeks.length,
+        slotsPerWeek: slotsPerWeek,
+      });
+
+      setCurrent(1); // Chuyển sang bước 2
+      setNotificationConfig({
+        visible: true,
+        type: 'success',
+        message: 'Import thành công!',
+        description: '',
+      });
+    } catch (error) {
+      let errorMessage = 'Có lỗi khi import file Excel.';
+      if (error.response && error.response.data && typeof error.response.data.message === 'string') {
+        errorMessage = error.response.data.message;
+      }
       setNotificationConfig({
         visible: true,
         type: 'error',
-        message: 'Thiếu thông tin!',
-        description: 'Vui lòng nhập đầy đủ thông tin môn học trước khi import file Excel.',
+        message: 'Lỗi import!',
+        description: errorMessage,
       });
-      return;
     }
-    setClassSlots(importedSlots);
-
-    // Tính lại số tuần và số slot mỗi tuần từ importedSlots
-    const weeks = [...new Set(importedSlots.map(slot => slot.week))];
-    const slotsPerWeek = Math.max(...weeks.map(week =>
-      importedSlots.filter(slot => slot.week === week).length
-    ));
-    setSubjectData(prev => ({
-      ...prev,
-      basicInfo,
-      configuration: {
-        ...prev.configuration,
-        totalWeeks: weeks.length,
-        slotsPerWeek: slotsPerWeek,
-        totalSlots: importedSlots.length
-      }
-    }));
-
-    // Cập nhật lại form values cho step 2
-    form.setFieldsValue({
-      totalWeeks: weeks.length,
-      slotsPerWeek: slotsPerWeek,
-    });
-
-    setCurrent(1); // Chuyển sang bước 2
   };
 
   // Hàm xử lý công khai môn học (placeholder, cần tích hợp API nếu có)
@@ -442,7 +466,7 @@ const CreateSubject = () => {
   };
 
   const steps = [
-    { title: 'Thông tin & cấu hình môn học', content: (<><Title level={4}>Thông tin môn học</Title><BasicInfoStep form={form} subjectId={subjectId} isEditing={isEditing} /><Title level={4}>Cấu hình môn học</Title><ConfigurationStep onGenerateClassSlots={handleImportExcelClassSlots} hasImportedClassSlots={classSlots.length > 0} /></>) },
+    { title: 'Thông tin & cấu hình môn học', content: (<><Title level={4}>Thông tin môn học</Title><BasicInfoStep form={form} subjectId={subjectId} isEditing={isEditing} /><Title level={4}>Cấu hình môn học</Title><ConfigurationStep onGenerateClassSlots={handleImportExcelClassSlots} onImportError={(msg) => setNotificationConfig({ visible: true, type: 'error', message: 'Lỗi import!', description: msg })} hasImportedClassSlots={classSlots.length > 0} /></>) },
     { title: 'Thông tin buổi học', content: <ClassInfoStep classSlots={classSlots} editingSlot={editingSlot} setEditingSlot={setEditingSlot} handleEditSlot={handleEditSlot} handleUpdateSlot={handleUpdateSlot} editForm={editForm} /> },
     { title: 'Thông tin đánh giá', content: <AssessmentStep form={form} configuration={subjectData.configuration} /> },
     { title: 'Chọn slot kiểm tra', content: <TestSlotsStep classSlots={classSlots} form={form} assessmentInfo={subjectData.assessmentInfo} /> },

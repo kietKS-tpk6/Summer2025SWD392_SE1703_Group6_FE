@@ -3,10 +3,18 @@ import { Table, Tag } from 'antd';
 import axios from 'axios';
 import { API_URL, endpoints } from '../../config/api';
 
-const statusColor = {
-  Paid: 'green',
-  Pending: 'gold',
-  Refunded: 'red',
+// PaymentStatus enum mapping từ backend:
+// 0: Paid, 1: Pending, 2: RequestRefund, 3: Refunded
+// Có thể trả về dạng số hoặc chuỗi, đều được map linh hoạt ở đây.
+const statusMap = {
+  Paid: { label: 'Đã thanh toán', color: 'green' },
+  // Pending: { label: 'Đang chờ', color: 'gold' },
+  RequestRefund: { label: 'Yêu cầu hoàn tiền', color: 'orange' },
+  Refunded: { label: 'Đã hoàn tiền', color: 'red' },
+  0: { label: 'Đã thanh toán', color: 'green' },
+  // 1: { label: 'Đang chờ', color: 'gold' },
+  2: { label: 'Yêu cầu hoàn tiền', color: 'orange' },
+  3: { label: 'Đã hoàn tiền', color: 'red' },
 };
 
 const columns = [
@@ -46,7 +54,10 @@ const columns = [
     title: 'Trạng thái',
     dataIndex: 'status',
     key: 'status',
-    render: (status) => <Tag color={statusColor[status] || 'default'}>{status}</Tag>,
+    render: (status) => {
+      const s = statusMap[status] || { label: status, color: 'default' };
+      return <Tag color={s.color}>{s.label}</Tag>;
+    },
     width: 110,
   },
   {
