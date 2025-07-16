@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { API_URL } from '../../config/api';
-import { Table, Avatar, Button, Tag } from 'antd';
+import { Table, Avatar, Button, Tag, Select } from 'antd';
 import { getUser } from '../../utils/auth';
 import { EyeOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
@@ -31,6 +31,8 @@ const statusText = (status) => {
   }
 };
 
+const { Option } = Select;
+
 const LecturerClassList = () => {
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -40,6 +42,7 @@ const LecturerClassList = () => {
   const user = getUser();
   const lecturerID = user?.accountId;
   const navigate = useNavigate();
+  const [selectedStatus, setSelectedStatus] = useState(null); // null = tất cả
 
   useEffect(() => {
     const fetchClasses = async () => {
@@ -53,20 +56,25 @@ const LecturerClassList = () => {
           },
         });
         const items = Array.isArray(res.data) ? res.data : res.data.items || [];
-        // Lọc theo lecturerID và status=2 (Ongoing)
+        // Lọc theo lecturerID và status (1,2,3 hoặc theo selectedStatus)
+        const validStatuses = [1, 2, 3];
         const filtered = items.filter(
-          (item) => item.status === 2 && item.lecturerID === lecturerID
+          (item) =>
+            item.lecturerID === lecturerID &&
+            (selectedStatus === null
+              ? validStatuses.includes(item.status)
+              : item.status === selectedStatus)
         );
         setClasses(filtered);
         setTotal(res.data.totalItems || filtered.length);
       } catch (err) {
-        setError('Không thể tải danh sách lớp đang dạy.');
+        setError('Không thể tải danh sách lớp.');
       } finally {
         setLoading(false);
       }
     };
     fetchClasses();
-  }, [page, lecturerID]);
+  }, [page, lecturerID, selectedStatus]);
 
   const columns = [
     {
@@ -132,7 +140,20 @@ const LecturerClassList = () => {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 24 }}>Danh sách lớp đang dạy</h2>
+      <h2 style={{ marginBottom: 24 }}>Danh sách lớp</h2>
+      <div style={{ marginBottom: 16 }}>
+        <span style={{ marginRight: 8 }}>Lọc theo trạng thái:</span>
+        <Select
+          value={selectedStatus}
+          onChange={value => { setSelectedStatus(value); setPage(1); }}
+          style={{ width: 180 }}
+        >
+          <Option value={null}>Tất cả</Option>
+          <Option value={1}>Mở tuyển sinh</Option>
+          <Option value={2}>Đang dạy</Option>
+          <Option value={3}>Hoàn thành</Option>
+        </Select>
+      </div>
       <Table
         columns={columns}
         dataSource={classes}
@@ -145,7 +166,7 @@ const LecturerClassList = () => {
           onChange: setPage,
           showSizeChanger: false,
         }}
-        locale={{ emptyText: error || 'Không có lớp nào đang dạy.' }}
+        locale={{ emptyText: error || 'Không có lớp nào.' }}
         bordered
       />
     </div>
