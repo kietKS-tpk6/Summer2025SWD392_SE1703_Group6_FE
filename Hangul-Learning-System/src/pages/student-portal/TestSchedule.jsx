@@ -4,7 +4,10 @@ import axios from 'axios';
 import { API_URL } from '../../config/api';
 import { useNavigate } from 'react-router-dom';
 import AddAssessmentToTestEventComponent from '../../components/classes/detail/AddAssessmentToTestEventComponent';
+import UpdateAssessmentOfTestEventComponent from '../../components/classes/detail/UpdateAssessmentOfTestEventComponent';
 import { Form } from 'antd';
+import Notification from '../../components/common/Notification';
+import dayjs from 'dayjs';
 
 const TestSchedule = ({ classId, subjectId }) => {
   const [tests, setTests] = useState([]);
@@ -17,6 +20,19 @@ const TestSchedule = ({ classId, subjectId }) => {
   const [modalTestEvent, setModalTestEvent] = useState(null);
   const [form] = Form.useForm();
   const [modalLoading, setModalLoading] = useState(false);
+
+  // State cho 2 modal riêng biệt
+  const [modalAddOpen, setModalAddOpen] = useState(false);
+  const [modalAddTestEvent, setModalAddTestEvent] = useState(null);
+  const [modalUpdateOpen, setModalUpdateOpen] = useState(false);
+  const [modalUpdateTestEvent, setModalUpdateTestEvent] = useState(null);
+
+  const [notification, setNotification] = useState({
+    visible: false,
+    type: 'success',
+    message: '',
+    description: ''
+  });
 
   useEffect(() => {
     const fetchTests = async () => {
@@ -90,6 +106,14 @@ const TestSchedule = ({ classId, subjectId }) => {
     3: 'Đề thi cuối kì',
   };
 
+  // Thêm hàm tiện ích để cộng 7 giờ (UTC+7)
+  function toVNTime(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    d.setHours(d.getHours() + 7);
+    return d;
+  }
+
   // Nếu là giảng viên, hiển thị tất cả bài kiểm tra ở dạng bảng
   if (userRole === 'Lecture') {
     const columns = [
@@ -99,7 +123,7 @@ const TestSchedule = ({ classId, subjectId }) => {
       { title: 'Tiết', dataIndex: 'lessonTitle', key: 'lessonTitle' },
       { title: 'Ngày', dataIndex: 'lessonStartTime', key: 'lessonStartTime', render: (date) => date ? new Date(date).toLocaleDateString('vi-VN') : '--' },
       { title: 'Giờ', dataIndex: 'lessonStartTime', key: 'lessonStartTime_time', render: (date) => date ? new Date(date).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '--' },
-      { title: 'Thời gian kiểm tra', key: 'testTime', render: (_, item) => item.startAt && item.endAt ? `${new Date(item.startAt).toLocaleString('vi-VN')} - ${new Date(item.endAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}` : 'Chưa có thời gian kiểm tra' },
+      { title: 'Thời gian kiểm tra', key: 'testTime', render: (_, item) => item.startAt && item.endAt ? `${toVNTime(item.startAt).toLocaleString('vi-VN')} - ${toVNTime(item.endAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}` : 'Chưa có thời gian kiểm tra' },
       { title: 'Trạng thái', key: 'status', render: (_, item) => { const status = getVirtualStatus(item.startAt, item.endAt); return <Tag color={status.color}>{status.text}</Tag>; } },
       { title: 'Thao tác', key: 'actions', align: 'center', render: (_, item) => {
           if (item.assessmentCategory === 2 || item.assessmentCategory === 3) {
@@ -114,11 +138,47 @@ const TestSchedule = ({ classId, subjectId }) => {
           }
           // Đề kiểm tra đánh giá: cho thêm hoặc xem
           return item.testID ? (
-            <Button size="small" type="primary" onClick={() => navigate(`/lecturer/view-test/${item.testEventID}`)}>
-              Xem chi tiết
-            </Button>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+              <Button
+                size="small"
+                type="primary"
+                style={{ minWidth: 120, fontWeight: 500 }}
+                onClick={() => navigate(`/lecturer/view-test/${item.testEventID}`)}
+              >
+                Xem chi tiết
+              </Button>
+              <Button
+                size="small"
+                type="default"
+                onClick={() => {
+                  // Chuẩn bị initialValues cho popup chỉnh sửa
+                  const initialValues = {
+                    testID: item.testID || undefined,
+                    description: item.description || '',
+                    startTime: item.startAt ? dayjs(toVNTime(item.startAt)) : undefined,
+                    endTime: item.endAt ? dayjs(toVNTime(item.endAt)) : undefined,
+                    attemptLimit: item.attemptLimit || 1,
+                    password: item.password || '',
+                  };
+                  setModalUpdateTestEvent({ ...item, initialValues });
+                  setModalUpdateOpen(true);
+                }}
+                style={{ minWidth: 120, fontWeight: 500, background: '#faad14', border: '1px solid #faad14', color: '#fff', transition: 'all 0.2s' }}
+                onMouseOver={e => e.currentTarget.style.background = '#ffd666'}
+                onMouseOut={e => e.currentTarget.style.background = '#faad14'}
+              >
+                Chỉnh sửa
+              </Button>
+            </div>
           ) : (
-            <Button size="small" type="dashed" onClick={() => { setModalTestEvent(item); setModalOpen(true); }}>
+            <Button
+              size="small"
+              type="dashed"
+              onClick={() => {
+                setModalAddTestEvent(item);
+                setModalAddOpen(true);
+              }}
+            >
               Thêm bài kiểm tra
             </Button>
           );
@@ -127,6 +187,13 @@ const TestSchedule = ({ classId, subjectId }) => {
     ];
     return (
       <>
+        <Notification
+          visible={notification.visible}
+          type={notification.type}
+          message={notification.message}
+          description={notification.description}
+          onClose={() => setNotification(n => ({ ...n, visible: false }))}
+        />
         <Card bordered style={{ borderRadius: 18 }}>
           <Typography.Title level={4} style={{ marginBottom: 16 }}>Lịch kiểm tra</Typography.Title>
           <Table
@@ -136,37 +203,25 @@ const TestSchedule = ({ classId, subjectId }) => {
             locale={{ emptyText: 'Chưa có lịch kiểm tra.' }}
           />
         </Card>
+        {/* Modal thêm đề kiểm tra */}
         <AddAssessmentToTestEventComponent
-          open={modalOpen}
-          onCancel={() => setModalOpen(false)}
+          open={modalAddOpen}
+          onCancel={() => setModalAddOpen(false)}
           onOk={async () => {
             setModalLoading(true);
             try {
               const values = await form.validateFields();
-              // Lấy lessonStartTime từ modalTestEvent
-              const lessonStart = modalTestEvent?.lessonStartTime ? new Date(modalTestEvent.lessonStartTime) : null;
-              const lessonEnd = modalTestEvent?.lessonEndTime ? new Date(modalTestEvent.lessonEndTime) : null;
+              // Lấy lessonStartTime từ modalAddTestEvent
+              const lessonStart = modalAddTestEvent?.lessonStartTime ? new Date(modalAddTestEvent.lessonStartTime) : null;
+              const lessonEnd = modalAddTestEvent?.lessonEndTime ? new Date(modalAddTestEvent.lessonEndTime) : null;
               const date = lessonStart ? new Date(lessonStart.setHours(0,0,0,0)) : null;
               // startAt = ngày lesson + giờ startTime
               const startAt = date && values.startTime ? new Date(date.setHours(values.startTime.hour(), values.startTime.minute(), 0, 0)) : null;
               // endAt = ngày lesson + giờ endTime
               const endAt = date && values.endTime ? new Date(date.setHours(values.endTime.hour(), values.endTime.minute(), 0, 0)) : null;
-              // Kiểm tra durationMinutes
-              const testEventRes = await axios.get(`${API_URL}api/TestEvent/get-by-class-id/${modalTestEvent.classID}`);
-              const testEvent = Array.isArray(testEventRes.data?.data)
-                ? testEventRes.data.data.find(ev => ev.testEventID === modalTestEvent.testEventID)
-                : null;
-              const durationMinutes = testEvent?.durationMinutes;
-              if (durationMinutes && startAt && endAt) {
-                const diff = Math.round((endAt - startAt) / 60000);
-                if (diff > durationMinutes) {
-                  message.error(`Thời gian kiểm tra của tiết học này chỉ được phép trong ${durationMinutes} phút`);
-                  setModalLoading(false);
-                  return;
-                }
-              }
+              // BỎ ĐOẠN KIỂM TRA durationMinutes
               const body = {
-                testEventIdToUpdate: modalTestEvent?.testEventID,
+                testEventIdToUpdate: modalAddTestEvent?.testEventID,
                 testID: values.testID,
                 description: values.description,
                 startAt: startAt ? startAt.toISOString() : null,
@@ -176,31 +231,107 @@ const TestSchedule = ({ classId, subjectId }) => {
               };
               await axios.put(`${API_URL}api/TestEvent/configure`, body);
               // Gọi API update status testEvent thành Actived (1)
-              if (modalTestEvent?.testEventID) {
+              if (modalAddTestEvent?.testEventID) {
                 await axios.put(`${API_URL}api/TestEvent/update-status`, {
-                  testEventIDToUpdate: modalTestEvent.testEventID,
+                  testEventIDToUpdate: modalAddTestEvent.testEventID,
                   status: 1
                 });
               }
-              setModalOpen(false);
+              setModalAddOpen(false);
               await reloadTests();
-              message.success('Thêm đề kiểm tra thành công!');
+              setNotification({
+                visible: true,
+                type: 'success',
+                message: 'Thêm đề kiểm tra thành công!',
+                description: ''
+              });
             } catch (err) {
-              message.error('Thêm đề kiểm tra thất bại!');
+              setNotification({
+                visible: true,
+                type: 'error',
+                message: 'Thêm đề kiểm tra thất bại!',
+                description: err?.message || ''
+              });
             } finally {
               setModalLoading(false);
             }
           }}
           form={form}
           loading={modalLoading}
-          lessonStartTime={modalTestEvent?.lessonStartTime}
-          lessonEndTime={modalTestEvent?.lessonEndTime}
-          assessment={modalTestEvent}
+          lessonStartTime={modalAddTestEvent?.lessonStartTime}
+          lessonEndTime={modalAddTestEvent?.lessonEndTime}
+          assessment={modalAddTestEvent}
           subjectId={subjectId}
-          assessmentCategory={modalTestEvent?.assessmentCategory ?? modalTestEvent?.category}
-          testType={modalTestEvent?.testType}
+          assessmentCategory={modalAddTestEvent?.assessmentCategory ?? modalAddTestEvent?.category}
+          testType={modalAddTestEvent?.testType}
           API_URL={API_URL}
           onSuccess={reloadTests}
+          initialValues={undefined}
+        />
+        {/* Modal cập nhật đề kiểm tra */}
+        <UpdateAssessmentOfTestEventComponent
+          open={modalUpdateOpen}
+          onCancel={() => setModalUpdateOpen(false)}
+          onOk={async () => {
+            setModalLoading(true);
+            try {
+              const values = await form.validateFields();
+              // Lấy lessonStartTime từ modalUpdateTestEvent
+              const lessonStart = modalUpdateTestEvent?.lessonStartTime ? new Date(modalUpdateTestEvent.lessonStartTime) : null;
+              const lessonEnd = modalUpdateTestEvent?.lessonEndTime ? new Date(modalUpdateTestEvent.lessonEndTime) : null;
+              const date = lessonStart ? new Date(lessonStart.setHours(0,0,0,0)) : null;
+              // startAt = ngày lesson + giờ startTime
+              const startAt = date && values.startTime ? new Date(date.setHours(values.startTime.hour(), values.startTime.minute(), 0, 0)) : null;
+              // endAt = ngày lesson + giờ endTime
+              const endAt = date && values.endTime ? new Date(date.setHours(values.endTime.hour(), values.endTime.minute(), 0, 0)) : null;
+              // BỎ ĐOẠN KIỂM TRA durationMinutes
+              const body = {
+                testEventIdToUpdate: modalUpdateTestEvent?.testEventID,
+                testID: values.testID,
+                description: values.description,
+                startAt: startAt ? startAt.toISOString() : null,
+                endAt: endAt ? endAt.toISOString() : null,
+                attemptLimit: values.attemptLimit,
+                password: values.password,
+              };
+              await axios.put(`${API_URL}api/TestEvent/configure`, body);
+              // Gọi API update status testEvent thành Actived (1)
+              if (modalUpdateTestEvent?.testEventID) {
+                await axios.put(`${API_URL}api/TestEvent/update-status`, {
+                  testEventIDToUpdate: modalUpdateTestEvent.testEventID,
+                  status: 1
+                });
+              }
+              setModalUpdateOpen(false);
+              await reloadTests();
+              setNotification({
+                visible: true,
+                type: 'success',
+                message: 'Cập nhật đề kiểm tra thành công!',
+                description: ''
+              });
+            } catch (err) {
+              setNotification({
+                visible: true,
+                type: 'error',
+                message: 'Cập nhật đề kiểm tra thất bại!',
+                description: err?.message || ''
+              });
+            } finally {
+              setModalLoading(false);
+            }
+          }}
+          form={form}
+          loading={modalLoading}
+          lessonStartTime={modalUpdateTestEvent?.lessonStartTime}
+          lessonEndTime={modalUpdateTestEvent?.lessonEndTime}
+          assessment={modalUpdateTestEvent}
+          subjectId={subjectId}
+          assessmentCategory={modalUpdateTestEvent?.assessmentCategory ?? modalUpdateTestEvent?.category}
+          testType={modalUpdateTestEvent?.testType}
+          API_URL={API_URL}
+          onSuccess={reloadTests}
+          initialValues={modalUpdateTestEvent?.initialValues}
         />
       </>
     );
@@ -241,7 +372,7 @@ const TestSchedule = ({ classId, subjectId }) => {
                 <div style={{ color: '#888', fontSize: 14 }}>
                   <b>Thời gian kiểm tra:</b> {' '}
                   {item.startAt && item.endAt
-                    ? `${new Date(item.startAt).toLocaleString('vi-VN')} - ${new Date(item.endAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`
+                    ? `${toVNTime(item.startAt).toLocaleString('vi-VN')} - ${toVNTime(item.endAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`
                     : 'Chưa có thời gian kiểm tra'}
                 </div>
                 {(() => {
