@@ -40,6 +40,9 @@ const TestSlotsStep = ({ classSlots, form, assessmentInfo }) => {
     return countMap;
   };
 
+  // Tìm index slot đầu tiên có Midterm
+  const midtermIndex = testSlots.findIndex(slot => slot?.criteriaId === 2);
+
   const usedCounts = getUsedCounts();
 
   const columns = [
@@ -76,7 +79,15 @@ const TestSlotsStep = ({ classSlots, form, assessmentInfo }) => {
               {criteria.map((criterion, index) => {
                 const used = usedCounts[criterion.category] || 0;
                 const limit = criterion.requiredTestCount;
-                const isDisabled = used >= limit && currentSelected !== criterion.category;
+                let isDisabled = used >= limit && currentSelected !== criterion.category;
+                // Disable Final nếu trước Midterm
+                if (
+                  criterion.category === 3 && // Final
+                  midtermIndex !== -1 && // Có Midterm
+                  currentSlotIndex < midtermIndex // Slot này trước Midterm
+                ) {
+                  isDisabled = true;
+                }
                 return (
                   <Option
                     key={index}

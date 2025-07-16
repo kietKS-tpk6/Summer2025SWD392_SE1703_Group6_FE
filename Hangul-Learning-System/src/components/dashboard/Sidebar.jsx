@@ -97,10 +97,16 @@ const Sidebar = () => {
     //   icon: <IdcardOutlined />, // icon thẻ ID
     //   label: 'Hồ sơ',
     // },
+    // {
+    //   key: '/dashboard/settings',
+    //   icon: <SettingOutlined />,
+    //   label: 'Cài đặt',
+    // },
+  
     {
-      key: '/dashboard/settings',
-      icon: <SettingOutlined />,
-      label: 'Cài đặt',
+      key: '/dashboard/income',
+      icon: <BarChartOutlined />, // icon thu nhập
+      label: 'Quản lí thu nhập',
     },
     {
       key: '/dashboard/system-config',

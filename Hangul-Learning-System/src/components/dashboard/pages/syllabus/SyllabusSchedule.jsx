@@ -59,13 +59,13 @@ const SyllabusSchedule = ({
       key: 'testDurationMinutes',
       width: 120,
     },
-    {
-      title: 'Cho phép làm lại',
-      dataIndex: 'allowMultipleAttempts',
-      key: 'allowMultipleAttempts',
-      width: 120,
-      render: (val) => val ? 'Có' : 'Không',
-    },
+    // {
+    //   title: 'Cho phép làm lại',
+    //   dataIndex: 'allowMultipleAttempts',
+    //   key: 'allowMultipleAttempts',
+    //   width: 120,
+    //   render: (val) => val ? 'Có' : 'Không',
+    // },
     // {
     //   title: 'Điểm đạt tối thiểu',
     //   dataIndex: 'minPassingScore',

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Form, InputNumber, Card, message, Upload, Button } from 'antd';
-import { UploadOutlined } from '@ant-design/icons';
+import { UploadOutlined, DownloadOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { API_URL, endpoints } from '../../../../../config/api';
 
-const ConfigurationStep = ({ onGenerateClassSlots, hasImportedClassSlots }) => {
+const ConfigurationStep = ({ onGenerateClassSlots, onImportError, hasImportedClassSlots }) => {
   const [maxWeeks, setMaxWeeks] = useState(null);
   const [maxSlotsPerWeek, setMaxSlotsPerWeek] = useState(null);
   const [maxTotalMinutes, setMaxTotalMinutes] = useState(null);
@@ -30,10 +30,18 @@ const ConfigurationStep = ({ onGenerateClassSlots, hasImportedClassSlots }) => {
           onGenerateClassSlots(res.data.data);
         }
       } else {
-        message.error(res.data.message || 'Có lỗi khi nhập file Excel');
+        if (onImportError) {
+          onImportError(res.data.message || 'Có lỗi khi nhập file Excel');
+        } else {
+          message.error(res.data.message || 'Có lỗi khi nhập file Excel');
+        }
       }
     } catch (err) {
-      message.error('Không thể nhập file Excel');
+      if (onImportError) {
+        onImportError('Không thể nhập file Excel');
+      } else {
+        message.error('Không thể nhập file Excel');
+      }
     }
     return false; // Ngăn antd upload mặc định
   };
@@ -60,7 +68,7 @@ const ConfigurationStep = ({ onGenerateClassSlots, hasImportedClassSlots }) => {
 
   return (
     <>
-      <div style={{ marginBottom: 16 }}>
+      <div style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
         <Upload
           beforeUpload={handleExcelUpload}
           showUploadList={false}
@@ -68,6 +76,34 @@ const ConfigurationStep = ({ onGenerateClassSlots, hasImportedClassSlots }) => {
         >
           <Button icon={<UploadOutlined />}>Nhập thông tin buổi học từ file Excel</Button>
         </Upload>
+        <Button
+          type="default"
+          icon={<DownloadOutlined />} // Thêm icon download
+          onClick={async () => {
+            try {
+              const response = await fetch('https://localhost:7201/api/ImportExcel/schedule/import/guide-doc', {
+                method: 'GET',
+                headers: {
+                  'accept': '*/*',
+                },
+              });
+              if (!response.ok) throw new Error('Không thể tải file hướng dẫn');
+              const blob = await response.blob();
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = 'import_schedule_guide.xlsx';
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              window.URL.revokeObjectURL(url);
+            } catch (err) {
+              message.error('Không thể tải file hướng dẫn');
+            }
+          }}
+        >
+          Tải file hướng dẫn Excel
+        </Button>
       </div>
       <Card>
         <Form.Item

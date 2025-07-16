@@ -37,11 +37,19 @@ const AccountDetail = ({ accountID: propAccountID }) => {
   const [notification, setNotification] = useState({ visible: false, type: 'success', message: '', description: '' });
   const [showEditConfirm, setShowEditConfirm] = useState(false);
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+  const [paymentHistoryModalOpen, setPaymentHistoryModalOpen] = useState(false);
+  const [paymentHistory, setPaymentHistory] = useState([]);
+  const [paymentHistoryLoading, setPaymentHistoryLoading] = useState(false);
+  const [paymentHistoryError, setPaymentHistoryError] = useState(null);
   // Thêm biến kiểm tra role của user đăng nhập
   let showBackButton = false;
+  let isCurrentUserManager = false;
   try {
     const user = JSON.parse(localStorage.getItem('user'));
-    if (user && user.role === 'Manager') showBackButton = true;
+    if (user && user.role === 'Manager') {
+      showBackButton = true;
+      isCurrentUserManager = true;
+    }
   } catch {}
 
   useEffect(() => {
@@ -285,7 +293,27 @@ const AccountDetail = ({ accountID: propAccountID }) => {
   };
 
   // Thêm hàm kiểm tra role
-  const isManager = (studentData?.role === 'Manager' || (editValues?.role === 'Manager'));
+  // const isManager = (studentData?.role === 'Manager' || (editValues?.role === 'Manager'));
+
+  // Hàm lấy lịch sử thanh toán
+  const fetchPaymentHistory = async () => {
+    setPaymentHistoryLoading(true);
+    setPaymentHistoryError(null);
+    try {
+      const res = await axios.get(`${API_URL}api/Payment/history/${studentData.accountID}`);
+      if (res.data && res.data.success) {
+        setPaymentHistory(res.data.data || []);
+      } else {
+        setPaymentHistory([]);
+        setPaymentHistoryError(res.data?.message || 'Không thể lấy lịch sử thanh toán');
+      }
+    } catch (err) {
+      setPaymentHistory([]);
+      setPaymentHistoryError(err?.response?.data?.message || err.message);
+    } finally {
+      setPaymentHistoryLoading(false);
+    }
+  };
 
   return (
     <Layout style={{ minHeight: '100vh', background: '#fff' }}>
@@ -334,6 +362,18 @@ const AccountDetail = ({ accountID: propAccountID }) => {
                     </Button>
                   </Upload>
                 </div>
+                {/* Nút xem lịch sử thanh toán cho Manager */}
+                {isCurrentUserManager && (
+                  <Button
+                    style={{ marginLeft: 16 }}
+                    onClick={() => {
+                      setPaymentHistoryModalOpen(true);
+                      fetchPaymentHistory();
+                    }}
+                  >
+                    Xem lịch sử thanh toán
+                  </Button>
+                )}
               </div>
               <Descriptions bordered column={1}>
                 <Descriptions.Item label="Mã tài khoản">{studentData.accountID}</Descriptions.Item>
@@ -384,7 +424,7 @@ const AccountDetail = ({ accountID: propAccountID }) => {
                   )}
                 </Descriptions.Item>
                 <Descriptions.Item label="Vai trò">
-                  {isEditing && isManager ? (
+                  {isEditing && isCurrentUserManager ? (
                     <Select value={editValues.role} onChange={v => handleChange('role', v)} style={{ width: '100%' }}>
                       <Option value="Manager">Quản lý</Option>
                       <Option value="Lecture">Giảng viên</Option>
@@ -395,7 +435,7 @@ const AccountDetail = ({ accountID: propAccountID }) => {
                   )}
                 </Descriptions.Item>
                 <Descriptions.Item label="Trạng thái">
-                  {isEditing && isManager ? (
+                  {isEditing && isCurrentUserManager ? (
                     <Select value={editValues.status} onChange={v => handleChange('status', v)} style={{ width: '100%' }}>
                       <Option value="Active">Đang hoạt động</Option>
                       <Option value="Blocked">Đã bị khóa</Option>
@@ -444,10 +484,59 @@ const AccountDetail = ({ accountID: propAccountID }) => {
             cancelText="Hủy"
             title="Bạn có chắc muốn lưu thay đổi?"
           >
-            {isManager ? (
+            {isCurrentUserManager ? (
               'Thao tác này sẽ lưu lại các thay đổi thông tin cá nhân của người dùng này.'
             ) : (
               'Thao tác này sẽ lưu lại các thay đổi thông tin cá nhân của bạn.'
+            )}
+          </Modal>
+          {/* Modal lịch sử thanh toán */}
+          <Modal
+            open={paymentHistoryModalOpen}
+            onCancel={() => setPaymentHistoryModalOpen(false)}
+            footer={null}
+            title="Lịch sử thanh toán"
+            width={700}
+          >
+            {paymentHistoryLoading ? (
+              <Spin />
+            ) : paymentHistoryError ? (
+              <Alert type="error" message={paymentHistoryError} />
+            ) : (
+              <>
+                {paymentHistory.length === 0 ? (
+                  <div>Không có lịch sử thanh toán.</div>
+                ) : (
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr>
+                        <th style={{ border: '1px solid #eee', padding: 8 }}>Mã thanh toán</th>
+                        <th style={{ border: '1px solid #eee', padding: 8 }}>Lớp</th>
+                        <th style={{ border: '1px solid #eee', padding: 8 }}>Số tiền</th>
+                        <th style={{ border: '1px solid #eee', padding: 8 }}>Trạng thái</th>
+                        <th style={{ border: '1px solid #eee', padding: 8 }}>Ngày thanh toán</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paymentHistory.map(item => (
+                        <tr key={item.paymentId}>
+                          <td style={{ border: '1px solid #eee', padding: 8 }}>{item.paymentId}</td>
+                          <td style={{ border: '1px solid #eee', padding: 8 }}>{item.className}</td>
+                          <td style={{ border: '1px solid #eee', padding: 8 }}>{item.total?.toLocaleString('vi-VN')}₫</td>
+                          <td style={{ border: '1px solid #eee', padding: 8 }}>
+                            {item.paymentStatus === 0 ? (
+                              <Tag color="green">Đã thanh toán</Tag>
+                            ) : (
+                              <Tag color="red">Chưa thanh toán</Tag>
+                            )}
+                          </td>
+                          <td style={{ border: '1px solid #eee', padding: 8 }}>{item.paidAt ? dayjs(item.paidAt).format('YYYY-MM-DD HH:mm') : ''}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </>
             )}
           </Modal>
         </Content>
