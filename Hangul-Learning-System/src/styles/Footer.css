@@ -2,11 +2,11 @@
   background: #4a525f;
   color: #ffffff;
   font-family: 'Work Sans', 'Montserrat', sans-serif;
-  padding: 40px 0 0 0;
+  padding: 80px 0 0 0;
   box-shadow: 0 -2px 24px rgba(0,0,0,0.04);
 }
 .footer__container {
-  max-width: 1170px;
+  max-width: 1100px;
   margin: auto;
   padding: 0 24px;
 }

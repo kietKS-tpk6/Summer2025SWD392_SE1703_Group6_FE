@@ -1,104 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import Service1 from '../../assets/Service1.png';
-import Service2 from '../../assets/Service2.png';
-import Service3 from '../../assets/Service3.png';
+
 import bg from '../../assets/Background.png';
 import aboutImg from '../../assets/about.png';
 import leafImg from '../../assets/leaf.png';
 import { FaPlay } from 'react-icons/fa';
-import graphicImg from '../../assets/graphic.png';
-import globalsystemImg from '../../assets/global.png';
-import citImg from '../../assets/cit.png';
-import webdevImg from '../../assets/webdev.png';
-import artImg from '../../assets/art.png';
-import musicImg from '../../assets/music.png';
-import techinfoImg from '../../assets/techinfo.png';
-import datascienceImg from '../../assets/datascience.png';
-import ClassCardList from '../class/ClassCardList';
 
-const Services = [
-  {
-    imageURL: Service1,
-    title: 'Online Education',
-    color: '#f9703a',
-  },
-  {
-    imageURL: Service2,
-    title: 'Online Education',
-    color: '#80be41',
-  },
-  {
-    imageURL: Service3,
-    title: 'Online Education',
-    color: '#ffb258',
-  },
-];
+import ClassCardList from '../class/ClassCardList';
+import datascienceImg from '../../assets/datascience.png';
+
+import 'swiper/css';
+import 'swiper/css/navigation';
+
 
 const Numbers = [
   { count: '4000', name: 'Students', color: '#ffba00' },
   { count: '260', name: 'Courses', color: '#ff5f72' },
-  { count: '5679', name: 'Hours Video', color: '#43cb83' }
-];
-
-const pagesContent = [
-  {
-    imageURL: graphicImg,
-    title: "Photoshop CC 2018 Essential Training: The Basics",
-    course: "Graphics Design",
-    src: '#'
-  },
-  {
-    imageURL: globalsystemImg,
-    title: "Get Started Coding Android Apps With Kotlin",
-    course: "Global System",
-    src: '#'
-  },
-  {
-    imageURL: citImg,
-    title: "Create Turntable Animations With Cinema 4D",
-    course: "Computer & Information Technology",
-    src: '#'
-  },
-  {
-    imageURL: webdevImg,
-    title: "A Beginner's Guide to the New Bootstrap 4 Grid",
-    course: "Web Development",
-    src: '#'
-  },
-  {
-    imageURL: artImg,
-    title: "A Designer's Guide to Vue.js Components",
-    course: "Art Departments",
-    src: '#'
-  },
-  {
-    imageURL: musicImg,
-    title: "Code a Swift App With Realm Mobile Database",
-    course: "Music",
-    src: '#'
-  },
-  {
-    imageURL: techinfoImg,
-    title: "10 Essential Design Tips in Adobe Illustrator",
-    course: "Technology Information",
-    src: '#'
-  },
-  {
-    imageURL: datascienceImg,
-    title: "Modern PHP From The Beginning",
-    course: "Data Science",
-    src: '#'
-  }
+  { count: '400', name: 'Hours Video', color: '#43cb83' }
 ];
 
 const Content = () => {
   const navigate = useNavigate();
   const [isOpen, setOpen] = useState(false); 
+  const [teachers, setTeachers] = useState([]);
+  const [teacherIndex, setTeacherIndex] = useState(0);
+  const teachersPerView = window.innerWidth < 700 ? 2 : 4;
+  const maxIndex = Math.max(0, teachers.length - teachersPerView);
+
   const handleApplyNow = () => {
     navigate('/login');
   };
+
   return (
     <>
       {/* Home Section */}
@@ -112,75 +45,92 @@ const Content = () => {
           transition={{ duration: 0.5 }}
           className="app__home-intro"
         >
-          <h1>
-            Innovation for education <br />
-            and society
+          <h1 className="korean-heading italic">
+            한국어 학습 시스템에 오신 <br />
+            것을 환영합니다
           </h1>
           <p>
-            Our interdisciplinary majors and minors mean you can
-            chart your own course for academic success.
+            Chào mừng bạn đến với trung tâm học <br />  tiếng hàn online của chúng tôi
           </p>
-          <button className="app__home-btn" onClick={handleApplyNow}>Apply Now</button>
+          <button className="app__home-btn" onClick={handleApplyNow}>Đăng nhập để học ngay</button>
         </motion.div>
       </div>
       {/* Service Section */}
       <div className="app__service">
-        <h1 className="head-text">Our Department</h1>
+        <h1 className="head-text">Các Khoa Đào Tạo</h1>
         <p className="p-text">
-          A hundred thousands grateful loves to your dear papa and mamma. Is your poor brother recovered of his ract-punch? Oh, dear! Oh, How men should beware of wicked punch!
+          Hàng trăm học viên đã tin tưởng và lựa chọn trung tâm của chúng tôi để chinh phục tiếng Hàn. Hãy cùng khám phá các khoa đào tạo đa dạng và phù hợp với mọi trình độ!
         </p>
         <ClassCardList />
       </div>
-      {/* About Section */}
-      <div className='app__about'>
-        <div className='app__bg-circle'/>
-        <div className="app__about-decor-top"></div>
-        <div className="app__about-decor-bottom"></div>
-        <motion.div
-          whileInView={{ y: [-50, 0], opacity: [0, 1] }}
-          transition={{ duration: 0.5 }}
-          className='app__about-items'>
-          <div className='app__about-play'>
-            <img src={aboutImg} className="app__about-play-img" alt="About"/>
-            <img src={leafImg} className="app__about-leaf" alt="leaf"/>
-            <button onClick={() => setOpen(true)}><FaPlay/></button>
+      
+      
+      {/* About Us Section (HTML mẫu user thêm) */}
+      <div className="app__aboutus-section">
+        <div className="aboutus-container">
+          {/* Header */}
+          <div className="aboutus-header fade-in">
+            <h2 className="aboutus-title">Về Chúng Tôi</h2>
+            <p className="aboutus-subtitle">
+              Trung tâm Hàn ngữ hàng đầu với phương pháp giảng dạy hiện đại, 
+              đội ngũ giáo viên chuyên nghiệp và môi trường học tập thân thiện
+            </p>
           </div>
-          <div className='app__about-info'>
-          <h1 className='head-text'>Limitless learning, more <br/>possibilities</h1>
-          <p className='p-text'>
-            The University of Rochester is one of the country's top-tier research universities. Our campuses are home to 200 academic majors, more than 2,000 faculty and instructional staff, and some 10,000 students—approximately half of whom are women.
-            <br/><br/>
-            Learning at the University of Rochester is also on a very personal scale. Rochester remains one of the smallest and most collegiate among top research universities, with smaller classes, a low 10:1 student to teacher ratio, and increased interactions with faculty.
-          </p>
-          <div className='app__about-info-numbers'>
-            {Numbers.map((item, idx) => (
-              <div className='app__about-info-number' style={{color: item.color}} key={idx}>
-                <h1>{item.count}</h1>
-                <h4>{item.name}</h4>
+          {/* Cards Grid */}
+          <div className="aboutus-grid">
+            <div className="aboutus-card fade-in">
+              <div className="card-content">
+                <div className="card-icon">🎯</div>
+                <h3 className="card-title">Sứ Mệnh Của Chúng Tôi</h3>
+                <p className="card-description">
+                  Chúng tôi cam kết trở thành cầu nối giúp học viên Việt Nam tiếp cận 
+                  tri thức, văn hóa và cơ hội mới thông qua việc thành thạo tiếng Hàn.
+                </p>
+                <ul className="card-features">
+                  <li>Giảng dạy bằng phương pháp hiện đại và tương tác</li>
+                  <li>Kết hợp học tập với trải nghiệm văn hóa Hàn Quốc</li>
+                  <li>Hỗ trợ học viên phát triển toàn diện</li>
+                  <li>Tạo cơ hội việc làm và du học</li>
+                </ul>
               </div>
-            ))}
+            </div>
+            <div className="aboutus-card fade-in">
+              <div className="card-content">
+                <div className="card-icon">💡</div>
+                <h3 className="card-title">Giá Trị Cốt Lõi</h3>
+                <p className="card-description">
+                  Những giá trị mà chúng tôi luôn theo đuổi và thể hiện 
+                  trong mọi hoạt động giảng dạy và phục vụ học viên.
+                </p>
+                <ul className="card-features">
+                  <li> Đặt chất lượng giảng dạy lên hàng đầu</li>
+                  <li> Luôn sát cánh cùng học viên</li>
+                  <li> Không ngừng đổi mới phương pháp</li>
+                  <li> Quan tâm đến từng học viên</li>
+                </ul>
+              </div>
+            </div>
           </div>
-        </div>
-      </motion.div>
-      </div>
-      {/* Pages Section */}
-      <div className='app__page-section'>
-        <div className='app__pages'>
-          <h1 className='head-text'>Around the University</h1>
-          <div className='app__page-items'>
-            {pagesContent.map((item, idx) => (
-              <motion.div
-                whileInView={{ y: [-50, 0], opacity: [0, 1] }}
-                transition={{ duration: 0.5 }}
-                className="app__page-item"
-                key={idx}
-              >
-                <img src={item.imageURL} alt="course"/>
-                <a href={item.src} className='app__page-course'>{item.title}</a>
-                <h6>{item.course}</h6>
-                <a href={item.src} className='app__page-course-link'>Keep reading...</a>
-              </motion.div>
-            ))}
+          {/* Stats Section */}
+          <div className="stats-section fade-in">
+            <div className="stats-grid">
+              <div className="stat-item">
+                <span className="stat-number">4,000+</span>
+                <span className="stat-label">Học viên tin tưởng</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-number">260+</span>
+                <span className="stat-label">Khóa học đa dạng</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-number">400+</span>
+                <span className="stat-label">Giảng viên chuyên nghiệp</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-number">95%</span>
+                <span className="stat-label">Tỷ lệ hài lòng</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
