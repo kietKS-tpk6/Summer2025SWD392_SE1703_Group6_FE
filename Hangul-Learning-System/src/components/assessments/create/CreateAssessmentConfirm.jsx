@@ -170,10 +170,69 @@ const CreateAssessmentConfirm = ({ basicInfo, sections }) => {
         footer={null}
         onCancel={handleClosePreview}
         centered
-        bodyStyle={{ textAlign: 'center', padding: 0 }}
+        bodyStyle={{
+          padding: 0,
+          background: 'transparent',
+          boxShadow: 'none',
+          minHeight: 0,
+          minWidth: 0,
+          overflow: 'visible'
+        }}
+        style={{
+          background: 'rgba(0,0,0,0.15)',
+          boxShadow: 'none',
+          top: 0,
+          padding: 0,
+          margin: 0,
+        }}
+        maskStyle={{
+          background: 'rgba(0,0,0,0.35)'
+        }}
+        width="auto"
       >
         {previewImage && (
-          <img src={previewImage} alt="preview" style={{ maxWidth: '90vw', maxHeight: '80vh', display: 'block', margin: '0 auto' }} />
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: '40vh',
+              minWidth: '40vw',
+              maxWidth: '90vw',
+              maxHeight: '80vh',
+              margin: '0 auto',
+              padding: 0,
+              background: 'transparent'
+            }}
+          >
+            <div
+              style={{
+                background: '#fff',
+                borderRadius: 16,
+                boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+                padding: 16,
+                maxWidth: '90vw',
+                maxHeight: '80vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                animation: 'zoomIn 0.25s'
+              }}
+            >
+              <img
+                src={previewImage}
+                alt="preview"
+                style={{
+                  maxWidth: '80vw',
+                  maxHeight: '70vh',
+                  borderRadius: 12,
+                  boxShadow: '0 2px 12px #0002',
+                  background: '#fff',
+                  display: 'block'
+                }}
+              />
+            </div>
+          </div>
         )}
       </Modal>
     </div>

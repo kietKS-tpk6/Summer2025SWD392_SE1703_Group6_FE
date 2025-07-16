@@ -102,14 +102,28 @@ const ViewDetailAssessment = ({ testID: propTestID, inModal }) => {
       setLoading(true);
       setError(undefined);
       try {
+        // Lấy chi tiết section (có imageURL) từ API mới
+        const sectionRes = await axios.get(`${API_URL}api/TestSection/by-test/${testID}`);
+        const sectionList = Array.isArray(sectionRes.data) ? sectionRes.data : [];
+        // Lấy chi tiết câu hỏi từ API cũ
         const res = await axios.get(`${API_URL}api/Questions/by-test/${testID}`);
-        setSections(res.data || []);
-        setEditSections(JSON.parse(JSON.stringify(res.data || [])));
+        let questionSections = res.data || [];
+        // Merge imageURL và audioURL từ sectionList vào questionSections
+        questionSections = questionSections.map((sec, idx) => {
+          const match = sectionList[idx] || {};
+          return {
+            ...sec,
+            imageURL: match.imageURL || sec.imageURL,
+            audioURL: match.audioURL || sec.audioURL,
+          };
+        });
+        setSections(questionSections);
+        setEditSections(JSON.parse(JSON.stringify(questionSections)));
         // Lấy status từ section đầu tiên (giả sử backend trả về status ở đây)
-        if (res.data && res.data[0] && res.data[0].testStatus !== undefined) {
-          setTestStatus(res.data[0].testStatus);
-        } else if (res.data && res.data[0] && res.data[0].status !== undefined) {
-          setTestStatus(res.data[0].status);
+        if (questionSections && questionSections[0] && questionSections[0].testStatus !== undefined) {
+          setTestStatus(questionSections[0].testStatus);
+        } else if (questionSections && questionSections[0] && questionSections[0].status !== undefined) {
+          setTestStatus(questionSections[0].status);
         }
         // Gọi thêm API để lấy fullname người tạo
         try {
@@ -120,17 +134,6 @@ const ViewDetailAssessment = ({ testID: propTestID, inModal }) => {
           setCreateBy(createBy);
           setTestInfo(testRes.data || {});
           setEditTestName(testRes.data?.testName || '');
-        } catch {}
-        // Gọi thêm API để lấy testSectionType, context cho từng section
-        try {
-          const sectionRes = await axios.get(`${API_URL}api/Questions/by-test/${testID}`);
-          if (Array.isArray(sectionRes.data)) {
-            setSections(prevSections => prevSections.map((sec, idx) => ({
-              ...sec,
-              testSectionType: sectionRes.data[idx]?.testSectionType,
-              context: sectionRes.data[idx]?.context,
-            })));
-          }
         } catch {}
       } catch (e) {
         setError('Không thể tải chi tiết bài kiểm tra');
@@ -326,6 +329,18 @@ const ViewDetailAssessment = ({ testID: propTestID, inModal }) => {
   const [showApproveConfirm, setShowApproveConfirm] = useState(false);
   // Thêm state cho xác nhận cập nhật
   const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
+
+  // Thêm state cho preview ảnh
+  const [previewImage, setPreviewImage] = useState(null);
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const handlePreview = (src) => {
+    setPreviewImage(src);
+    setPreviewVisible(true);
+  };
+  const handleClosePreview = () => {
+    setPreviewVisible(false);
+    setPreviewImage(null);
+  };
 
   return (
     <div style={{ maxWidth: 950, margin: '0 auto', padding: 24 }}>
@@ -537,7 +552,8 @@ const ViewDetailAssessment = ({ testID: propTestID, inModal }) => {
                   <img
                     src={section.imageURL}
                     alt="img"
-                    style={{ maxWidth: 180, maxHeight: 120, borderRadius: 8, border: '1px solid #eee', boxShadow: '0 2px 8px #0001' }}
+                    style={{ maxWidth: 180, maxHeight: 120, borderRadius: 8, border: '1px solid #eee', boxShadow: '0 2px 8px #0001', cursor: 'pointer' }}
+                    onClick={() => handlePreview(section.imageURL)}
                   />
                 )}
                 {section.audioURL && (
@@ -569,7 +585,7 @@ const ViewDetailAssessment = ({ testID: propTestID, inModal }) => {
                     )}
                     {/* Hiển thị ảnh/audio cho câu hỏi */}
                     {q.imageURL && (
-                      <img src={q.imageURL} alt="img" style={{ maxWidth: 120, marginLeft: 8, verticalAlign: 'middle', borderRadius: 4, border: '1px solid #eee' }} />
+                      <img src={q.imageURL} alt="img" style={{ maxWidth: 120, marginLeft: 8, verticalAlign: 'middle', borderRadius: 4, border: '1px solid #eee', cursor: 'pointer' }} onClick={() => handlePreview(q.imageURL)} />
                     )}
                     {q.audioURL && (
                       <audio src={q.audioURL} controls style={{ marginLeft: 8, verticalAlign: 'middle' }} />
@@ -648,7 +664,7 @@ const ViewDetailAssessment = ({ testID: propTestID, inModal }) => {
                               </>
                             )}
                             {a.imageURL && (
-                              <img src={a.imageURL} alt="img" style={{ maxWidth: 60, marginLeft: 8, verticalAlign: 'middle', borderRadius: 4, border: '1px solid #eee' }} />
+                              <img src={a.imageURL} alt="img" style={{ maxWidth: 60, marginLeft: 8, verticalAlign: 'middle', borderRadius: 4, border: '1px solid #eee', cursor: 'pointer' }} onClick={() => handlePreview(a.imageURL)} />
                             )}
                             {a.audioURL && (
                               <audio src={a.audioURL} controls style={{ marginLeft: 8, verticalAlign: 'middle' }} />
@@ -674,6 +690,77 @@ const ViewDetailAssessment = ({ testID: propTestID, inModal }) => {
           </Card>
         ))}
       </div>
+      {/* Modal preview ảnh */}
+      <Modal
+        open={previewVisible}
+        footer={null}
+        onCancel={handleClosePreview}
+        centered
+        bodyStyle={{
+          padding: 0,
+          background: 'transparent',
+          boxShadow: 'none',
+          minHeight: 0,
+          minWidth: 0,
+          overflow: 'visible'
+        }}
+        style={{
+          background: 'rgba(0,0,0,0.15)',
+          boxShadow: 'none',
+          top: 0,
+          padding: 0,
+          margin: 0,
+        }}
+        maskStyle={{
+          background: 'rgba(0,0,0,0.35)'
+        }}
+        width="auto"
+      >
+        {previewImage && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: '40vh',
+              minWidth: '40vw',
+              maxWidth: '90vw',
+              maxHeight: '80vh',
+              margin: '0 auto',
+              padding: 0,
+              background: 'transparent'
+            }}
+          >
+            <div
+              style={{
+                background: '#fff',
+                borderRadius: 16,
+                boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+                padding: 16,
+                maxWidth: '90vw',
+                maxHeight: '80vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                animation: 'zoomIn 0.25s'
+              }}
+            >
+              <img
+                src={previewImage}
+                alt="preview"
+                style={{
+                  maxWidth: '80vw',
+                  maxHeight: '70vh',
+                  borderRadius: 12,
+                  boxShadow: '0 2px 12px #0002',
+                  background: '#fff',
+                  display: 'block'
+                }}
+              />
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };
