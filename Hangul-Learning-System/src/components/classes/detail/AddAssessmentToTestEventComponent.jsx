@@ -27,10 +27,12 @@ const AddAssessmentToTestEventComponent = ({
   assessmentCategory,
   testType,
   onSuccess,
+  durationMinutes,
 }) => {
   // State cho danh sách bài test
   const [availableTests, setAvailableTests] = useState([]);
   const [testLoading, setTestLoading] = useState(false);
+  const [testNamesMap, setTestNamesMap] = useState({});
 
   // State cho giờ bắt đầu/kết thúc
   const [selectedStartTime, setSelectedStartTime] = useState(null);
@@ -43,6 +45,21 @@ const AddAssessmentToTestEventComponent = ({
   // State cho modal xem chi tiết bài test
   const [viewTestModalOpen, setViewTestModalOpen] = useState(false);
   const [viewTestID, setViewTestID] = useState(null);
+
+  // Reset state khi popup đóng
+  useEffect(() => {
+    if (!open) {
+      setViewTestModalOpen(false);
+      setViewTestID(null);
+    }
+  }, [open]);
+
+  // Reset lại form khi mở popup cho event mới
+  useEffect(() => {
+    if (open && assessment) {
+      form.resetFields();
+    }
+  }, [open, assessment]);
 
   // Fetch danh sách bài test khi modal open và assessment thay đổi
   useEffect(() => {
@@ -62,7 +79,22 @@ const AddAssessmentToTestEventComponent = ({
         console.log('API advanced-search params:', params);
         const res = await axios.get(`${API_URL}api/Test/advanced-search`, { params });
         console.log('API advanced-search result:', res.data);
-        setAvailableTests(Array.isArray(res.data?.items) ? res.data.items : []);
+        const tests = Array.isArray(res.data?.items) ? res.data.items : [];
+        setAvailableTests(tests);
+        // Nếu testName bị thiếu, fetch thêm từ API /api/Test/{testID}
+        const missingNames = tests.filter(t => !t.testName && t.testID);
+        if (missingNames.length > 0) {
+          const namesMap = {};
+          await Promise.all(missingNames.map(async t => {
+            try {
+              const res2 = await axios.get(`${API_URL}api/Test/${t.testID}`);
+              if (res2.data && res2.data.testName) {
+                namesMap[t.testID] = res2.data.testName;
+              }
+            } catch {}
+          }));
+          setTestNamesMap(prev => ({ ...prev, ...namesMap }));
+        }
       } catch (err) {
         setAvailableTests([]);
         console.log('API advanced-search error:', err);
@@ -208,7 +240,9 @@ const AddAssessmentToTestEventComponent = ({
                 style={{ flex: 1 }}
               >
                 {availableTests.map(test => (
-                  <Select.Option key={test.testID} value={test.testID}>{test.testName}</Select.Option>
+                  <Select.Option key={test.testID} value={test.testID}>
+                    {test.testName || testNamesMap[test.testID] || test.testID}
+                  </Select.Option>
                 ))}
               </Select>
               {viewTestID && (
@@ -248,7 +282,7 @@ const AddAssessmentToTestEventComponent = ({
             minuteStep={5}
           />
         </Form.Item>
-        <Form.Item label="Số lần học sinh làm bài" name="attemptLimit" rules={[{ required: true, message: 'Nhập số lượng học sinh' }]}> 
+        <Form.Item label="Số lần học sinh làm bài" name="attemptLimit" rules={[{ required: true, message: 'Nhập số lần học sinh được phép làm bài' }]}> 
           <Input type="number" min={1} onChange={onAttemptLimitChange} />
         </Form.Item>
         <Form.Item label="Password cho bài test" name="password"> 
@@ -271,7 +305,11 @@ const AddAssessmentToTestEventComponent = ({
       >
         {confirmValues && (
           <div style={{ lineHeight: 2 }}>
-            <div><b>Bài test:</b> {availableTests.find(t => t.testID === confirmValues.testID)?.testName || confirmValues.testID}</div>
+            <div><b>Bài test:</b> {
+              availableTests.find(t => t.testID === confirmValues.testID)?.testName
+              || testNamesMap[confirmValues.testID]
+              || confirmValues.testID
+            }</div>
             <div><b>Mô tả:</b> {confirmValues.description}</div>
             <div><b>Ngày kiểm tra:</b> {lessonDate ? lessonDate.format('DD/MM/YYYY') : ''}</div>
             <div><b>Giờ bắt đầu:</b> {confirmValues.startTime ? dayjs(confirmValues.startTime).format('HH:mm') : ''}</div>
