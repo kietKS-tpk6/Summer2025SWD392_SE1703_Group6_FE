@@ -350,21 +350,45 @@ const AccountDetail = ({ accountID: propAccountID, hideFields = [] }) => {
           alignItems: 'center',
           boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
         }}>
-          <div style={{ position: 'relative', marginBottom: 24 }}>
-            <Avatar size={350} src={avatarUrl} icon={<UserOutlined />} style={{ border: '4px solid #fff', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', borderRadius: 24 }} shape="square" />
-          </div>
-          <Upload
-            name="file"
-            showUploadList={false}
-            customRequest={customAvatarUpload}
-            onChange={handleAvatarChange}
-            accept="image/*"
-          >
-            <Button icon={<UploadOutlined />} loading={avatarUploading} style={{ width: 180, height: 40, fontWeight: 500, fontSize: 16, marginBottom: 8 }}>
-              Đổi ảnh đại diện
+          {/* Nút quay lại nằm góc trái, avatar căn giữa */}
+          <div style={{ position: 'relative', width: '100%', marginBottom: 24 }}>
+            <Button
+              icon={<ArrowLeftOutlined />}
+              onClick={() => navigate(-1)}
+              style={{ position: 'absolute', top: 0, left: 0, minWidth: 40, height: 40, fontWeight: 500, marginBottom: 0, zIndex: 2 }}
+            >
+              Quay lại
             </Button>
-          </Upload>
-          {isCurrentUserManager && (
+            <div style={{ height: 60 }} />
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+              <Avatar size={350} src={avatarUrl} icon={<UserOutlined />} style={{ border: '4px solid #fff', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', borderRadius: 24 }} shape="square" />
+            </div>
+          </div>
+          {/* Ẩn nút đổi ảnh nếu là Manager và không phải tài khoản của mình */}
+          {!(isCurrentUserManager && studentData && (() => {
+            try {
+              const user = JSON.parse(localStorage.getItem('user'));
+              return user && user.accountId !== studentData.accountID;
+            } catch { return false; }
+          })()) && (
+            <Upload
+              name="file"
+              showUploadList={false}
+              customRequest={customAvatarUpload}
+              onChange={handleAvatarChange}
+              accept="image/*"
+            >
+              <Button icon={<UploadOutlined />} loading={avatarUploading} style={{ width: 180, height: 40, fontWeight: 500, fontSize: 16, marginBottom: 8 }}>
+                Đổi ảnh đại diện
+              </Button>
+            </Upload>
+          )}
+          {((isCurrentUserManager) || (studentData && (() => {
+            try {
+              const user = JSON.parse(localStorage.getItem('user'));
+              return user && user.role === 'Student' && user.accountId === studentData.accountID;
+            } catch { return false; }
+          })())) && (
             <Button
               onClick={() => {
                 setPaymentHistoryModalOpen(true);
@@ -378,7 +402,17 @@ const AccountDetail = ({ accountID: propAccountID, hideFields = [] }) => {
         </div>
         {/* Thêm thẻ đóng div cho cột trái ở đây */}
         {/* Right column: Info fields */}
-        <div style={{ flex: 1, padding: '32px 0 32px 0', position: 'relative' }}>
+        <div style={{ flex: 1, padding: '32px 0 32px 0', position: 'relative', paddingTop: 0 }}>
+          {/* Nút quay lại ở góc trên trái */}
+          {/* <div style={{ position: 'absolute', top: 0, left: 0 }}>
+            <Button
+              icon={<ArrowLeftOutlined />}
+              onClick={() => navigate(-1)}
+              style={{ minWidth: 40, height: 40, fontWeight: 500 }}
+            >
+              Quay lại
+            </Button>
+          </div> */}
           {/* Nút chỉnh sửa ở góc trên phải */}
           {!isEditing && studentData && studentData.accountID && (
             <div style={{ position: 'absolute', top: 0, right: 0 }}>
