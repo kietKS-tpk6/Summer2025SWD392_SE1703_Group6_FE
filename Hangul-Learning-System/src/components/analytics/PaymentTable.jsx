@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Table, Tag } from 'antd';
 import axios from 'axios';
 import { API_URL, endpoints } from '../../config/api';
+import { Link } from 'react-router-dom';
 
 // PaymentStatus enum mapping từ backend:
 // 0: Paid, 1: Pending, 2: RequestRefund, 3: Refunded
@@ -30,6 +31,9 @@ const columns = [
     dataIndex: 'studentName',
     key: 'studentName',
     width: 160,
+    render: (text, record) => (
+      <Link to={`/dashboard/profile/${record.studentID}`}>{text}</Link>
+    ),
   },
   {
     title: 'Lớp học',
@@ -52,7 +56,7 @@ const columns = [
   },
   {
     title: 'Trạng thái',
-    dataIndex: 'status',
+    dataIndex: 'status',  
     key: 'status',
     render: (status) => {
       const s = statusMap[status] || { label: status, color: 'default' };

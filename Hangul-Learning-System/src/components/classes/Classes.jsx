@@ -12,7 +12,7 @@ import './ClassesTableComponent.css';
 import dayjs from 'dayjs';
 import ActionConfirm from '../common/ActionConfirm';
 import InfoModal from '../common/InfoModal';
-
+import UpdateClassModal from './UpdateClassModal';
 const { Search } = Input;
 const { Option } = Select;
 
@@ -48,6 +48,8 @@ const Classes = () => {
   const [infoModal, setInfoModal] = useState({ open: false, content: '' });
   const [classAssessments, setClassAssessments] = useState({});
   const [availableTestsMap, setAvailableTestsMap] = useState({});
+  const [editingClass, setEditingClass] = useState(null);
+  const [openUpdateModal, setOpenUpdateModal] = useState(false);
 
   const navigate = useNavigate();
 
@@ -141,7 +143,23 @@ const Classes = () => {
     navigate('detail', { state: { classId: record.classID, assessments, availableTests: availableTestsMap, subjectId: record.subjectID || record.subjectId } });
   };
 
-  const handleEdit = (record) => { /* ... */ };
+  const handleEdit = async (record) => {
+    setOpenUpdateModal(true);
+    try {
+      const res = await axios.get(`${API_URL}api/Class/get-class-for-update/${record.classID}`);
+      if (res.data && res.data.success && res.data.data) {
+        setEditingClass(res.data.data);
+      } else {
+        setEditingClass(null);
+        showNotify({ type: 'error', message: 'Không lấy được dữ liệu lớp học!', description: res.data.message || '' });
+        setOpenUpdateModal(false);
+      }
+    } catch (err) {
+      setEditingClass(null);
+      showNotify({ type: 'error', message: 'Lỗi khi lấy dữ liệu lớp học!', description: err.message });
+      setOpenUpdateModal(false);
+    }
+  };
   const handleDelete = (record) => {
     setDeleteModal({ open: true, record });
   };
@@ -229,6 +247,8 @@ const Classes = () => {
       });
       await axios.post(`${API_URL}api/StudentMarks/setup-by-class-id/${record.classID}`)
       await axios.post(`${API_URL}api/Attendance/setup-attendace-by-class-id/${record.classID}`)
+      await axios.post(`${API_URL}api/TestEvent/setup-test-event/${classId}`);
+
       showNotify({
         type: 'success',
         message: 'Cập nhật thành công',
@@ -356,6 +376,16 @@ const Classes = () => {
         onClose={() => setInfoModal({ open: false, content: '' })}
         title="Không thể chốt danh sách"
         content={infoModal.content}
+      />
+      <UpdateClassModal
+        open={openUpdateModal}
+        onClose={() => setOpenUpdateModal(false)}
+        classData={editingClass}
+        onSuccess={() => {
+          setOpenUpdateModal(false);
+          fetchData();
+        }}
+        showNotify={showNotify}
       />
     </div>
   );

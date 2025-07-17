@@ -23,7 +23,7 @@ const statusViMap = {
 };
 // const statusMap = { 0: <Tag color="green">Đang hoạt động</Tag>, 1: <Tag color="red">Ngưng hoạt động</Tag> };
 
-const AccountDetail = ({ accountID: propAccountID }) => {
+const AccountDetail = ({ accountID: propAccountID, hideFields = [] }) => {
   const params = useParams();
   const navigate = useNavigate();
   const [studentData, setStudentData] = useState(null);
@@ -324,144 +324,213 @@ const AccountDetail = ({ accountID: propAccountID }) => {
         description={notification.description}
         onClose={() => setNotification(prev => ({ ...prev, visible: false }))}
       />
-      {/* <Sidebar /> */}
-      {/* <Layout> */}
-        <Content style={{ margin: '24px', padding: '32px', borderRadius: '30px', minHeight: 400 }}>
-          {showBackButton && (
+      <Content
+        style={{
+          // margin: '32px auto',
+          // padding: 0,
+          // borderRadius: '24px',
+          // minHeight: 400,
+          // maxWidth: 950,
+          // background: '#fff',
+          // boxShadow: '0 2px 16px rgba(0,0,0,0.07)',
+          display: 'flex',
+          flexDirection: 'row',
+          gap: 20,
+          alignItems: 'flex-start',
+        }}
+      >
+        {/* Left column: Avatar + Upload */}
+        <div style={{
+          flex: '0 0 320px',
+          background: '#fafbfc',
+          borderRadius: '24px',
+          padding: '32px 24px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
+        }}>
+          {/* Nút quay lại nằm góc trái, avatar căn giữa */}
+          <div style={{ position: 'relative', width: '100%', marginBottom: 24 }}>
             <Button
-              style={{ marginBottom: 16, display: 'flex', alignItems: 'center' }}
               icon={<ArrowLeftOutlined />}
-              onClick={() => navigate('/dashboard/users')}
-              type="primary"
+              onClick={() => navigate(-1)}
+              style={{ position: 'absolute', top: 0, left: 0, minWidth: 40, height: 40, fontWeight: 500, marginBottom: 0, zIndex: 2 }}
             >
               Quay lại
             </Button>
+            <div style={{ height: 60 }} />
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+              <Avatar size={350} src={avatarUrl} icon={<UserOutlined />} style={{ border: '4px solid #fff', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', borderRadius: 24 }} shape="square" />
+            </div>
+          </div>
+          {/* Ẩn nút đổi ảnh nếu là Manager và không phải tài khoản của mình */}
+          {!(isCurrentUserManager && studentData && (() => {
+            try {
+              const user = JSON.parse(localStorage.getItem('user'));
+              return user && user.accountId !== studentData.accountID;
+            } catch { return false; }
+          })()) && (
+            <Upload
+              name="file"
+              showUploadList={false}
+              customRequest={customAvatarUpload}
+              onChange={handleAvatarChange}
+              accept="image/*"
+            >
+              <Button icon={<UploadOutlined />} loading={avatarUploading} style={{ width: 180, height: 40, fontWeight: 500, fontSize: 16, marginBottom: 8 }}>
+                Đổi ảnh đại diện
+              </Button>
+            </Upload>
           )}
-          <h2 style={{ fontWeight: 700, fontSize: 28, marginBottom: 24 }}>Thông tin cá nhân</h2>
+          {((isCurrentUserManager) || (studentData && (() => {
+            try {
+              const user = JSON.parse(localStorage.getItem('user'));
+              return user && user.role === 'Student' && user.accountId === studentData.accountID;
+            } catch { return false; }
+          })())) && (
+            <Button
+              onClick={() => {
+                setPaymentHistoryModalOpen(true);
+                fetchPaymentHistory();
+              }}
+              style={{ width: 180, height: 40, fontWeight: 500, fontSize: 16, marginTop: 8 }}
+            >
+              Xem lịch sử thanh toán
+            </Button>
+          )}
+        </div>
+        {/* Thêm thẻ đóng div cho cột trái ở đây */}
+        {/* Right column: Info fields */}
+        <div style={{ flex: 1, padding: '32px 0 32px 0', position: 'relative', paddingTop: 0 }}>
+          {/* Nút quay lại ở góc trên trái */}
+          {/* <div style={{ position: 'absolute', top: 0, left: 0 }}>
+            <Button
+              icon={<ArrowLeftOutlined />}
+              onClick={() => navigate(-1)}
+              style={{ minWidth: 40, height: 40, fontWeight: 500 }}
+            >
+              Quay lại
+            </Button>
+          </div> */}
+          {/* Nút chỉnh sửa ở góc trên phải */}
+          {!isEditing && studentData && studentData.accountID && (
+            <div style={{ position: 'absolute', top: 0, right: 0 }}>
+              <Button
+                type="primary"
+                onClick={handleEdit}
+                style={{ minWidth: 140, height: 40, fontWeight: 500 }}
+              >
+                Chỉnh sửa
+              </Button>
+            </div>
+          )}
+          <h2 style={{ fontWeight: 700, fontSize: 28, marginBottom: 32, textAlign: 'left' }}>Thông tin cá nhân</h2>
           {loading ? (
             <Spin />
           ) : error ? (
             <Alert type="error" message={error} />
           ) : studentData ? (
-            <>
-              <div style={{ display: 'flex', alignItems: 'center', marginBottom: 24 }}>
-                <Avatar size={80} src={avatarUrl} icon={<UserOutlined />} style={{ marginRight: 24 }} />
-                <div>
-                  <b>{studentData.lastName} {studentData.firstName}</b>
-                </div>
-                <div style={{ marginLeft: 32 }}>
-                  <Upload
-                    name="file"
-                    showUploadList={false}
-                    customRequest={customAvatarUpload}
-                    onChange={handleAvatarChange}
-                    accept="image/*"
-                  >
-                    <Button icon={<UploadOutlined />} loading={avatarUploading}>
-                      Đổi ảnh đại diện
-                    </Button>
-                  </Upload>
-                </div>
-                {/* Nút xem lịch sử thanh toán cho Manager */}
-                {isCurrentUserManager && (
-                  <Button
-                    style={{ marginLeft: 16 }}
-                    onClick={() => {
-                      setPaymentHistoryModalOpen(true);
-                      fetchPaymentHistory();
-                    }}
-                  >
-                    Xem lịch sử thanh toán
-                  </Button>
+            <form style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+              {/* Profile group */}
+              <div style={{ gridColumn: '1 / span 2', marginBottom: 8, fontWeight: 600, fontSize: 18 }}>Thông tin tài khoản</div>
+              <div>
+                <label style={{ fontWeight: 500 }}>Mã tài khoản</label>
+                <Input value={studentData.accountID} disabled style={{ marginTop: 4 }} />
+              </div>
+              <div></div>
+              <div>
+                <label style={{ fontWeight: 500 }}>Họ</label>
+                {isEditing ? (
+                  <Input value={editValues.lastName} onChange={e => handleChange('lastName', e.target.value)} style={{ marginTop: 4 }} />
+                ) : (
+                  <Input value={studentData.lastName} disabled style={{ marginTop: 4 }} />
                 )}
               </div>
-              <Descriptions bordered column={1}>
-                <Descriptions.Item label="Mã tài khoản">{studentData.accountID}</Descriptions.Item>
-                <Descriptions.Item label="Họ">
+              <div>
+                <label style={{ fontWeight: 500 }}>Tên</label>
+                {isEditing ? (
+                  <Input value={editValues.firstName} onChange={e => handleChange('firstName', e.target.value)} style={{ marginTop: 4 }} />
+                ) : (
+                  <Input value={studentData.firstName} disabled style={{ marginTop: 4 }} />
+                )}
+              </div>
+              <div>
+                <label style={{ fontWeight: 500 }}>Giới tính</label>
+                {isEditing ? (
+                  <Select value={editValues.gender} onChange={v => handleChange('gender', v)} style={{ width: '100%', marginTop: 4 }}>
+                    <Option value="Nam">Nam</Option>
+                    <Option value="Nữ">Nữ</Option>
+                    <Option value="Khác">Khác</Option>
+                  </Select>
+                ) : (
+                  <Input value={studentData.gender} disabled style={{ marginTop: 4 }} />
+                )}
+              </div>
+              <div>
+                <label style={{ fontWeight: 500 }}>Số điện thoại</label>
+                {isEditing ? (
+                  <Input value={editValues.phoneNumber} onChange={e => handleChange('phoneNumber', e.target.value)} style={{ marginTop: 4 }} />
+                ) : (
+                  <Input value={studentData.phoneNumber} disabled style={{ marginTop: 4 }} />
+                )}
+              </div>
+              <div>
+                <label style={{ fontWeight: 500 }}>Email</label>
+                {isEditing ? (
+                  <Input value={editValues.email} onChange={e => handleChange('email', e.target.value)} style={{ marginTop: 4 }} />
+                ) : (
+                  <Input value={studentData.email} disabled style={{ marginTop: 4 }} />
+                )}
+              </div>
+              {!hideFields.includes('birthDate') && (
+                <div>
+                  <label style={{ fontWeight: 500 }}>Ngày sinh</label>
                   {isEditing ? (
-                    <Input value={editValues.lastName} onChange={e => handleChange('lastName', e.target.value)} />
+                    <DatePicker value={editValues.birthDate ? dayjs(editValues.birthDate) : null} onChange={d => handleChange('birthDate', d)} format="YYYY-MM-DD" style={{ width: '100%', marginTop: 4 }} />
                   ) : (
-                    studentData.lastName
+                    <Input value={studentData.birthDate} disabled style={{ marginTop: 4 }} />
                   )}
-                </Descriptions.Item>
-                <Descriptions.Item label="Tên">
-                  {isEditing ? (
-                    <Input value={editValues.firstName} onChange={e => handleChange('firstName', e.target.value)} />
-                  ) : (
-                    studentData.firstName
-                  )}
-                </Descriptions.Item>
-                <Descriptions.Item label="Giới tính">
-                  {isEditing ? (
-                    <Select value={editValues.gender} onChange={v => handleChange('gender', v)} style={{ width: '100%' }}>
-                      <Option value="Nam">Nam</Option>
-                      <Option value="Nữ">Nữ</Option>
-                      <Option value="Khác">Khác</Option>
-                    </Select>
-                  ) : (
-                    studentData.gender
-                  )}
-                </Descriptions.Item>
-                <Descriptions.Item label="Số điện thoại">
-                  {isEditing ? (
-                    <Input value={editValues.phoneNumber} onChange={e => handleChange('phoneNumber', e.target.value)} />
-                  ) : (
-                    studentData.phoneNumber
-                  )}
-                </Descriptions.Item>
-                <Descriptions.Item label="Email">
-                  {isEditing ? (
-                    <Input value={editValues.email} onChange={e => handleChange('email', e.target.value)} />
-                  ) : (
-                    studentData.email
-                  )}
-                </Descriptions.Item>
-                <Descriptions.Item label="Ngày sinh">
-                  {isEditing ? (
-                    <DatePicker value={editValues.birthDate ? dayjs(editValues.birthDate) : null} onChange={d => handleChange('birthDate', d)} format="YYYY-MM-DD" style={{ width: '100%' }} />
-                  ) : (
-                    studentData.birthDate
-                  )}
-                </Descriptions.Item>
-                <Descriptions.Item label="Vai trò">
+                </div>
+              )}
+              {!hideFields.includes('role') && (
+                <div>
+                  <label style={{ fontWeight: 500 }}>Vai trò</label>
                   {isEditing && isCurrentUserManager ? (
-                    <Select value={editValues.role} onChange={v => handleChange('role', v)} style={{ width: '100%' }}>
+                    <Select value={editValues.role} onChange={v => handleChange('role', v)} style={{ width: '100%', marginTop: 4 }}>
                       <Option value="Manager">Quản lý</Option>
                       <Option value="Lecture">Giảng viên</Option>
                       <Option value="Student">Học sinh</Option>
                     </Select>
                   ) : (
-                    roleViMap[studentData.role] || studentData.role
+                    <Input value={roleViMap[studentData.role] || studentData.role} disabled style={{ marginTop: 4 }} />
                   )}
-                </Descriptions.Item>
-                <Descriptions.Item label="Trạng thái">
+                </div>
+              )}
+              {!hideFields.includes('status') && (
+                <div>
+                  <label style={{ fontWeight: 500 }}>Trạng thái</label>
                   {isEditing && isCurrentUserManager ? (
-                    <Select value={editValues.status} onChange={v => handleChange('status', v)} style={{ width: '100%' }}>
+                    <Select value={editValues.status} onChange={v => handleChange('status', v)} style={{ width: '100%', marginTop: 4 }}>
                       <Option value="Active">Đang hoạt động</Option>
                       <Option value="Blocked">Đã bị khóa</Option>
                       <Option value="Deleted">Đã xóa</Option>
                     </Select>
                   ) : (
-                    statusViMap[studentData.status] || studentData.status
+                    <Input value={statusViMap[studentData.status] || studentData.status} disabled style={{ marginTop: 4 }} />
                   )}
-                </Descriptions.Item>
-              </Descriptions>
-              {isEditing ? (
-                <div style={{ marginTop: 24 }}>
-                  <Button type="primary" onClick={() => setShowSaveConfirm(true)} style={{ marginRight: 8 }}>Lưu</Button>
-                  <Button onClick={handleCancel}>Hủy</Button>
                 </div>
-              ) : (
-                <Button
-                  type="primary"
-                  style={{ marginTop: 24 }}
-                  onClick={handleEdit}
-                  disabled={!studentData || !studentData.accountID}
-                >
-                  Chỉnh sửa
-                </Button>
               )}
-            </>
+              {/* Action buttons */}
+              <div style={{ gridColumn: '1 / span 2', display: 'flex', justifyContent: isEditing ? 'flex-end' : 'center', gap: 16, marginTop: 24 }}>
+                {isEditing ? (
+                  <>
+                    <Button type="primary" onClick={() => setShowSaveConfirm(true)} style={{ minWidth: 120, height: 40, fontWeight: 500 }}>Lưu</Button>
+                    <Button onClick={handleCancel} style={{ minWidth: 120, height: 40, fontWeight: 500 }}>Hủy</Button>
+                  </>
+                ) : null}
+              </div>
+            </form>
           ) : null}
           <Modal
             open={showEditConfirm}
@@ -539,8 +608,8 @@ const AccountDetail = ({ accountID: propAccountID }) => {
               </>
             )}
           </Modal>
-        </Content>
-      {/* </Layout> */}
+        </div>
+      </Content>
     </Layout>
   );
 };
