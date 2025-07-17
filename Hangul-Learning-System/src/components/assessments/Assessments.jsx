@@ -334,6 +334,7 @@ const Assessments = () => {
       setLecturerModal(false);
       setModalLoading(false);
       setLecturerLoading(false);
+      setPage(1); // Đảm bảo useEffect sẽ fetch lại danh sách mới nhất
       // Điều hướng về đúng sidebar
       if (userRole === 'Lecturer' || userRole === 'Lecture') {
         navigate('/lecturer/assessment');
