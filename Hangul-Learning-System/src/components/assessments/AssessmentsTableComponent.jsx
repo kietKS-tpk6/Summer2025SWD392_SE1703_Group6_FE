@@ -3,10 +3,10 @@ import { Tag, Space, Button, Table, Input, Select } from 'antd';
 import { EyeOutlined, EditOutlined, DeleteOutlined, SearchOutlined, PlusOutlined } from '@ant-design/icons';
 
 const testStatusMap = {
+  Actived: { text: 'Đã duyệt', color: 'green' },
   Drafted: { text: 'Nháp', color: 'default' },
   Pending: { text: 'Chờ duyệt', color: 'orange' },
   Rejected: { text: 'Từ chối', color: 'red' },
-  Actived: { text: 'Đã duyệt', color: 'green' },
   Deleted: { text: 'Đã xóa', color: 'gray' },
 };
 
@@ -108,6 +108,12 @@ export default function AssessmentsTable({
     return matchStatus && matchSearch;
   });
 
+  // Sắp xếp: Đang hoạt động (Actived) lên đầu
+  const sortedData = [
+    ...filteredData.filter(item => item.Status === 'Actived'),
+    ...filteredData.filter(item => item.Status !== 'Actived'),
+  ];
+
   return (
     <>
       <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
@@ -198,7 +204,7 @@ export default function AssessmentsTable({
             },
           },
         ]}
-        dataSource={filteredData}
+        dataSource={sortedData}
         pagination={{ pageSize: 10 }}
         rowKey="testID"
         scroll={{ x: 1000 }}

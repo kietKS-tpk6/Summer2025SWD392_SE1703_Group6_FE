@@ -122,7 +122,7 @@ const PaymentForm = () => {
           } catch (pollError) {
             console.error("Polling error:", pollError.response?.data || pollError.message);
           }
-        }, 4000);
+        }, 1500);
       } catch (err) {
         console.error("Lỗi khi kiểm tra trạng thái:", err.response?.data || err.message);
       } finally {

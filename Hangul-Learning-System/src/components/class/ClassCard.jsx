@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, Button, Tag, Tooltip, Avatar } from 'antd';
-import { EyeOutlined, UserOutlined } from '@ant-design/icons';
+import { EyeOutlined, UserOutlined, ClockCircleOutlined, StarOutlined } from '@ant-design/icons';
 import '../../styles/ClassCard.css';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -16,6 +16,7 @@ const statusColor = (status) => {
     default: return 'default';
   }
 };
+
 const statusText = (status) => {
   switch (status) {
     case 0: return 'Chờ xử lý';
@@ -36,6 +37,11 @@ const ClassCard = ({
   status,
   onView,
   id,
+  rating = 4.8,
+  studentsCount = 125,
+  duration = "8 tuần",
+  isPopular = false,
+  originalPrice = null
 }) => {
   const navigate = useNavigate();
 
@@ -43,13 +49,17 @@ const ClassCard = ({
     navigate(`/class-detail/${id}`);
   };
 
+  const discountPercent = originalPrice && priceOfClass ? 
+    Math.round(((originalPrice - priceOfClass) / originalPrice) * 100) : 0;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: 0.5, ease: 'easeOut' }}
+      transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
       className="class-card-motion"
+      whileHover={{ y: -12 }}
     >
       <Card
         hoverable
@@ -57,57 +67,92 @@ const ClassCard = ({
         cover={
           <div className="class-card-img-wrap">
             <img alt={className} src={imageURL} className="class-card-img" />
-            {status === 1 && (
-              <Tag color="green" className="class-card-badge">Mới</Tag>
-            )}
+            <div className="class-card-overlay">
+              <div className="class-card-badges">
+                {status === 1 && (
+                  <Tag color="green" className="class-card-badge new-badge">
+                    <span className="badge-text">Mới</span>
+                  </Tag>
+                )}
+                {isPopular && (
+                  <Tag color="orange" className="class-card-badge popular-badge">
+                    <StarOutlined style={{ marginRight: 4 }} />
+                    <span className="badge-text">Phổ biến</span>
+                  </Tag>
+                )}
+                {discountPercent > 0 && (
+                  <Tag color="red" className="class-card-badge discount-badge">
+                    <span className="badge-text">-{discountPercent}%</span>
+                  </Tag>
+                )}
+              </div>
+            </div>
+            <div className="class-card-img-gradient"></div>
           </div>
         }
         style={{
-          width: 320,
-          borderRadius: 22,
+          width: 340,
+          borderRadius: 24,
           margin: '1.2rem 0.7rem',
-          boxShadow: '0 8px 32px 0 rgba(251,176,64,0.10), 0 1.5rem 3rem #fbb04011',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08), 0 8px 40px rgba(251, 176, 64, 0.12)',
           border: 'none',
-          overflow: 'visible',
+          overflow: 'hidden',
           background: '#fff',
+          transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
         }}
-        bodyStyle={{ padding: '22px 22px 18px 22px', minHeight: 180 }}
+        bodyStyle={{ padding: '24px 24px 20px 24px' }}
       >
-        <Tooltip title={className}>
-          <h3 className="class-card-title" style={{ marginBottom: 14, minHeight: 48 }}>
-            {className}
-          </h3>
-        </Tooltip>
-        <div className="class-card-lecturer-row">
-          <Avatar
-            size={32}
-            icon={<UserOutlined />}
-            style={{ background: '#ffe9b0', color: '#fbb040', marginRight: 8 }}
-          />
-          <span className="class-card-lecturer">{lecturerName}</span>
+        <div className="class-card-header">
+          <Tooltip title={className} placement="top">
+            <h3 className="class-card-title">
+              {className}
+            </h3>
+          </Tooltip>
+          
+          
         </div>
-        <div className="class-card-info-row" style={{ margin: '18px 0 16px 0' }}>
-          <span className="class-card-price">{priceOfClass ? priceOfClass.toLocaleString() : '--'} <span style={{ fontSize: 13, fontWeight: 500 }}>VNĐ</span></span>
-          <Tag color={statusColor(status)} className="class-card-status">
+
+        <div className="class-card-lecturer-section">
+          <div className="lecturer-info">
+            <Avatar
+              size={36}
+              icon={<UserOutlined />}
+              className="lecturer-avatar"
+            />
+            <div className="lecturer-details">
+              <span className="lecturer-name">{lecturerName}</span>
+              <span className="lecturer-title">Giảng viên</span>
+            </div>
+          </div>
+          
+          
+        </div>
+
+        <div className="class-card-price-section">
+          <div className="price-container">
+            <span className="current-price">
+              {priceOfClass ? priceOfClass.toLocaleString() : '--'}
+              <span className="currency">VNĐ</span>
+            </span>
+            {originalPrice && (
+              <span className="original-price">
+                {originalPrice.toLocaleString()} VNĐ
+              </span>
+            )}
+          </div>
+          
+          <Tag color={statusColor(status)} className="status-tag">
             {statusText(status)}
           </Tag>
         </div>
+
         <Button
           type="primary"
           icon={<EyeOutlined />}
           block
-          className="class-card-view-btn"
+          className="class-card-cta-btn"
           onClick={handleView}
-          style={{
-            background: 'linear-gradient(90deg, #fbb040 0%, #ffe9b0 100%)',
-            color: '#222',
-            border: 'none',
-            fontWeight: 700,
-            borderRadius: 10,
-            fontSize: 16,
-            boxShadow: '0 2px 8px #fbb04022',
-            letterSpacing: 1,
-          }}
+          size="large"
         >
           Xem chi tiết
         </Button>

@@ -4,7 +4,7 @@ import dayjs from 'dayjs';
 import axios from 'axios';
 import ViewDetailAssessment from '../../assessments/ViewDetailAssessment';
 
-const AddAssessmentToTestEventComponent = ({
+const UpdateAssessmentOfTestEventComponent = ({
   open,
   onCancel,
   onOk,
@@ -29,24 +29,16 @@ const AddAssessmentToTestEventComponent = ({
   onSuccess,
   durationMinutes,
 }) => {
-  // State cho danh sách bài test
   const [availableTests, setAvailableTests] = useState([]);
   const [testLoading, setTestLoading] = useState(false);
   const [testNamesMap, setTestNamesMap] = useState({});
-
-  // State cho giờ bắt đầu/kết thúc
   const [selectedStartTime, setSelectedStartTime] = useState(null);
   const [selectedEndTime, setSelectedEndTime] = useState(null);
-
-  // State cho modal xác nhận
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [confirmValues, setConfirmValues] = useState(null);
-
-  // State cho modal xem chi tiết bài test
   const [viewTestModalOpen, setViewTestModalOpen] = useState(false);
   const [viewTestID, setViewTestID] = useState(null);
 
-  // Reset state khi popup đóng
   useEffect(() => {
     if (!open) {
       setViewTestModalOpen(false);
@@ -54,14 +46,13 @@ const AddAssessmentToTestEventComponent = ({
     }
   }, [open]);
 
-  // Reset lại form khi mở popup cho event mới
   useEffect(() => {
     if (open && assessment) {
       form.resetFields();
+      form.setFieldsValue(initialValues);
     }
-  }, [open, assessment]);
+  }, [open, assessment, initialValues]);
 
-  // Fetch danh sách bài test khi modal open và assessment thay đổi
   useEffect(() => {
     const fetchTests = async () => {
       if (!open) {
@@ -76,12 +67,9 @@ const AddAssessmentToTestEventComponent = ({
           testType: testType,
           status: 3,
         };
-        console.log('API advanced-search params:', params);
         const res = await axios.get(`${API_URL}api/Test/advanced-search`, { params });
-        console.log('API advanced-search result:', res.data);
         const tests = Array.isArray(res.data?.items) ? res.data.items : [];
         setAvailableTests(tests);
-        // Nếu testName bị thiếu, fetch thêm từ API /api/Test/{testID}
         const missingNames = tests.filter(t => !t.testName && t.testID);
         if (missingNames.length > 0) {
           const namesMap = {};
@@ -97,7 +85,6 @@ const AddAssessmentToTestEventComponent = ({
         }
       } catch (err) {
         setAvailableTests([]);
-        console.log('API advanced-search error:', err);
       } finally {
         setTestLoading(false);
       }
@@ -105,21 +92,16 @@ const AddAssessmentToTestEventComponent = ({
     fetchTests();
   }, [open, assessmentCategory, testType, subjectId, API_URL]);
 
-  // Lấy ngày lesson (chỉ cho chọn đúng ngày này)
   const lessonDate = lessonStartTime ? dayjs(lessonStartTime).startOf('day') : null;
 
-  // Khi chọn giờ bắt đầu
   const handleStartTimeChange = (time) => {
     setSelectedStartTime(time);
     if (onStartTimeChange) onStartTimeChange(time);
-    // Nếu giờ kết thúc hiện tại không hợp lệ, tự động cập nhật lại
     if (time && selectedEndTime) {
       const start = dayjs(time);
       const end = dayjs(selectedEndTime);
       if (end.diff(start, 'minute') < 15) {
-        // Tính giờ kết thúc mới
         let newEnd = start.add(15, 'minute');
-        // Nếu vượt quá lessonEndTime thì set null
         if (lessonEndTime && newEnd.isAfter(dayjs(lessonEndTime))) {
           setSelectedEndTime(null);
           if (onEndTimeChange) onEndTimeChange(null);
@@ -133,13 +115,11 @@ const AddAssessmentToTestEventComponent = ({
     }
   };
 
-  // Khi chọn giờ kết thúc
   const handleEndTimeChange = (time) => {
     setSelectedEndTime(time);
     if (onEndTimeChange) onEndTimeChange(time);
   };
 
-  // TimePicker: chỉ cho chọn giờ/phút hợp lệ
   const disabledStartTime = () => {
     if (!lessonStartTime || !lessonEndTime) return {};
     const start = dayjs(lessonStartTime);
@@ -173,7 +153,6 @@ const AddAssessmentToTestEventComponent = ({
       disabledHours: () => {
         const arr = [];
         for (let i = 0; i < 24; i++) {
-          // Không cho chọn trước minEnd hoặc ngoài khoảng lessonEndTime
           if (i < minEnd.hour() || i > end.hour()) arr.push(i);
         }
         return arr;
@@ -194,12 +173,11 @@ const AddAssessmentToTestEventComponent = ({
   return (
     <Modal
       open={open}
-      title="Thêm đề kiểm tra"
+      title="Cập nhật đề kiểm tra"
       onCancel={onCancel}
       onOk={async () => {
         try {
           const values = await form.validateFields();
-          // Validate giờ kết thúc phải sau giờ bắt đầu ít nhất 15 phút
           if (values.startTime && values.endTime) {
             const start = dayjs(values.startTime);
             const end = dayjs(values.endTime);
@@ -211,7 +189,6 @@ const AddAssessmentToTestEventComponent = ({
           setConfirmValues(values);
           setConfirmVisible(true);
         } catch (err) {
-          // Form validate lỗi, không làm gì
         }
       }}
       okText="Xác nhận"
@@ -297,7 +274,7 @@ const AddAssessmentToTestEventComponent = ({
         onOk={async () => {
           if (onOk) await onOk();
           setConfirmVisible(false);
-          if (onCancel) onCancel(); // Đóng modal chính
+          if (onCancel) onCancel();
           if (onSuccess) onSuccess();
         }}
         okText="Xác nhận"
@@ -319,7 +296,7 @@ const AddAssessmentToTestEventComponent = ({
           </div>
         )}
         <div style={{ marginTop: 16, fontWeight: 600, color: '#1677ff' }}>
-          Bạn có xác nhận thêm bài kiểm tra không?
+          Bạn có xác nhận cập nhật bài kiểm tra không?
         </div>
       </Modal>
       {/* Modal xem chi tiết bài test */}
@@ -336,4 +313,4 @@ const AddAssessmentToTestEventComponent = ({
   );
 };
 
-export default AddAssessmentToTestEventComponent;
+export default UpdateAssessmentOfTestEventComponent;
