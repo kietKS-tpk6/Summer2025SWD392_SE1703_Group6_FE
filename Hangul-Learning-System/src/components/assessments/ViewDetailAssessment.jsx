@@ -601,7 +601,7 @@ const ViewDetailAssessment = ({ testID: propTestID, inModal }) => {
                   style={{ background: '#f6faff', border: '1px solid #e6eaf0', boxShadow: '0 1px 3px #f0f1f2' }}
                   bodyStyle={{ padding: 16 }}
                   title={<span style={{ color: '#1677ff', fontWeight: 600 }}>Câu {qIdx + 1}</span>}
-                  extra={isEditing && <Button danger size="small" icon={<DeleteOutlined />} onClick={() => handleDeleteQuestion(idx, qIdx)} />}
+                  extra={isEditing && <Button type="primary" danger icon={<DeleteOutlined />} onClick={() => handleDeleteQuestion(idx, qIdx)} />}
                 >
                   <div style={{ marginBottom: 8 }}>
                     <b>Nội dung:</b> {isEditing ? (
@@ -683,7 +683,7 @@ const ViewDetailAssessment = ({ testID: propTestID, inModal }) => {
                                 >
                                   Đúng
                                 </Button>
-                                <Button danger size="small" icon={<DeleteOutlined />} onClick={() => handleDeleteAnswer(idx, qIdx, aIdx)} />
+                                <Button type="primary" danger icon={<DeleteOutlined />} onClick={() => handleDeleteAnswer(idx, qIdx, aIdx)} />
                               </>
                             ) : (
                               <>

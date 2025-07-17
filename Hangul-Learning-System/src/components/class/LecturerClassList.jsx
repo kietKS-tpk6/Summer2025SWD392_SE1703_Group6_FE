@@ -127,10 +127,11 @@ const LecturerClassList = () => {
       key: 'action',
       render: (_, record) => (
         <Button
+          type="primary"
           icon={<EyeOutlined />}
           onClick={() => navigate(`/lecturer/class/${record.classID}`)}
         >
-          Xem chi tiết
+          Xem
         </Button>
       ),
       align: 'center',

@@ -124,7 +124,6 @@ const SystemConfig = () => {
       render: (_, record) => (
         <Button
           type="primary"
-          size="small"
           loading={loadingKeys.includes(record.key)}
           onClick={() => handleSave(record)}
         >

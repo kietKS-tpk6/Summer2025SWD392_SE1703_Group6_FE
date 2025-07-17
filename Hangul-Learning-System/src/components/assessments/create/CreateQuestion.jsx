@@ -437,7 +437,7 @@ const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score, onImpor
                         )}
                         {/* Nút xóa đáp án */}
                         {q.answers.length > minOptions && (
-                          <Button danger size="small" icon={<DeleteOutlined />} onClick={() => handleRemoveOption(idx, aIdx)} />
+                          <Button type="primary" danger icon={<DeleteOutlined />} onClick={() => handleRemoveOption(idx, aIdx)} />
                         )}
                       </div>
                     ));
