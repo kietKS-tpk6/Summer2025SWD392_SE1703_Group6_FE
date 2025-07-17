@@ -53,7 +53,7 @@ const HeaderBar = () => {
         </div>
         <div className='app__nav-actions'>
           {!user ? (
-            <button className='app__navbar-btn' onClick={handleApplyNow}>Apply now</button>
+            <button className='app__navbar-btn' onClick={handleApplyNow}>Đăng Ký Ngay</button>
           ) : (
             <div className="app__navbar-user">
               <span className="app__navbar-hello">
@@ -91,7 +91,7 @@ const HeaderBar = () => {
                 ))}
                 <li>
                   <button className='app__navbar-menu-btn' onClick={handleApplyNow}>
-                    Apply now
+                    Đăng Ký Ngay
                   </button>
                 </li>
               </ul>
