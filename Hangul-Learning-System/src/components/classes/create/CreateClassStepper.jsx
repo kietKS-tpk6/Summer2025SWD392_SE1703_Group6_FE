@@ -186,10 +186,6 @@ const CreateClassStepper = ({
         startHour: dayjs(lessons.lessonTime).format('HH:mm'),
         daysOfWeek: lessons.weekDays
       });
-      const testEventResponse = await axios.post(`${API_URL}api/TestEvent/setup-test-event/${classId}`);
-      console.log(classResponse.data);
-      console.log(lessonResponse.data);
-      console.log(testEventResponse.data);
       if (classResponse.data.success) {
         if (shouldOpenRecruit) {
           await axios.put(`${API_URL}api/Class/update-status`, {
@@ -209,7 +205,6 @@ const CreateClassStepper = ({
         } else {
           const descriptionString = [
             lessonResponse.data.message,
-            testEventResponse.data.message
           ].join('\n');
           showNotify({
             type: 'success',
