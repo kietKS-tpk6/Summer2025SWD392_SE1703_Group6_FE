@@ -86,7 +86,7 @@ const AssessmentBasicForm = React.forwardRef(({ subjects = [], formData = {}, on
       </Form.Item>
 
       <Form.Item
-        label="Phân loại (Category)"
+        label="Phân loại"
         name="Category"
         rules={[{ required: true, message: 'Vui lòng chọn phân loại' }]}
       >

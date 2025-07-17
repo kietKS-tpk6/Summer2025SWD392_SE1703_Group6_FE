@@ -257,9 +257,9 @@ const AddAssessmentToTestEventComponent = ({
             </div>
           )}
           <Form.Item
-            label="Chọn bài test"
+            label="Chọn bài kiểm tra"
             name="testID"
-            rules={[{ required: true, message: 'Vui lòng chọn bài test' }]}
+            rules={[{ required: true, message: 'Vui lòng chọn bài kiểm tra' }]}
           >
             {testLoading ? (
               <Spin size="small" style={{ display: 'block', margin: '8px auto' }} />
@@ -322,7 +322,7 @@ const AddAssessmentToTestEventComponent = ({
           <Form.Item label="Số lần học sinh làm bài" name="attemptLimit" rules={[{ required: true, message: 'Nhập số lần học sinh được phép làm bài' }]}> 
             <Input type="number" min={1} onChange={onAttemptLimitChange} />
           </Form.Item>
-          <Form.Item label="Password cho bài test" name="password"> 
+          <Form.Item label="Mật khẩu cho bài kiểm tra" name="password"> 
             <Input onChange={onPasswordChange} />
           </Form.Item>
         </Form>
