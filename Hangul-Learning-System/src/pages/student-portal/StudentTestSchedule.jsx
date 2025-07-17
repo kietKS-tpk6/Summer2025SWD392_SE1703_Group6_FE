@@ -133,13 +133,12 @@ const StudentTestSchedule = () => {
       title: 'Thao tác',
       key: 'actions',
       render: (_, record) => (
-        <Button 
-          type="primary" 
-          size="small" 
+        <Button
+          type="primary"
           icon={<EyeOutlined />}
           onClick={() => handleViewTest(record.testEventID, record.testId)}
         >
-          Xem chi tiết
+          Chi tiết
         </Button>
       ),
     },
