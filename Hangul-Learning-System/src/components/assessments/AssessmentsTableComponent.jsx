@@ -127,6 +127,8 @@ export default function AssessmentsTable({
             <Option value="Drafted">Nháp</Option>
             <Option value="Pending">Chờ duyệt</Option>
             <Option value="Actived">Đang hoạt động</Option>
+            <Option value="Rejected">Từ chối</Option>
+            <Option value="Deleted">Đã xóa</Option>
             <Option value="all">Tất cả</Option>
           </Select>
           <Search
@@ -183,20 +185,12 @@ export default function AssessmentsTable({
               } catch (e) {
                 userRole = null;
               }
-              const isLecturer = userRole === 'Lecturer';
-              const isOwnDraft = isLecturer && record.Status === 'Drafted' && record.createdBy === user.accountId;
+              // Chỉ cho phép xóa nếu là bài nháp
+              const isDraft = record.Status === 'Drafted';
               return (
                 <Space>
                   <Button onClick={() => onView(record)}>Xem</Button>
-                  {/* Chỉ cho phép sửa/gửi duyệt nếu là bài của mình và là Drafted */}
-                  {isOwnDraft && (
-                    <>
-                      <Button onClick={() => onEdit(record)} type="primary">Sửa</Button>
-                      <Button onClick={() => onSendApprove(record)} type="dashed" style={{ color: '#faad14', borderColor: '#faad14' }}>Gửi duyệt</Button>
-                    </>
-                  )}
-                  {/* Nếu không phải bài của mình hoặc không phải Drafted thì không cho sửa/gửi duyệt */}
-                  {(!isOwnDraft && isLecturer) ? null : (
+                  {isDraft && (
                     <Button onClick={() => onDelete(record)} danger icon={<DeleteOutlined />} />
                   )}
                 </Space>
