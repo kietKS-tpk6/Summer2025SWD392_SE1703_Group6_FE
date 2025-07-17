@@ -167,6 +167,7 @@ const Classes = () => {
     const record = deleteModal.record;
     try {
       var noti = await axios.delete(`${API_URL}api/Class/delete/${record.classID}`);
+      await axios.delete(`${API_URL}api/Lesson/delete-by-class-id/${record.classID}`);
       showNotify({
         type: 'success',
         message: noti.data.message,
