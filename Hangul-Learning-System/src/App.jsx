@@ -22,6 +22,7 @@ import WeeklyTimeTable from './pages/student-portal/WeeklyTimeTable';
 import AccountDetail from '../src/components/common/AccountDetail';
 import AssessmentManagement from './components/assessments/Assessments'; // hoặc tên file bạn muốn 
 import ViewDetailAssessment from './components/assessments/ViewDetailAssessment';
+import CreateUser from './components/dashboard/pages/CreateUser';
 
 // import About from './pages/viewer-portal/About';
 // import Courses from './pages/viewer-portal/Courses';
@@ -66,6 +67,7 @@ const { Content } = Layout;
 const dashboardRoutes = [
   { path: '/', element: <Dashboard /> },
   { path: '/users', element: <Users /> },
+  { path: '/users/create', element: <CreateUser /> },
   { path: '/class', element: <ClassManagement /> },
   { path: '/class/detail', element: <ClassDetail /> },
   { path: '/subject', element: <Subjects /> },
