@@ -71,13 +71,13 @@ export function getAssessmentsTableColumns(handlers) {
       key: 'actions',
       render: (_, record) => (
         <Space size="middle">
-          <Button type="primary" size="small" icon={<EyeOutlined />} onClick={() => onView(record)}>
+          <Button type="primary" icon={<EyeOutlined />} onClick={() => onView(record)}>
             Xem
           </Button>
-          <Button type="primary" size="small" icon={<EditOutlined />} onClick={() => onEdit(record)}>
+          <Button type="primary" icon={<EditOutlined />} onClick={() => onEdit(record)}>
             Sửa
           </Button>
-          <Button danger size="small" icon={<DeleteOutlined />} onClick={() => onDelete(record)}>
+          <Button type="primary" danger icon={<DeleteOutlined />} onClick={() => onDelete(record)}>
             Xóa
           </Button>
         </Space>
@@ -187,17 +187,25 @@ export default function AssessmentsTable({
               const isOwnDraft = isLecturer && record.Status === 'Drafted' && record.createdBy === user.accountId;
               return (
                 <Space>
-                  <Button onClick={() => onView(record)}>Xem</Button>
+                  <Button type="primary" icon={<EyeOutlined />} onClick={() => onView(record)}>
+                    Xem
+                  </Button>
                   {/* Chỉ cho phép sửa/gửi duyệt nếu là bài của mình và là Drafted */}
                   {isOwnDraft && (
                     <>
-                      <Button onClick={() => onEdit(record)} type="primary">Sửa</Button>
-                      <Button onClick={() => onSendApprove(record)} type="dashed" style={{ color: '#faad14', borderColor: '#faad14' }}>Gửi duyệt</Button>
+                      <Button type="primary" icon={<EditOutlined />} onClick={() => onEdit(record)}>
+                        Sửa
+                      </Button>
+                      <Button type="dashed" style={{ color: '#faad14', borderColor: '#faad14' }} onClick={() => onSendApprove(record)}>
+                        Gửi duyệt
+                      </Button>
                     </>
                   )}
                   {/* Nếu không phải bài của mình hoặc không phải Drafted thì không cho sửa/gửi duyệt */}
                   {(!isOwnDraft && isLecturer) ? null : (
-                    <Button onClick={() => onDelete(record)} danger icon={<DeleteOutlined />} />
+                    <Button type="primary" danger icon={<DeleteOutlined />} onClick={() => onDelete(record)}>
+                      {/* Xóa */}
+                    </Button>
                   )}
                 </Space>
               );
