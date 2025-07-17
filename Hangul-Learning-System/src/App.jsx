@@ -9,11 +9,7 @@ import ClassManagement from './components/classes/Classes';
 import Subjects from './components/dashboard/pages/Subjects';
 import CreateSubject from './components/dashboard/pages/subject/CreateSubject';
 import Syllabus from './components/dashboard/pages/Syllabus';
-import Blog from './components/dashboard/pages/Blog';
 import Analytics from './components/analytics/Analytics';
-import Chat from './components/dashboard/pages/Chat';
-import Schedule from './components/dashboard/pages/Schedule';
-import Profile from './components/dashboard/pages/Profile';
 import Settings from './components/dashboard/pages/Settings';
 import ViewerPage from './pages/viewer-portal/ViewerPage';
 import HomeContent from './components/Homepage/Content';
@@ -73,10 +69,10 @@ const dashboardRoutes = [
   { path: '/subject', element: <Subjects /> },
   { path: '/subject/create', element: <CreateSubject /> },
   { path: '/syllabus', element: <Syllabus /> },
-  { path: '/blog', element: <Blog /> },
+  // { path: '/blog', element: <Blog /> },
   { path: '/analytics', element: <Analytics /> },
-  { path: '/chat', element: <Chat /> },
-  { path: '/schedule', element: <Schedule /> },
+  // { path: '/chat', element: <Chat /> },
+  // { path: '/schedule', element: <Schedule /> },
   { path: '/profile', element: <AccountDetail/> },
   { path: '/profile/:accountId', element: <AccountDetail /> },
   { path: '/settings', element: <Settings /> },
