@@ -83,7 +83,7 @@ const Schedule = () => {
                 <p><strong>Date:</strong> {class_.date}</p>
                 <p><strong>Teacher:</strong> {class_.teacher}</p>
                 <Space>
-                  <Button type="primary" size="small">Join Class</Button>
+                  <Button type="primary">Join Class</Button>
                   <Button size="small">View Details</Button>
                 </Space>
               </Card>
