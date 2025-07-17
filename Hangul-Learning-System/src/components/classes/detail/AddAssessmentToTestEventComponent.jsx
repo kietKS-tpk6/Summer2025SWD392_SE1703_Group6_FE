@@ -3,6 +3,7 @@ import { Modal, Form, Select, Input, DatePicker, TimePicker, Spin, message, Butt
 import dayjs from 'dayjs';
 import axios from 'axios';
 import ViewDetailAssessment from '../../assessments/ViewDetailAssessment';
+import Notification from '../../common/Notification';
 
 const AddAssessmentToTestEventComponent = ({
   open,
@@ -26,8 +27,7 @@ const AddAssessmentToTestEventComponent = ({
   onEndTimeChange,
   assessmentCategory,
   testType,
-  onSuccess,
-  durationMinutes,
+  onSuccess
 }) => {
   // State cho danh sách bài test
   const [availableTests, setAvailableTests] = useState([]);
@@ -45,6 +45,12 @@ const AddAssessmentToTestEventComponent = ({
   // State cho modal xem chi tiết bài test
   const [viewTestModalOpen, setViewTestModalOpen] = useState(false);
   const [viewTestID, setViewTestID] = useState(null);
+
+  // State cho thông báo
+  const [notification, setNotification] = useState({ visible: false, type: 'success', message: '', description: '' });
+
+  // State cho thời gian kiểm tra
+  const [durationMinutes, setDurationMinutes] = useState(null);
 
   // Reset state khi popup đóng
   useEffect(() => {
@@ -104,6 +110,23 @@ const AddAssessmentToTestEventComponent = ({
     };
     fetchTests();
   }, [open, assessmentCategory, testType, subjectId, API_URL]);
+
+  // Khi mở modal, nếu có testEventID thì fetch durationMinutes
+  useEffect(() => {
+    if (open && assessment && assessment.testEventID && API_URL) {
+      axios.get(`${API_URL}api/TestEvent/get-by-id/${assessment.testEventID}`)
+        .then(res => {
+          if (res.data && res.data.data && typeof res.data.data.durationMinutes === 'number') {
+            setDurationMinutes(res.data.data.durationMinutes);
+          } else {
+            setDurationMinutes(null);
+          }
+        })
+        .catch(() => setDurationMinutes(null));
+    } else if (!open) {
+      setDurationMinutes(null);
+    }
+  }, [open, assessment, API_URL]);
 
   // Lấy ngày lesson (chỉ cho chọn đúng ngày này)
   const lessonDate = lessonStartTime ? dayjs(lessonStartTime).startOf('day') : null;
@@ -192,113 +215,137 @@ const AddAssessmentToTestEventComponent = ({
   };
 
   return (
-    <Modal
-      open={open}
-      title="Thêm đề kiểm tra"
-      onCancel={onCancel}
-      onOk={async () => {
-        try {
-          const values = await form.validateFields();
-          // Validate giờ kết thúc phải sau giờ bắt đầu ít nhất 15 phút
-          if (values.startTime && values.endTime) {
-            const start = dayjs(values.startTime);
-            const end = dayjs(values.endTime);
-            if (end.diff(start, 'minute') < 15) {
-              message.error('Giờ kết thúc phải sau giờ bắt đầu ít nhất 15 phút!');
-              return;
+    <>
+      <Notification
+        visible={notification.visible}
+        type={notification.type}
+        message={notification.message}
+        description={notification.description}
+        onClose={() => setNotification(prev => ({ ...prev, visible: false }))}
+      />
+      <Modal
+        open={open}
+        title="Thêm đề kiểm tra"
+        onCancel={onCancel}
+        onOk={async () => {
+          try {
+            const values = await form.validateFields();
+            // Validate giờ kết thúc phải sau giờ bắt đầu ít nhất 15 phút
+            if (values.startTime && values.endTime) {
+              const start = dayjs(values.startTime);
+              const end = dayjs(values.endTime);
+              if (end.diff(start, 'minute') < 15) {
+                message.error('Giờ kết thúc phải sau giờ bắt đầu ít nhất 15 phút!');
+                return;
+              }
             }
+            setConfirmValues(values);
+            setConfirmVisible(true);
+          } catch (err) {
+            // Form validate lỗi, không làm gì
           }
-          setConfirmValues(values);
-          setConfirmVisible(true);
-        } catch (err) {
-          // Form validate lỗi, không làm gì
-        }
-      }}
-      okText="Xác nhận"
-      cancelText="Hủy"
-      confirmLoading={loading}
-    >
-      <Form form={form} layout="vertical" initialValues={initialValues}>
-        <Form.Item
-          label="Chọn bài test"
-          name="testID"
-          rules={[{ required: true, message: 'Vui lòng chọn bài test' }]}
-        >
-          {testLoading ? (
-            <Spin size="small" style={{ display: 'block', margin: '8px auto' }} />
-          ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Select
-                placeholder="Chọn bài test"
-                notFoundContent="Hiện tại không có bài kiểm tra phù hợp"
-                value={form.getFieldValue('testID')}
-                onChange={value => {
-                  onTestChange && onTestChange(value);
-                  setViewTestID(value);
-                  form.setFieldsValue({ testID: value });
-                }}
-                style={{ flex: 1 }}
-              >
-                {availableTests.map(test => (
-                  <Select.Option key={test.testID} value={test.testID}>
-                    {test.testName || testNamesMap[test.testID] || test.testID}
-                  </Select.Option>
-                ))}
-              </Select>
-              {viewTestID && (
-                <Button type="link" onClick={() => setViewTestModalOpen(true)} style={{ padding: 0 }}>
-                  Xem chi tiết bài test
-                </Button>
-              )}
+        }}
+        okText="Xác nhận"
+        cancelText="Hủy"
+        confirmLoading={loading}
+      >
+        <Form form={form} layout="vertical" initialValues={initialValues}>
+          {/* Hiển thị thời gian kiểm tra nếu có */}
+          {durationMinutes !== null && (
+            <div style={{ marginBottom: 12, color: 'red', fontWeight: 600 }}>
+              Thời gian kiểm tra của tiết này là: {durationMinutes} phút
             </div>
           )}
-        </Form.Item>
-        <Form.Item label="Mô tả" name="description">
-          <Input.TextArea rows={2} onChange={onDescriptionChange} />
-        </Form.Item>
-        <Form.Item label="Ngày kiểm tra" required>
-          <DatePicker
-            style={{ width: '100%' }}
-            format="DD/MM/YYYY"
-            value={lessonDate}
-            disabled
-          />
-        </Form.Item>
-        <Form.Item label="Giờ bắt đầu" name="startTime" rules={[{ required: true, message: 'Chọn giờ bắt đầu' }]}> 
-          <TimePicker
-            style={{ width: '100%' }}
-            format="HH:mm"
-            onChange={handleStartTimeChange}
-            disabledTime={disabledStartTime}
-            minuteStep={5}
-          />
-        </Form.Item>
-        <Form.Item label="Giờ kết thúc" name="endTime" rules={[{ required: true, message: 'Chọn giờ kết thúc' }]}> 
-          <TimePicker
-            style={{ width: '100%' }}
-            format="HH:mm"
-            onChange={handleEndTimeChange}
-            disabledTime={disabledEndTime}
-            minuteStep={5}
-          />
-        </Form.Item>
-        <Form.Item label="Số lần học sinh làm bài" name="attemptLimit" rules={[{ required: true, message: 'Nhập số lần học sinh được phép làm bài' }]}> 
-          <Input type="number" min={1} onChange={onAttemptLimitChange} />
-        </Form.Item>
-        <Form.Item label="Password cho bài test" name="password"> 
-          <Input onChange={onPasswordChange} />
-        </Form.Item>
-      </Form>
+          <Form.Item
+            label="Chọn bài test"
+            name="testID"
+            rules={[{ required: true, message: 'Vui lòng chọn bài test' }]}
+          >
+            {testLoading ? (
+              <Spin size="small" style={{ display: 'block', margin: '8px auto' }} />
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Select
+                  placeholder="Chọn bài test"
+                  notFoundContent="Hiện tại không có bài kiểm tra phù hợp"
+                  value={form.getFieldValue('testID')}
+                  onChange={value => {
+                    onTestChange && onTestChange(value);
+                    setViewTestID(value);
+                    form.setFieldsValue({ testID: value });
+                  }}
+                  style={{ flex: 1 }}
+                >
+                  {availableTests.map(test => (
+                    <Select.Option key={test.testID} value={test.testID}>
+                      {test.testName || testNamesMap[test.testID] || test.testID}
+                    </Select.Option>
+                  ))}
+                </Select>
+                {viewTestID && (
+                  <Button type="link" onClick={() => setViewTestModalOpen(true)} style={{ padding: 0 }}>
+                    Xem chi tiết bài test
+                  </Button>
+                )}
+              </div>
+            )}
+          </Form.Item>
+          <Form.Item label="Mô tả" name="description">
+            <Input.TextArea rows={2} onChange={onDescriptionChange} />
+          </Form.Item>
+          <Form.Item label="Ngày kiểm tra" required>
+            <DatePicker
+              style={{ width: '100%' }}
+              format="DD/MM/YYYY"
+              value={lessonDate}
+              disabled
+            />
+          </Form.Item>
+          <Form.Item label="Giờ bắt đầu" name="startTime" rules={[{ required: true, message: 'Chọn giờ bắt đầu' }]}> 
+            <TimePicker
+              style={{ width: '100%' }}
+              format="HH:mm"
+              onChange={handleStartTimeChange}
+              disabledTime={disabledStartTime}
+              minuteStep={5}
+            />
+          </Form.Item>
+          <Form.Item label="Giờ kết thúc" name="endTime" rules={[{ required: true, message: 'Chọn giờ kết thúc' }]}> 
+            <TimePicker
+              style={{ width: '100%' }}
+              format="HH:mm"
+              onChange={handleEndTimeChange}
+              disabledTime={disabledEndTime}
+              minuteStep={5}
+            />
+          </Form.Item>
+          <Form.Item label="Số lần học sinh làm bài" name="attemptLimit" rules={[{ required: true, message: 'Nhập số lần học sinh được phép làm bài' }]}> 
+            <Input type="number" min={1} onChange={onAttemptLimitChange} />
+          </Form.Item>
+          <Form.Item label="Password cho bài test" name="password"> 
+            <Input onChange={onPasswordChange} />
+          </Form.Item>
+        </Form>
+      </Modal>
       {/* Modal xác nhận thông tin nhập */}
       <Modal
         open={confirmVisible}
         title="Xác nhận thông tin bài kiểm tra"
         onCancel={() => setConfirmVisible(false)}
         onOk={async () => {
-          if (onOk) await onOk();
-          setConfirmVisible(false);
-          if (onCancel) onCancel(); // Đóng modal chính
-          if (onSuccess) onSuccess();
+          if (onOk) {
+            setConfirmVisible(false); // Đóng modal xác nhận NGAY LẬP TỨC
+            try {
+              await onOk();
+              if (onCancel) onCancel();
+              if (onSuccess) onSuccess();
+            } catch (err) {
+              let msg = 'Thêm bài kiểm tra không thành công!';
+              if (err?.response?.data?.message) msg = err.response.data.message;
+              else if (err?.message) msg = err.message;
+              setNotification({ visible: true, type: 'error', message: msg });
+            }
+          }
         }}
         okText="Xác nhận"
         cancelText="Quay lại"
@@ -332,7 +379,7 @@ const AddAssessmentToTestEventComponent = ({
       >
         {viewTestID && <ViewDetailAssessment testID={viewTestID} inModal />}
       </Modal>
-    </Modal>
+    </>
   );
 };
 
