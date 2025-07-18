@@ -294,9 +294,39 @@ const DashboardOverview = () => {
     };
 
     return (
-      <Card title={<span><CalendarOutlined style={{ marginRight: 8 }} />Lịch công việc</span>} style={{ borderRadius: 15, boxShadow: '0 4px 12px rgba(0,0,0,0.05)', marginBottom: 32 }}>
-        <Calendar fullscreen={false} dateCellRender={dateCellRender} style={{ borderRadius: 8 }} />
-      </Card>
+      <Card
+  title={<span><CalendarOutlined style={{ marginRight: 8 }} />Lịch công việc</span>}
+  style={{
+    borderRadius: 15,
+    boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+    marginBottom: 32,
+    overflow: 'hidden',
+  }}
+>
+  <style>
+    {`
+      /* Thêm viền bao quanh từng ô */
+      .ant-picker-cell {
+        border: 1px solid #e0e0e0;
+        padding: 4px;
+        box-sizing: border-box;
+      }
+
+      /* Hover highlight */
+      .ant-picker-cell:hover {
+        background: #f0faff;
+        border-color: #1890ff;
+      }
+
+      /* Để đảm bảo không có padding bất thường */
+      .ant-picker-calendar-date {
+        padding: 0;
+      }
+    `}
+  </style>
+  <Calendar fullscreen={false} dateCellRender={dateCellRender} style={{ borderRadius: 8 }} />
+</Card>
+
     );
   };
 

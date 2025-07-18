@@ -13,8 +13,8 @@ const { Header } = Layout;
 const Items = [
   { label: 'Trang chủ', key: '/' },
   { label: 'Khóa học', key: '/classes' },
-  { label: 'Về chúng tôi', key: '/about' },
-  { label: 'Tin tức', key: '/news' },
+  { label: 'Về chúng tôi', key: '/about', disabled: true },
+  { label: 'Tin tức', key: '/news', disabled: true },
 ];
 
 const HeaderBar = () => {

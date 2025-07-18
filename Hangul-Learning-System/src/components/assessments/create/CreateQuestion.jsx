@@ -286,6 +286,32 @@ const [isPreviewVisible, setIsPreviewVisible] = useState(false);
       >
         Import Excel
       </Button>
+      {/* Nút import barem điểm cho Writing */}
+      {type === 'Writing' && (
+        <>
+          <input
+            type="file"
+            accept=".xlsx,.xls"
+            style={{ display: 'none' }}
+            id="import-barem-excel-input"
+            onChange={e => {
+              const file = e.target.files[0];
+              if (file) {
+                // Tạm thời chỉ log file, sau này sẽ xử lý API
+                console.log('Import barem điểm:', file);
+              }
+            }}
+          />
+          <Button
+            type="primary"
+            icon={<UploadOutlined />}
+            style={{ marginBottom: 16, marginLeft: 8 }}
+            onClick={() => document.getElementById('import-barem-excel-input').click()}
+          >
+            Import Excel barem điểm
+          </Button>
+        </>
+      )}
       <Button
         type="dashed"
         icon={<PlusOutlined />} 
