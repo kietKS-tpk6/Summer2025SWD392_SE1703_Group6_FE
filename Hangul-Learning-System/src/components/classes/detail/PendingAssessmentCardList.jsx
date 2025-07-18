@@ -169,11 +169,11 @@ const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, s
             const testName = assessment.description || 'Chưa có đề kiểm tra';
             const hasQuestions = !!assessment.testID;
             let date = '';
-            if (assessment.startAt) date = dayjs(assessment.startAt).add(7, 'hour').format('DD/MM/YYYY');
-            else if (assessment.endAt) date = dayjs(assessment.endAt).add(7, 'hour').format('DD/MM/YYYY');
+            if (assessment.startAt) date = dayjs(assessment.startAt).format('DD/MM/YYYY');
+            else if (assessment.endAt) date = dayjs(assessment.endAt).format('DD/MM/YYYY');
             let time = '';
             if (assessment.startAt && assessment.endAt) {
-              time = `${dayjs(assessment.startAt).add(7, 'hour').format('HH:mm')} - ${dayjs(assessment.endAt).add(7, 'hour').format('HH:mm')}`;
+              time = `${dayjs(assessment.startAt).format('HH:mm')} - ${dayjs(assessment.endAt).format('HH:mm')}`;
             }
             let categoryLabel = '';
             if (assessment.assessmentCategory !== undefined && assessment.assessmentCategory !== null) {
@@ -201,6 +201,13 @@ const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, s
                       onClick={() => {
                         setModalAddTestEvent(assessment);
                         setModalAddOpen(true);
+                        // Nếu là đề thi cuối kì (final), set attemptLimit = 1
+                        if (
+                          assessment.assessmentCategory === 3 ||
+                          assessment.category === 3
+                        ) {
+                          addForm.setFieldsValue({ attemptLimit: 1 });
+                        }
                       }}
                     >
                       Thêm đề kiểm tra
@@ -219,8 +226,8 @@ const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, s
                         const initialValues = {
                           testID: assessment.testID || undefined,
                           description: assessment.description || '',
-                          startTime: assessment.startAt ? dayjs(assessment.startAt).add(7, 'hour') : undefined,
-                          endTime: assessment.endAt ? dayjs(assessment.endAt).add(7, 'hour') : undefined,
+                          startTime: assessment.startAt ? dayjs(assessment.startAt) : undefined,
+                          endTime: assessment.endAt ? dayjs(assessment.endAt) : undefined,
                           attemptLimit: assessment.attemptLimit || 1,
                           password: assessment.password || '',
                         };
@@ -281,10 +288,10 @@ const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, s
             const lessonEnd = modalAddTestEvent?.lessonEndTime ? dayjs(modalAddTestEvent.lessonEndTime) : null;
             // Ngày kiểm tra là lessonStart (chỉ 1 ngày)
             const date = lessonStart ? lessonStart.startOf('day') : null;
-            // startAt = ngày lesson + giờ startTime
-            const startAt = date && values.startTime ? date.hour(values.startTime.hour()).minute(values.startTime.minute()) : null;
-            // endAt = ngày lesson + giờ endTime
-            const endAt = date && values.endTime ? date.hour(values.endTime.hour()).minute(values.endTime.minute()) : null;
+            // startAt = ngày lesson + giờ startTime (cộng thêm 7 giờ để lưu đúng giờ Việt Nam)
+            const startAt = date && values.startTime ? date.hour(values.startTime.hour()).minute(values.startTime.minute()).add(7, 'hour') : null;
+            // endAt = ngày lesson + giờ endTime (cộng thêm 7 giờ để lưu đúng giờ Việt Nam)
+            const endAt = date && values.endTime ? date.hour(values.endTime.hour()).minute(values.endTime.minute()).add(7, 'hour') : null;
             const body = {
               testEventIdToUpdate: modalAddTestEvent?.testEventID,
               testID: values.testID,
@@ -320,7 +327,18 @@ const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, s
         onStartDateChange={date => setStartDate(date)}
         onStartTimeChange={time => setStartTime(time)}
         onEndTimeChange={time => setEndTime(time)}
-        onAttemptLimitChange={e => setAttemptLimit(e.target.value)}
+        onAttemptLimitChange={e => {
+          // Nếu là final thì không cho đổi
+          if (
+            modalAddTestEvent?.assessmentCategory === 3 ||
+            modalAddTestEvent?.category === 3
+          ) {
+            addForm.setFieldsValue({ attemptLimit: 1 });
+            setAttemptLimit(1);
+            return;
+          }
+          setAttemptLimit(e.target.value);
+        }}
         onPasswordChange={e => setPassword(e.target.value)}
         lessonStartTime={modalAddTestEvent?.lessonStartTime}
         lessonEndTime={modalAddTestEvent?.lessonEndTime}
@@ -345,10 +363,10 @@ const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, s
             const lessonEnd = modalUpdateTestEvent?.lessonEndTime ? dayjs(modalUpdateTestEvent.lessonEndTime) : null;
             // Ngày kiểm tra là lessonStart (chỉ 1 ngày)
             const date = lessonStart ? lessonStart.startOf('day') : null;
-            // startAt = ngày lesson + giờ startTime
-            const startAt = date && values.startTime ? date.hour(values.startTime.hour()).minute(values.startTime.minute()) : null;
-            // endAt = ngày lesson + giờ endTime
-            const endAt = date && values.endTime ? date.hour(values.endTime.hour()).minute(values.endTime.minute()) : null;
+            // startAt = ngày lesson + giờ startTime (cộng thêm 7 giờ để lưu đúng giờ Việt Nam)
+            const startAt = date && values.startTime ? date.hour(values.startTime.hour()).minute(values.startTime.minute()).add(7, 'hour') : null;
+            // endAt = ngày lesson + giờ endTime (cộng thêm 7 giờ để lưu đúng giờ Việt Nam)
+            const endAt = date && values.endTime ? date.hour(values.endTime.hour()).minute(values.endTime.minute()).add(7, 'hour') : null;
             const body = {
               testEventIdToUpdate: modalUpdateTestEvent?.testEventID,
               testID: values.testID,
