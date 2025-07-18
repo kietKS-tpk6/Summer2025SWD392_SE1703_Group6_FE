@@ -60,15 +60,32 @@ const ManagerRightSidebar = () => {
       overflowY: 'auto',
       border: '1px solid #f0f0f0',
     }}>
-      <Title level={4} style={{ color: '#1890ff', fontWeight: 700, marginBottom: 18 }}>Tổng quan hôm nay</Title>
+      <Title level={4} style={{ color: '#1890ff', fontWeight: 700, marginBottom: 18,textAlign: 'center' }}>Tổng quan hôm nay</Title>
 
-      <Card size="small" style={{ marginBottom: 12, borderRadius: 12, border: '1px solid #f0f0f0', background: '#f8fbff' }}>
-        <Text style={{ color: '#222' }}><CalendarOutlined style={{ color: '#1890ff' }} /> Số lớp học hôm nay:</Text>
+      <Card
+        size="small"
+        style={{
+          marginBottom: 12,
+          borderRadius: 12,
+          border: '1px solid #f0f0f0',
+          background: '#f8fbff',
+          textAlign: 'center' // Thêm dòng này
+        }}
+      >
+        <Text style={{fontWeight:'bolder', color: '#222' }}>
+          <CalendarOutlined style={{ color: '#1890ff' }} /> Số lớp học hôm nay:
+        </Text>
         <Title level={3} style={{ color: '#1890ff', margin: 0 }}>{data.todayClasses}</Title>
       </Card>
 
-      <Card size="small" style={{ marginBottom: 12, borderRadius: 12, border: '1px solid #f0f0f0', background: '#f8fbff' }}>
-        <Text style={{ color: '#222' }}><FileTextOutlined style={{ color: '#1890ff' }} /> Bài kiểm tra hôm nay:</Text>
+      <Card size="small" style={{
+          marginBottom: 12,
+          borderRadius: 12,
+          border: '1px solid #f0f0f0',
+          background: '#f8fbff',
+          textAlign: 'center' // Thêm dòng này
+        }}>
+        <Text style={{fontWeight:'bolder', color: '#222' }}><FileTextOutlined style={{ color: '#1890ff' }} /> Bài kiểm tra hôm nay:</Text>
         <Title level={3} style={{ color: '#1890ff', margin: 0 }}>{data.todayTests}</Title>
       </Card>
 

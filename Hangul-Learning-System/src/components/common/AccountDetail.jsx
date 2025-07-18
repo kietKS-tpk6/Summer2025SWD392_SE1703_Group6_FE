@@ -41,6 +41,7 @@ const AccountDetail = ({ accountID: propAccountID, hideFields = [] }) => {
   const [paymentHistory, setPaymentHistory] = useState([]);
   const [paymentHistoryLoading, setPaymentHistoryLoading] = useState(false);
   const [paymentHistoryError, setPaymentHistoryError] = useState(null);
+  const [phoneError, setPhoneError] = useState('');
   // Thêm biến kiểm tra role của user đăng nhập
   let showBackButton = false;
   let isCurrentUserManager = false;
@@ -145,9 +146,22 @@ const AccountDetail = ({ accountID: propAccountID, hideFields = [] }) => {
     setShowEditConfirm(true);
   };
 
+  // Regex validate đầu số nhà mạng Việt Nam
+  const validatePhoneNumber = (phone) => {
+    const regex = /^(0(3[2-9]|5[689]|7[06789]|8[1-9]|9[0-9]))\d{7}$/;
+    return regex.test(phone);
+  };
+
   // Khi thay đổi trường
   const handleChange = (field, value) => {
     setEditValues(prev => ({ ...prev, [field]: value }));
+    if (field === 'phoneNumber') {
+      if (!validatePhoneNumber(value)) {
+        setPhoneError('Số điện thoại không hợp lệ hoặc không đúng đầu số nhà mạng!');
+      } else {
+        setPhoneError('');
+      }
+    }
     if (field === 'image') {
       setAvatarUrl(value);
       console.log('handleChange - updated image:', value);
@@ -251,6 +265,11 @@ const AccountDetail = ({ accountID: propAccountID, hideFields = [] }) => {
     // Validate đầu vào
     if (!editValues.firstName || !editValues.lastName || !editValues.email) {
       message.warning('Vui lòng nhập đầy đủ họ, tên và email!');
+      return;
+    }
+    if (isEditing && editValues.phoneNumber && !validatePhoneNumber(editValues.phoneNumber)) {
+      setPhoneError('Số điện thoại không hợp lệ hoặc không đúng đầu số nhà mạng!');
+      message.warning('Số điện thoại không hợp lệ hoặc không đúng đầu số nhà mạng!');
       return;
     }
     
@@ -470,7 +489,10 @@ const AccountDetail = ({ accountID: propAccountID, hideFields = [] }) => {
               <div>
                 <label style={{ fontWeight: 500 }}>Số điện thoại</label>
                 {isEditing ? (
-                  <Input value={editValues.phoneNumber} onChange={e => handleChange('phoneNumber', e.target.value)} style={{ marginTop: 4 }} />
+                  <>
+                    <Input value={editValues.phoneNumber} onChange={e => handleChange('phoneNumber', e.target.value)} style={{ marginTop: 4 }} />
+                    {phoneError && <div style={{ color: 'red', marginTop: 4 }}>{phoneError}</div>}
+                  </>
                 ) : (
                   <Input value={studentData.phoneNumber} disabled style={{ marginTop: 4 }} />
                 )}
