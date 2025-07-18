@@ -481,7 +481,7 @@ const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score, onImpor
               {errors[`qcorrect_${sectionIdx}_${idx}`] && <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>Chưa chọn đáp án đúng!</div>}
             </>
           )}
-          {section.type === 'Writing' && Array.isArray(q.criteriaList) && q.criteriaList.length > 0 && (
+          {type === 'Writing' && Array.isArray(q.criteriaList) && q.criteriaList.length > 0 && (
             <div style={{ marginTop: 12, marginBottom: 8 }}>
               <b>Barem chấm điểm:</b>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 8 }}>
