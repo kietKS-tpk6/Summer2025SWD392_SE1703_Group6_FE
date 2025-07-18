@@ -147,7 +147,7 @@ const LessonDetailPage = (props) => {
             <Divider />
             <Title level={5}>Nội dung bài học</Title>
             <Paragraph style={{ marginBottom: 16 }}>{lesson.content || <i>Chưa có nội dung</i>}</Paragraph>
-            {lesson.hasTest && (
+            {/* {lesson.hasTest && (
               <div style={{ marginTop: 24 }}>
                 <Button
                   type="primary"
@@ -161,7 +161,7 @@ const LessonDetailPage = (props) => {
                   Xem kiểm tra
                 </Button>
               </div>
-            )}
+            )} */}
           </Col>
         </Row>
       </Card>
