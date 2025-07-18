@@ -15,7 +15,7 @@ const classStatusMap = {
 };
 
 export function getClassesTableColumns(statusFilter, handlers) {
-  const { onView, onEdit, onDelete, onOpenRecruit, onFinalize } = handlers;
+  const { onView, onEdit, onDelete, onOpenRecruit, onFinalize, onCompleted } = handlers;
   const baseColumns = [
     {
       title: 'Mã lớp',
@@ -103,7 +103,7 @@ export function getClassesTableColumns(statusFilter, handlers) {
     title: 'Thao tác',
     key: 'actions',
     render: (_, record) => {
-      const { status } = record;
+      const { status, endDateClass } = record;
       const actions = [];
       if (statusFilter === 'all' || status === 0 || status === 1 || status === 5) {
         actions.push(
@@ -162,6 +162,19 @@ export function getClassesTableColumns(statusFilter, handlers) {
             onClick={() => onFinalize(record)}
           >
             Chốt danh sách
+          </Button>
+        );
+      }
+      if (status === 2 && endDateClass && dayjs(endDateClass).isBefore(dayjs(), 'day') && typeof onCompleted === 'function') {
+        actions.push(
+          <Button
+            type="primary"
+            size="small"
+            key="completeClass"
+            style={{ background: '#52c41a', borderColor: '#52c41a', color: '#fff' }}
+            onClick={() => onCompleted(record)}
+          >
+            Đánh dấu hoàn thành
           </Button>
         );
       }

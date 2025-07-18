@@ -167,6 +167,7 @@ const Classes = () => {
     const record = deleteModal.record;
     try {
       var noti = await axios.delete(`${API_URL}api/Class/delete/${record.classID}`);
+      await axios.delete(`${API_URL}api/Lesson/delete-by-class-id/${record.classID}`);
       showNotify({
         type: 'success',
         message: noti.data.message,
@@ -245,9 +246,10 @@ const Classes = () => {
         classId: record.classID,
         classStatus: 2
       });
+      await axios.post(`${API_URL}api/TestEvent/setup-test-event/${record.classID}`);
       await axios.post(`${API_URL}api/StudentMarks/setup-by-class-id/${record.classID}`)
       await axios.post(`${API_URL}api/Attendance/setup-attendace-by-class-id/${record.classID}`)
-      await axios.post(`${API_URL}api/TestEvent/setup-test-event/${classId}`);
+    
 
       showNotify({
         type: 'success',
@@ -277,6 +279,39 @@ const Classes = () => {
       });
     } finally {
       fetchData();
+    }
+  };
+
+  // Handler đánh dấu hoàn thành lớp học
+  const handleComplete = async (record) => {
+    try {
+      const res = await axios.get(`${API_URL}api/Class/is-completed/${record.classID}`);
+      if (res.data && res.data.success) {
+        // Nếu lớp có thể hoàn thành, gọi API cập nhật trạng thái
+        await axios.put(`${API_URL}api/Class/update-status`, {
+          classId: record.classID,
+          classStatus: 3
+        });
+        showNotify({
+          type: 'success',
+          message: 'Đã đánh dấu hoàn thành lớp học!',
+          description: `Lớp "${record.className}" đã chuyển sang trạng thái Hoàn thành.`
+        });
+        fetchData();
+      } else {
+        // Nếu không thành công, hiện notification với message trả về
+        showNotify({
+          type: 'error',
+          message: 'Không thể hoàn thành lớp học',
+          description: res.data?.message || 'Lớp vẫn đang diễn ra hoặc chưa kết thúc.'
+        });
+      }
+    } catch (err) {
+      showNotify({
+        type: 'error',
+        message: 'Lỗi khi kiểm tra hoàn thành lớp học',
+        description: err.message
+      });
     }
   };
 
@@ -314,6 +349,7 @@ const Classes = () => {
           onDelete: handleDelete,
           onOpenRecruit: handleOpenRecruit,
           onFinalize: handleFinalize,
+          onCompleted: handleComplete,
         })}
         dataSource={data}
         loading={loading}
