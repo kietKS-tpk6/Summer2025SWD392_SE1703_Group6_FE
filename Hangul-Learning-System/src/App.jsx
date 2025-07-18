@@ -104,7 +104,7 @@ const lecturerRoutes = [
   { path: '/check-attendance', element: <CheckAttendancePage /> },
   { path: '/assessment', element: <AssessmentManagement /> },
   { path: '/assessment/:testID', element: <ViewDetailAssessment /> },
-  { path: '/attendance', element: <AttendancePage/>},
+  // { path: '/attendance', element: <AttendancePage/>},
   { path: '/view-test/:testEventID', element: <ViewTestLecturer /> },
   { path: '/test-detail/:studentTestID', element: <LecturerTestDetail /> },
   { path: '/grades', element: <GradesPage /> },
