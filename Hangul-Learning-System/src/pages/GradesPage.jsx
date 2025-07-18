@@ -247,6 +247,7 @@ const GradesPage = () => {
         if (
           mark !== null &&
           mark !== undefined &&
+          mark !== '' && // <--- allow empty string (not entered)
           (
             isNaN(mark) ||
             mark < 0 ||
@@ -415,6 +416,7 @@ const GradesPage = () => {
   function calculateAverages(dataRows) {
     return dataRows.map(row => {
       let total = 0;
+      let hasAnyMark = false;
       criteriaList.forEach(c => {
         let weight = null;
         if (criteriaWeightMap[c.category]) {
@@ -423,12 +425,13 @@ const GradesPage = () => {
           weight = count > 0 ? catWeight / count : 0;
         }
         const mark = row[c.key];
-        if (mark !== null && mark !== undefined && weight !== null) {
+        if (mark !== null && mark !== undefined && mark !== '') {
+          hasAnyMark = true;
           total += mark * weight;
         }
       });
-      // Chỉ cộng các điểm có nhập × % (không chia lại), sau đó chia cho 100 để ra thang điểm đúng
-      const avg = total > 0 ? (total / 100).toFixed(2) : null;
+      // Nếu có ít nhất 1 điểm (kể cả 0), thì hiển thị 0 hoặc số, chỉ '-' nếu không có điểm nào
+      const avg = hasAnyMark ? (total / 100).toFixed(2) : '-';
       return { ...row, average: avg };
     });
   }
@@ -454,6 +457,25 @@ const GradesPage = () => {
           {/* <Button icon={<FilterOutlined />} onClick={() => message.info('Tính năng nhập bảng điểm sẽ được cập nhật sau!')}>
             Nhập bảng điểm
           </Button> */}
+          {/* Move edit/finalize buttons here */}
+          {!isEditing ? (
+            <Button type="primary" icon={<EditOutlined />} onClick={handleStartEdit}>
+              Chỉnh sửa
+            </Button>
+          ) : (
+            <>
+              <Button type="primary" onClick={handleSaveEdit}>Lưu</Button>
+              <Button onClick={handleCancelEdit}>Hủy</Button>
+            </>
+          )}
+          {/* <Button
+            type="primary"
+            danger
+            disabled={isGradesFinalized}
+            onClick={() => setConfirmFinalizeVisible(true)}
+          >
+            Chốt sổ điểm
+          </Button> */}
         </Space>
       </div>
       {apiError && <Alert type="error" message={apiError} showIcon style={{ marginBottom: 16 }} />}
@@ -467,31 +489,8 @@ const GradesPage = () => {
           scroll={{ x: true }}
         />
       </Card>
-      {/* Hai nút cùng hàng */}
-      <div style={{ marginTop: 24, textAlign: 'center' }}>
-        <Space style={{ textAlign: 'center' }}>
-          {!isEditing ? (
-            <Button type="primary" icon={<EditOutlined />} onClick={handleStartEdit}>
-              Chỉnh sửa
-            </Button>
-          ) : (
-            <>
-              <Button type="primary" onClick={handleSaveEdit}>Lưu</Button>
-              <Button onClick={handleCancelEdit}>Hủy</Button>
-            </>
-          )}
-          <Button
-            type="primary"
-            danger
-            disabled={isGradesFinalized}
-            onClick={() => setConfirmFinalizeVisible(true)}
-          >
-            Chốt sổ điểm
-          </Button>
-        </Space>
-      </div>
       {/* Modal xác nhận chốt sổ điểm */}
-      <Modal
+      {/* <Modal
         title={<div style={{fontSize:'25px',fontWeight:'bolder', textAlign: 'center', width: '100%' }}>Xác nhận chốt sổ điểm</div>}
         open={confirmFinalizeVisible}
         onOk={handleFinalizeGrades}
@@ -504,7 +503,7 @@ const GradesPage = () => {
         <div>
           <p>Bạn có chắc chắn muốn <b style={{color:'red'}}>chốt sổ điểm</b>?<br/>Sau khi chốt, bạn sẽ không thể chỉnh sửa bảng điểm nữa.</p>
         </div>
-      </Modal>
+      </Modal> */}
 
       {/* Edit Grade Modal (tùy chỉnh sau nếu cần) */}
       <Modal
@@ -525,7 +524,8 @@ const GradesPage = () => {
               key={col.key}
               name={col.key}
               label={col.title}
-              rules={[{ required: true, message: 'Vui lòng nhập điểm!' }, { type: 'number', min: 0, max: 10, message: 'Điểm từ 0-10' }]}
+              // Allow empty, but if filled, must be number 0-10
+              rules={[{ pattern: /^$|^\d+(\.\d{1})?$/, message: 'Điểm phải là số hoặc để trống' }, { type: 'number', min: 0, max: 10, message: 'Điểm từ 0-10', transform: v => v === '' ? undefined : Number(v) }]}
             >
               <Input type="number" min={0} max={10} step={0.1} />
             </Form.Item>

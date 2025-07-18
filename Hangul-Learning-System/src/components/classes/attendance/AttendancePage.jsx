@@ -92,7 +92,30 @@ const AttendancePage = (props) => {
       <Button onClick={() => navigate(-1)} style={{ marginBottom: 24 }}>
         ← Quay lại
       </Button>
-      <Title level={3} style={{ marginBottom: 32 }}>Bảng điểm danh lớp</Title>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
+        <Title level={3} style={{ margin: 0 }}>Bảng điểm danh lớp</Title>
+        <Button
+          type="primary"
+          onClick={async () => {
+            try {
+              const res = await axios.get(`${API_URL}api/ExportExcel/export-attendance/${classId}`, {
+                responseType: 'blob',
+              });
+              const url = window.URL.createObjectURL(new Blob([res.data]));
+              const link = document.createElement('a');
+              link.href = url;
+              link.setAttribute('download', `attendance_${classId}.xlsx`);
+              document.body.appendChild(link);
+              link.click();
+              link.remove();
+            } catch (err) {
+              alert('Xuất file thất bại!');
+            }
+          }}
+        >
+          Xuất file điểm danh
+        </Button>
+      </div>
       <Table
         columns={columns}
         dataSource={tableData}

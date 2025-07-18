@@ -41,7 +41,7 @@ const ClassDetail = (props) => {
         >
           Quay lại
         </Button>
-        <h1>Chi tiết lớp học</h1>
+        <h1 style={{fontWeight:"bolder"}}>Chi tiết lớp học</h1>
         <div style={{ marginBottom: 24 }}>
           <BasicInfoSection classId={classId} />
         </div>
