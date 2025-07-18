@@ -165,7 +165,7 @@ export function getClassesTableColumns(statusFilter, handlers) {
           </Button>
         );
       }
-      if (status === 2 && endDateClass && dayjs(endDateClass).isBefore(dayjs(), 'day') && typeof onCompleted === 'function') {
+      if (status === 2 && endDateClass && dayjs(endDateClass).isBefore(dayjs())) {
         actions.push(
           <Button
             type="primary"
