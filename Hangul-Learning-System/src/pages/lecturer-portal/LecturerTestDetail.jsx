@@ -146,6 +146,23 @@ const LecturerTestDetail = () => {
         );
         console.log('Kết quả trả về:', response?.data);
       }
+      // Gọi API chuyển điểm sang bảng điểm
+      try {
+        await axios.put(
+          `https://localhost:7201/api/StudentMarks/update-marks-by-student-test/${data.studentTestID}`,
+          null,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+      } catch (err) {
+        setNotification({ visible: true, type: 'error', message: 'Lỗi cập nhật bảng điểm', description: err?.message || 'Có lỗi khi cập nhật bảng điểm.' });
+        setSaving(false);
+        return;
+      }
       setNotification({ visible: true, type: 'success', message: 'Chấm điểm thành công', description: 'Đã lưu/chấm điểm thành công!' });
       setTimeout(() => {
         navigate(-1);

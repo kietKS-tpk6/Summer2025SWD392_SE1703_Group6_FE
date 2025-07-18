@@ -187,8 +187,10 @@ export default function AssessmentsTable({
               } catch (e) {
                 userRole = null;
               }
-              const isLecturer = userRole === 'Lecture' || userRole === 'Lecturer';
-              const isOwnDraft = record.Status === 'Drafted' && record.createBy === currentAccountId;
+              // Chỉ cho phép xóa nếu là bài nháp
+              const isDraft = record.Status === 'Drafted';
+              // Define isOwnDraft: bài nháp và là của mình
+              const isOwnDraft = record.Status === 'Drafted' && record.CreateBy === user.accountId;
               return (
                 <Space>
                   <Button type="primary" icon={<EyeOutlined />} onClick={() => onView(record)}>
@@ -206,6 +208,12 @@ export default function AssessmentsTable({
                         Xóa
                       </Button>
                     </>
+                  )}
+                  {/* Nếu không phải bài của mình hoặc không phải Drafted thì không cho sửa/gửi duyệt */}
+                  {(!isOwnDraft && userRole === 'Lecturer') ? null : (
+                    <Button type="primary" danger icon={<DeleteOutlined />} onClick={() => onDelete(record)}>
+                      {/* Xóa */}
+                    </Button>
                   )}
                 </Space>
               );

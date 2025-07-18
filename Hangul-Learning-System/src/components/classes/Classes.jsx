@@ -50,6 +50,8 @@ const Classes = () => {
   const [availableTestsMap, setAvailableTestsMap] = useState({});
   const [editingClass, setEditingClass] = useState(null);
   const [openUpdateModal, setOpenUpdateModal] = useState(false);
+  const [completeModal, setCompleteModal] = useState({ open: false, record: null });
+  const [completing, setCompleting] = useState(false);
 
   const navigate = useNavigate();
 
@@ -282,38 +284,42 @@ const Classes = () => {
     }
   };
 
-  // Handler đánh dấu hoàn thành lớp học
-  const handleComplete = async (record) => {
+  // Sửa handleComplete để chỉ mở modal xác nhận
+  const handleComplete = (record) => {
+    setCompleteModal({ open: true, record });
+  };
+
+  // Hàm xác nhận hoàn thành thực sự
+  const handleCompleteConfirm = async () => {
+    const record = completeModal.record;
+    if (!record) return;
+    setCompleting(true);
     try {
-      const res = await axios.get(`${API_URL}api/Class/is-completed/${record.classID}`);
-      if (res.data && res.data.success) {
-        // Nếu lớp có thể hoàn thành, gọi API cập nhật trạng thái
-        await axios.put(`${API_URL}api/Class/update-status`, {
-          classId: record.classID,
-          classStatus: 3
-        });
-        showNotify({
-          type: 'success',
-          message: 'Đã đánh dấu hoàn thành lớp học!',
-          description: `Lớp "${record.className}" đã chuyển sang trạng thái Hoàn thành.`
-        });
-        fetchData();
-      } else {
-        // Nếu không thành công, hiện notification với message trả về
-        showNotify({
-          type: 'error',
-          message: 'Không thể hoàn thành lớp học',
-          description: res.data?.message || 'Lớp vẫn đang diễn ra hoặc chưa kết thúc.'
-        });
-      }
+      await axios.get(`${API_URL}api/Class/is-completed/${record.classID}`);
+      await axios.put(`${API_URL}api/Class/update-status`, {
+        classId: record.classID,
+        classStatus: 3
+      });
+      await axios.post(`${API_URL}api/Email/send-certificate/class/${record.classID}`)
+      showNotify({
+        type: 'success',
+        message: 'Đã đánh dấu hoàn thành lớp học!',
+        description: `Lớp "${record.className}" đã chuyển sang trạng thái Hoàn thành.`
+      });
     } catch (err) {
+      const msg = err.response?.data?.message || 'Lớp vẫn đang diễn ra hoặc chưa đủ điều kiện để hoàn thành.';
       showNotify({
         type: 'error',
-        message: 'Lỗi khi kiểm tra hoàn thành lớp học',
-        description: err.message
+        message: 'Không thể hoàn thành lớp học',
+        description: msg
       });
+    } finally {
+      setCompleting(false);
+      setCompleteModal({ open: false, record: null }); // Đóng modal sau khi xử lý xong
+      fetchData();
     }
   };
+  
 
   return (
     <div>
@@ -422,6 +428,16 @@ const Classes = () => {
           fetchData();
         }}
         showNotify={showNotify}
+      />
+      <ActionConfirm
+        open={completeModal.open}
+        onCancel={() => setCompleteModal({ open: false, record: null })}
+        onOk={handleCompleteConfirm}
+        okText="Xác nhận"
+        cancelText="Đóng"
+        title="Xác nhận hoàn thành lớp học"
+        content="Bạn có chắc chắn muốn đánh dấu lớp học này là hoàn thành? Sau khi hoàn thành, học viên sẽ nhận được chứng chỉ."
+        confirmLoading={completing}
       />
     </div>
   );
