@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Tag, Spin, Typography, Button, Input, Space, Radio } from 'antd';
 import { CheckCircleTwoTone, CloseCircleTwoTone, SaveOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { API_URL } from '../../../config/api';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import ActionConfirm from '../../common/ActionConfirm';
 import Notification from '../../common/Notification';
 
@@ -18,6 +19,7 @@ const statusMap = {
 
 const CheckAttendancePage = (props) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const lessonId = props.lessonId || location.state?.lessonId;
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -203,7 +205,7 @@ const CheckAttendancePage = (props) => {
   if (!data) return <div style={{ textAlign: 'center', marginTop: 60 }}>Không có dữ liệu điểm danh.</div>;
 
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto', padding: 24, minHeight: '100vh', boxSizing: 'border-box', background: '#fafcff' }}>
+    <div style={{ margin: '0 auto', padding: 24, minHeight: '100vh', boxSizing: 'border-box'}}>
       <Notification
         visible={notification.visible}
         type={notification.type}
@@ -213,9 +215,14 @@ const CheckAttendancePage = (props) => {
       />
       
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
-        <Title level={3} style={{ margin: 0 }}>
-          Điểm danh: {data.lessonTitle}
-        </Title>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <Button onClick={() => navigate(-1)} style={{ marginRight: 16 }} icon={<ArrowLeftOutlined />}>
+            Quay lại
+          </Button>
+          <Title level={3} style={{ margin: 0 }}>
+            Điểm danh: {data.lessonTitle}
+          </Title>
+        </div>
         <Button 
           type="primary" 
           icon={<SaveOutlined />}

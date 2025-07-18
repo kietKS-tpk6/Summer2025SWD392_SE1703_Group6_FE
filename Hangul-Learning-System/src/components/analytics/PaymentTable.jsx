@@ -23,7 +23,7 @@ const columns = [
     title: 'Mã giao dịch',
     dataIndex: 'paymentID',
     key: 'paymentID',
-    width: 120,
+    width: 80,
     fixed: 'left',
   },
   {
@@ -39,25 +39,38 @@ const columns = [
     title: 'Lớp học',
     dataIndex: 'className',
     key: 'className',
-    width: 140,
+    width: 200,
   },
   {
     title: 'Số tiền',
     dataIndex: 'amount',
     key: 'amount',
-    align: 'right',
+    align: 'center',
     render: (amount, record) => {
       if (record.status === 'Refunded') {
         return `- ${amount.toLocaleString('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 })}`;
       }
       return amount.toLocaleString('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 });
     },
-    width: 120,
+    width: 60,
   },
   {
     title: 'Trạng thái',
     dataIndex: 'status',  
     key: 'status',
+    align: 'center',
+    sorter: (a, b) => {
+      // Đưa status về số để so sánh, ưu tiên số nếu có, nếu không thì so sánh chuỗi
+      const getStatusValue = (status) => {
+        if (typeof status === 'number') return status;
+        if (status === 'Paid') return 0;
+        if (status === 'Pending') return 1;
+        if (status === 'RequestRefund') return 2;
+        if (status === 'Refunded') return 3;
+        return 99; // unknown
+      };
+      return getStatusValue(a.status) - getStatusValue(b.status);
+    },
     render: (status) => {
       const s = statusMap[status] || { label: status, color: 'default' };
       return <Tag color={s.color}>{s.label}</Tag>;
@@ -68,6 +81,7 @@ const columns = [
     title: 'Ngày thanh toán',
     dataIndex: 'paidAt',
     key: 'paidAt',
+    align: 'center',
     render: (date) => new Date(date).toLocaleDateString('vi-VN'),
     width: 130,
   },

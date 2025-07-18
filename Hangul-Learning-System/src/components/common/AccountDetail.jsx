@@ -41,9 +41,12 @@ const AccountDetail = ({ accountID: propAccountID, hideFields = [] }) => {
   const [paymentHistory, setPaymentHistory] = useState([]);
   const [paymentHistoryLoading, setPaymentHistoryLoading] = useState(false);
   const [paymentHistoryError, setPaymentHistoryError] = useState(null);
+  const [phoneError, setPhoneError] = useState('');
   // Thêm biến kiểm tra role của user đăng nhập
   let showBackButton = false;
   let isCurrentUserManager = false;
+  // Thêm state cho lỗi email
+  const [emailError, setEmailError] = useState('');
   try {
     const user = JSON.parse(localStorage.getItem('user'));
     if (user && user.role === 'Manager') {
@@ -145,9 +148,36 @@ const AccountDetail = ({ accountID: propAccountID, hideFields = [] }) => {
     setShowEditConfirm(true);
   };
 
+  // Regex validate đầu số nhà mạng Việt Nam
+  const validatePhoneNumber = (phone) => {
+    const regex = /^(0(3[2-9]|5[689]|7[06789]|8[1-9]|9[0-9]))\d{7}$/;
+    return regex.test(phone);
+  };
+
+  // Thêm hàm validate email
+  const validateEmail = (email) => {
+    // Đơn giản, có thể thay đổi regex nếu cần nghiêm ngặt hơn
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+  };
+
   // Khi thay đổi trường
   const handleChange = (field, value) => {
     setEditValues(prev => ({ ...prev, [field]: value }));
+    if (field === 'phoneNumber') {
+      if (!validatePhoneNumber(value)) {
+        setPhoneError('Số điện thoại không hợp lệ hoặc không đúng đầu số nhà mạng!');
+      } else {
+        setPhoneError('');
+      }
+    }
+    if (field === 'email') {
+      if (!validateEmail(value)) {
+        setEmailError('Email không hợp lệ!');
+      } else {
+        setEmailError('');
+      }
+    }
     if (field === 'image') {
       setAvatarUrl(value);
       console.log('handleChange - updated image:', value);
@@ -251,6 +281,17 @@ const AccountDetail = ({ accountID: propAccountID, hideFields = [] }) => {
     // Validate đầu vào
     if (!editValues.firstName || !editValues.lastName || !editValues.email) {
       message.warning('Vui lòng nhập đầy đủ họ, tên và email!');
+      return;
+    }
+    if (isEditing && editValues.phoneNumber && !validatePhoneNumber(editValues.phoneNumber)) {
+      setPhoneError('Số điện thoại không hợp lệ hoặc không đúng đầu số nhà mạng!');
+      message.warning('Số điện thoại không hợp lệ hoặc không đúng đầu số nhà mạng!');
+      return;
+    }
+    // Kiểm tra lỗi email
+    if (isEditing && editValues.email && !validateEmail(editValues.email)) {
+      setEmailError('Email không hợp lệ!');
+      message.warning('Email không hợp lệ!');
       return;
     }
     
@@ -470,7 +511,10 @@ const AccountDetail = ({ accountID: propAccountID, hideFields = [] }) => {
               <div>
                 <label style={{ fontWeight: 500 }}>Số điện thoại</label>
                 {isEditing ? (
-                  <Input value={editValues.phoneNumber} onChange={e => handleChange('phoneNumber', e.target.value)} style={{ marginTop: 4 }} />
+                  <>
+                    <Input value={editValues.phoneNumber} onChange={e => handleChange('phoneNumber', e.target.value)} style={{ marginTop: 4 }} />
+                    {phoneError && <div style={{ color: 'red', marginTop: 4 }}>{phoneError}</div>}
+                  </>
                 ) : (
                   <Input value={studentData.phoneNumber} disabled style={{ marginTop: 4 }} />
                 )}
@@ -478,7 +522,10 @@ const AccountDetail = ({ accountID: propAccountID, hideFields = [] }) => {
               <div>
                 <label style={{ fontWeight: 500 }}>Email</label>
                 {isEditing ? (
-                  <Input value={editValues.email} onChange={e => handleChange('email', e.target.value)} style={{ marginTop: 4 }} />
+                  <>
+                    <Input value={editValues.email} onChange={e => handleChange('email', e.target.value)} style={{ marginTop: 4 }} />
+                    {emailError && <div style={{ color: 'red', marginTop: 4 }}>{emailError}</div>}
+                  </>
                 ) : (
                   <Input value={studentData.email} disabled style={{ marginTop: 4 }} />
                 )}

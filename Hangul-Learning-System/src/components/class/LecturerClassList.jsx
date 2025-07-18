@@ -109,7 +109,7 @@ const LecturerClassList = () => {
     //   align: 'right',
     // },
     {
-      title: 'Ngày bắt đầu',
+      title: 'Ngày bắt đầu dự kiến',
       dataIndex: 'teachingStartTime',
       key: 'teachingStartTime',
       render: (date) => date ? new Date(date).toLocaleDateString('vi-VN') : '--',

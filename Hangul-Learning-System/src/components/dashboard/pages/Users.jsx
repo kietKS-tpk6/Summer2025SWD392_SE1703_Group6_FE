@@ -30,6 +30,56 @@ const Users = () => {
   const fetchUsers = async (page = 1, pageSize = 10, search = '', roleFilter, genderFilter, statusFilter) => {
     try {
       setLoading(true);
+
+      // Nếu search là accountID (ví dụ: A00000)
+      if (/^A\d+$/.test(search)) {
+        try {
+          const response = await axios.get(`${API_URL}api/Account/${search}`);
+          if (response.data && response.data.accountID) {
+            const user = response.data;
+            const formattedData = [{
+              key: 0,
+              id: 1,
+              accountID: user.accountID,
+              name: `${user.lastName} ${user.firstName}`,
+              email: user.email,
+              phoneNumber: user.phoneNumber,
+              role: user.role || getRoleName(user.role),
+              status: user.status || getStatusName(user.status),
+              gender: user.gender || getGenderName(user.gender),
+              birthDate: user.birthDate
+            }];
+            setUsers(formattedData);
+            setPagination({
+              current: 1,
+              pageSize: 10,
+              total: 1
+            });
+            setLoading(false);
+            return;
+          } else {
+            setUsers([]);
+            setPagination({
+              current: 1,
+              pageSize: 10,
+              total: 0
+            });
+            setLoading(false);
+            return;
+          }
+        } catch (error) {
+          setUsers([]);
+          setPagination({
+            current: 1,
+            pageSize: 10,
+            total: 0
+          });
+          setLoading(false);
+          return;
+        }
+      }
+
+      // ...phần còn lại giữ nguyên như cũ
       const response = await axios.get(`${API_URL}${endpoints.manageAccount.getAccount}`, {
         params: {
           page,
@@ -66,6 +116,12 @@ const Users = () => {
       }
     } catch (error) {
       message.error('Error fetching users');
+      setUsers([]);
+      setPagination({
+        current: 1,
+        pageSize: 10,
+        total: 0
+      });
       console.error('Error:', error);
     } finally {
       setLoading(false);
@@ -182,7 +238,7 @@ const Users = () => {
           <Button type="primary" icon={<EyeOutlined />} onClick={() => {
             navigate(`/dashboard/profile/${record.accountID}`);
           }}>Xem</Button>
-          <Button
+          {/* <Button
             type="primary"
             danger
             icon={<DeleteOutlined />}
@@ -191,8 +247,8 @@ const Users = () => {
               setDeleteModalVisible(true);
             }}
           >
-            {/* Xóa */}
-          </Button>
+            Xóa
+          </Button> */}
         </Space>
       ),
     },
@@ -201,7 +257,7 @@ const Users = () => {
   return (
     <div>
       <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
-        <h1>Quản lý người dùng</h1>
+        <h1 style={{fontWeight:"bolder"}}>Quản lý người dùng</h1>
         <Space>
           <Search
             placeholder="Tìm kiếm người dùng"
@@ -251,7 +307,7 @@ const Users = () => {
         pagination={pagination}
         onChange={handleTableChange}
       />
-      <Modal
+      {/* <Modal
         title="Xác nhận xóa"
         open={deleteModalVisible}
         onOk={handleDeleteUser}
@@ -264,7 +320,7 @@ const Users = () => {
         okButtonProps={{ danger: true }}
       >
         <p>Bạn có chắc chắn muốn xóa người dùng này?</p>
-      </Modal>
+      </Modal> */}
     </div>
   );
 };
