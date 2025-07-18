@@ -6,7 +6,7 @@ import AssessmentBasicForm from './create/AssessmentBasicForm';
 import CreateAssessmentStepper from './create/CreateAssessmentStepper';
 import axios from 'axios';
 import { API_URL } from '../../config/api';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import ViewDetailAssessment from './ViewDetailAssessment';
 import * as XLSX from 'xlsx';
 import AssessmentsTable from './AssessmentsTableComponent';
@@ -68,6 +68,7 @@ const Assessments = () => {
   });
   const [categoryOptions, setCategoryOptions] = useState([]);
   const navigate = useNavigate();
+  const location = useLocation();
   const [openModal, setOpenModal] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
   // Thêm state cho phân trang
@@ -85,6 +86,19 @@ const Assessments = () => {
   const [lecturerLoading, setLecturerLoading] = useState(false);
 
   const [notification, setNotification] = useState({ visible: false, type: 'success', message: '', description: '' });
+
+  useEffect(() => {
+    if (location.state?.showNotification) {
+      setNotification({
+        visible: true,
+        type: location.state.notificationType || 'success',
+        message: location.state.notificationMessage || 'Thành công',
+        description: location.state.notificationDescription || '',
+      });
+      // Xóa state để reload lại không hiện lại notification
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location]);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');

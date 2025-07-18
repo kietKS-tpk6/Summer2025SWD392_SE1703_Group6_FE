@@ -400,7 +400,6 @@ const ViewDetailAssessment = ({ testID: propTestID, inModal }) => {
                         notificationDescription: 'Đã duyệt bài kiểm tra!'
                       }
                     });
-                    setTimeout(() => window.location.reload(), 100);
                   } catch {
                     setNotification({
                       visible: true,
@@ -446,7 +445,6 @@ const ViewDetailAssessment = ({ testID: propTestID, inModal }) => {
                         notificationDescription: 'Đã duyệt bài kiểm tra!'
                       }
                     });
-                    setTimeout(() => window.location.reload(), 100);
                   } catch {
                     setNotification({
                       visible: true,
@@ -472,8 +470,6 @@ const ViewDetailAssessment = ({ testID: propTestID, inModal }) => {
                 try {
                   await axios.put(`${API_URL}api/Test/update-status-fix`, { testID, testStatus: 1 });
                   setTestStatus(1);
-                  const res = await axios.get(`${API_URL}api/Questions/by-test/${testID}`);
-                  setSections(res.data || []);
                   navigate('/lecturer/assessment', {
                     state: {
                       showNotification: true,
@@ -482,7 +478,6 @@ const ViewDetailAssessment = ({ testID: propTestID, inModal }) => {
                       notificationDescription: 'Đã gửi bài kiểm tra cho quản lí duyệt!'
                     }
                   });
-                  setTimeout(() => window.location.reload(), 100);
                 } catch {}
                 setApproving(false);
               }}
