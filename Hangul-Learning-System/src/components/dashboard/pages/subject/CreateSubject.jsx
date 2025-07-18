@@ -288,18 +288,8 @@ const CreateSubject = () => {
             defaultDuration: values.defaultDuration
           }
         }));
-        // Chỉ validate nếu chưa có dữ liệu import từ Excel
-        if (classSlots.length === 0 && (!values.totalWeeks || !values.slotsPerWeek)) {
-          setNotificationConfig({
-            visible: true,
-            type: 'error',
-            message: 'Thiếu thông tin!',
-            description: 'Vui lòng nhập đầy đủ thông tin cấu hình.',
-          });
-          return;
-        }
-        // Chỉ generateClassSlots nếu chưa có dữ liệu import từ Excel
-        if (classSlots.length === 0) {
+        // Nếu chưa import Excel, luôn cập nhật lại classSlots
+        if (!(classSlots.length > 0 && subjectData.configuration && subjectData.configuration.totalSlots)) {
           generateClassSlots(values.totalWeeks, values.slotsPerWeek, values.defaultDuration);
         }
       }
