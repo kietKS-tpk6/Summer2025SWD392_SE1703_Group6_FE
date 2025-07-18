@@ -272,10 +272,16 @@ const UpdateAssessmentOfTestEventComponent = ({
         title="Xác nhận thông tin bài kiểm tra"
         onCancel={() => setConfirmVisible(false)}
         onOk={async () => {
-          if (onOk) await onOk();
-          setConfirmVisible(false);
-          if (onCancel) onCancel();
-          if (onSuccess) onSuccess();
+          setConfirmVisible(false); // Đóng modal xác nhận NGAY LẬP TỨC
+          if (onOk) {
+            try {
+              await onOk();
+              if (onCancel) onCancel();
+              if (onSuccess) onSuccess();
+            } catch (err) {
+              // Notification lỗi sẽ show ở PendingAssessmentCardList
+            }
+          }
         }}
         okText="Xác nhận"
         cancelText="Quay lại"

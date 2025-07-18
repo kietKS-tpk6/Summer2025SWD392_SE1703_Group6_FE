@@ -5,7 +5,7 @@ import axios from 'axios';
 import { API_URL } from '../../../config/api';
 import AddAssessmentToTestEventComponent from './AddAssessmentToTestEventComponent';
 import UpdateAssessmentOfTestEventComponent from './UpdateAssessmentOfTestEventComponent';
-import { notification } from 'antd';
+import Notification from '../../common/Notification';
 
 // Enum mapping from AssessmentBasicForm
 const TEST_CONTENT_OPTIONS = [
@@ -42,6 +42,7 @@ const CATEGORY_ENUM_MAP = {
 
 const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, subjectId }) => {
   const [assessments, setAssessments] = useState(initialAssessments || []);
+  const [notificationState, setNotificationState] = useState({ visible: false, type: 'success', message: '', description: '' });
 
   const total = assessments ? assessments.length : 0;
   const attached = assessments ? assessments.filter(a => a.testID).length : 0;
@@ -104,6 +105,13 @@ const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, s
   // Sửa lại phần Modal:
   return (
     <div>
+      <Notification
+        visible={notificationState.visible}
+        type={notificationState.type}
+        message={notificationState.message}
+        description={notificationState.description}
+        onClose={() => setNotificationState(prev => ({ ...prev, visible: false }))}
+      />
       {/* <div style={{ textAlign: 'center', fontSize: 18, marginBottom: 12, fontWeight: 700, color: '#222' }}>
         Tổng số buổi kiểm tra: {total}
       </div> */}
@@ -161,11 +169,11 @@ const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, s
             const testName = assessment.description || 'Chưa có đề kiểm tra';
             const hasQuestions = !!assessment.testID;
             let date = '';
-            if (assessment.startAt) date = dayjs(assessment.startAt).format('DD/MM/YYYY');
-            else if (assessment.endAt) date = dayjs(assessment.endAt).format('DD/MM/YYYY');
+            if (assessment.startAt) date = dayjs(assessment.startAt).add(7, 'hour').format('DD/MM/YYYY');
+            else if (assessment.endAt) date = dayjs(assessment.endAt).add(7, 'hour').format('DD/MM/YYYY');
             let time = '';
             if (assessment.startAt && assessment.endAt) {
-              time = `${dayjs(assessment.startAt).format('HH:mm')} - ${dayjs(assessment.endAt).format('HH:mm')}`;
+              time = `${dayjs(assessment.startAt).add(7, 'hour').format('HH:mm')} - ${dayjs(assessment.endAt).add(7, 'hour').format('HH:mm')}`;
             }
             let categoryLabel = '';
             if (assessment.assessmentCategory !== undefined && assessment.assessmentCategory !== null) {
@@ -200,27 +208,43 @@ const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, s
                   </>
                 )}
                 {hasQuestions && (
-                  <Button
-                    type="default"
-                    size="small"
-                    style={{ marginBottom: 8, background: '#faad14', border: '1px solid #faad14', color: '#fff', transition: 'all 0.2s' }}
-                    onMouseOver={e => e.currentTarget.style.background = '#ffd666'}
-                    onMouseOut={e => e.currentTarget.style.background = '#faad14'}
-                    onClick={() => {
-                      const initialValues = {
-                        testID: assessment.testID || undefined,
-                        description: assessment.description || '',
-                        startTime: assessment.startAt ? dayjs(assessment.startAt) : undefined,
-                        endTime: assessment.endAt ? dayjs(assessment.endAt) : undefined,
-                        attemptLimit: assessment.attemptLimit || 1,
-                        password: assessment.password || '',
-                      };
-                      setModalUpdateTestEvent({ ...assessment, initialValues });
-                      setModalUpdateOpen(true);
-                    }}
-                  >
-                    Chỉnh sửa
-                  </Button>
+                  <>
+                    <Button
+                      type="default"
+                      size="small"
+                      style={{ marginBottom: 8, background: '#faad14', border: '1px solid #faad14', color: '#fff', transition: 'all 0.2s', marginRight: 8 }}
+                      onMouseOver={e => e.currentTarget.style.background = '#ffd666'}
+                      onMouseOut={e => e.currentTarget.style.background = '#faad14'}
+                      onClick={() => {
+                        const initialValues = {
+                          testID: assessment.testID || undefined,
+                          description: assessment.description || '',
+                          startTime: assessment.startAt ? dayjs(assessment.startAt).add(7, 'hour') : undefined,
+                          endTime: assessment.endAt ? dayjs(assessment.endAt).add(7, 'hour') : undefined,
+                          attemptLimit: assessment.attemptLimit || 1,
+                          password: assessment.password || '',
+                        };
+                        setModalUpdateTestEvent({ ...assessment, initialValues });
+                        setModalUpdateOpen(true);
+                      }}
+                    >
+                      Chỉnh sửa
+                    </Button>
+                    <Button
+                      type="primary"
+                      size="small"
+                      style={{ marginBottom: 8 }}
+                      onClick={() => {
+                        // Nếu có testEventID, chuyển hướng sang trang chi tiết bài test
+                        if (assessment.testEventID) {
+                          window.open(`/lecturer/view-test/${assessment.testEventID}`, '_blank');
+                        }
+                      }}
+                      disabled={!assessment.testEventID}
+                    >
+                      Xem chi tiết
+                    </Button>
+                  </>
                 )}
                 <div style={{ fontWeight: 600, marginBottom: 8 }}>
                   {testName}
@@ -281,7 +305,10 @@ const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, s
             setModalAddOpen(false);
             await reloadAssessments();
           } catch (err) {
-            // handle error nếu cần
+            let msg = 'Thêm bài kiểm tra không thành công!';
+            if (err?.response?.data?.message) msg = err.response.data.message;
+            else if (err?.message) msg = err.message;
+            setNotificationState({ visible: true, type: 'error', message: msg });
           }
         }}
         availableTests={modalAvailableTests}
@@ -341,13 +368,9 @@ const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, s
             }
             setModalUpdateOpen(false);
             await reloadAssessments();
-            notification.success({
-              message: 'Cập nhật đề kiểm tra thành công!'
-            });
+            setNotificationState({ visible: true, type: 'success', message: 'Cập nhật đề kiểm tra thành công!' });
           } catch {
-            notification.error({
-              message: 'Cập nhật đề kiểm tra thất bại!'
-            });
+            setNotificationState({ visible: true, type: 'error', message: 'Cập nhật đề kiểm tra thất bại!' });
           }
         }}
         availableTests={modalAvailableTests}
@@ -375,4 +398,4 @@ const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, s
   );
 };
 
-export default PendingAssessmentCardList; 
+export default PendingAssessmentCardList;

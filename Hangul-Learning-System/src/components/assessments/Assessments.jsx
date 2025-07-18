@@ -137,12 +137,27 @@ const Assessments = () => {
   }, [statusFilter, page, pageSize]);
 
   // Filter + search
+  let currentUser = {};
+  let currentRole = null;
+  let currentAccountId = null;
+  try {
+    currentUser = JSON.parse(localStorage.getItem('user')) || {};
+    currentRole = currentUser.role;
+    currentAccountId = currentUser.accountId;
+  } catch {}
+  const isManager = currentRole === 'Manager';
+  const isLecturer = currentRole === 'Lecture' || currentRole === 'Lecturer';
   const filteredData = data.filter(item => {
     const matchStatus = statusFilter === 'all' || item.Status === statusFilter;
     const matchSearch =
       (item.testName || '').toLowerCase().includes(searchText.toLowerCase()) ||
       (item.subjectName || '').toLowerCase().includes(searchText.toLowerCase()) ||
       (item.createdByName || '').toLowerCase().includes(searchText.toLowerCase());
+    // Nếu là Lecturer chỉ xem bài của mình (so sánh createBy với accountId)
+    if (isLecturer) {
+      return matchStatus && matchSearch && item.createBy === currentAccountId;
+    }
+    // Manager xem tất cả
     return matchStatus && matchSearch;
   });
 
@@ -334,6 +349,7 @@ const Assessments = () => {
       setLecturerModal(false);
       setModalLoading(false);
       setLecturerLoading(false);
+      setPage(1); // Đảm bảo useEffect sẽ fetch lại danh sách mới nhất
       // Điều hướng về đúng sidebar
       if (userRole === 'Lecturer' || userRole === 'Lecture') {
         navigate('/lecturer/assessment');

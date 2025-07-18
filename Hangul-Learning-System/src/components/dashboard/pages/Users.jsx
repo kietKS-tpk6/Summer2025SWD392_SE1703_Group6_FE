@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Space, Input, message, Select } from 'antd';
-import { SearchOutlined, PlusOutlined } from '@ant-design/icons';
+import { Table, Button, Space, Input, message, Select, Modal } from 'antd';
+import { SearchOutlined, PlusOutlined, EyeOutlined, DeleteOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { API_URL, endpoints } from '../../../config/api';
 import { useNavigate } from 'react-router-dom';
@@ -22,6 +22,8 @@ const Users = () => {
     pageSize: 10,
     total: 0
   });
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   const navigate = useNavigate();
 
@@ -116,6 +118,24 @@ const Users = () => {
     setPagination({ ...pagination, current: 1 });
   };
 
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
+    try {
+      setLoading(true);
+      // Giả sử API xoá user là DELETE /api/users/:id
+      const deleteUrl = `${API_URL}${endpoints.manageAccount.deleteAccount}${selectedUser.accountID}`;
+      await axios.delete(deleteUrl);
+      message.success('Xóa người dùng thành công');
+      fetchUsers(pagination.current, pagination.pageSize, searchText, filters.role, filters.gender, filters.status);
+    } catch (error) {
+      message.error('Không thể xóa người dùng. Vui lòng thử lại.');
+    } finally {
+      setLoading(false);
+      setDeleteModalVisible(false);
+      setSelectedUser(null);
+    }
+  };
+
   const columns = [
     {
       title: 'ID',
@@ -159,10 +179,20 @@ const Users = () => {
       width: 160,
       render: (_, record) => (
         <Space>
-          <Button type="primary" size="small" onClick={() => {
+          <Button type="primary" icon={<EyeOutlined />} onClick={() => {
             navigate(`/dashboard/profile/${record.accountID}`);
-          }}>Xem chi tiết</Button>
-          <Button danger size="small">Xóa</Button>
+          }}>Xem</Button>
+          <Button
+            type="primary"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={() => {
+              setSelectedUser(record);
+              setDeleteModalVisible(true);
+            }}
+          >
+            {/* Xóa */}
+          </Button>
         </Space>
       ),
     },
@@ -208,7 +238,7 @@ const Users = () => {
             <Option value={0}>Đang hoạt động</Option>
             <Option value={1}>Không hoạt động</Option>
           </Select>
-          <Button type="primary" icon={<PlusOutlined />}>
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/dashboard/users/create')}>
             Thêm người dùng
           </Button>
         </Space>
@@ -221,6 +251,20 @@ const Users = () => {
         pagination={pagination}
         onChange={handleTableChange}
       />
+      <Modal
+        title="Xác nhận xóa"
+        open={deleteModalVisible}
+        onOk={handleDeleteUser}
+        onCancel={() => {
+          setDeleteModalVisible(false);
+          setSelectedUser(null);
+        }}
+        okText="Xóa"
+        cancelText="Hủy"
+        okButtonProps={{ danger: true }}
+      >
+        <p>Bạn có chắc chắn muốn xóa người dùng này?</p>
+      </Modal>
     </div>
   );
 };

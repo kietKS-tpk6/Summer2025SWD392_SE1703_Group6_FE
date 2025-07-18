@@ -366,6 +366,7 @@ const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score, onImpor
             onChange={e => handleQuestionChange(idx, e.target.value)}
             style={{ marginBottom: 16 }}
             status={errors[`qcontent_${sectionIdx}_${idx}`] ? 'error' : undefined}
+            autoSize={{ minRows: 2, maxRows: 8 }}
           />
           {errors[`qcontent_${sectionIdx}_${idx}`] && <div style={{ color: 'red', fontSize: 12, marginBottom: 8 }}>Chưa nhập nội dung câu hỏi!</div>}
           {type === 'MCQ' && (
@@ -398,6 +399,7 @@ const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score, onImpor
                           style={{ flex: 1 }}
                           disabled={answerType === 'image' || answerType === 'audio' || !!a.imageURL || !!a.audioURL}
                           status={errors[`qanswer_${sectionIdx}_${idx}`] || errors[`qanswer_${sectionIdx}_${idx}_${aIdx}`] ? 'error' : undefined}
+                          autoSize={{ minRows: 1, maxRows: 4 }}
                         />
                         {errors[`qanswer_${sectionIdx}_${idx}_${aIdx}`] && <span style={{ color: 'red', fontSize: 12 }}>Chưa nhập nội dung đáp án!</span>}
                         {/* Upload ảnh/audio cho đáp án */}
@@ -435,7 +437,7 @@ const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score, onImpor
                         )}
                         {/* Nút xóa đáp án */}
                         {q.answers.length > minOptions && (
-                          <Button danger size="small" icon={<DeleteOutlined />} onClick={() => handleRemoveOption(idx, aIdx)} />
+                          <Button type="primary" danger icon={<DeleteOutlined />} onClick={() => handleRemoveOption(idx, aIdx)} />
                         )}
                       </div>
                     ));
@@ -478,6 +480,34 @@ const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score, onImpor
               </Radio.Group>
               {errors[`qcorrect_${sectionIdx}_${idx}`] && <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>Chưa chọn đáp án đúng!</div>}
             </>
+          )}
+          {section.type === 'Writing' && Array.isArray(q.criteriaList) && q.criteriaList.length > 0 && (
+            <div style={{ marginTop: 12, marginBottom: 8 }}>
+              <b>Barem chấm điểm:</b>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 8 }}>
+                {q.criteriaList.map((barem, bIdx) => (
+                  <div
+                    key={bIdx}
+                    style={{
+                      background: '#f8fafd',
+                      border: '1px solid #e6eaf0',
+                      borderRadius: 10,
+                      padding: '14px 18px',
+                      fontSize: 16,
+                      marginBottom: 4,
+                      boxShadow: '0 1px 4px #f0f1f2',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 24,
+                    }}
+                  >
+                    <span style={{ minWidth: 120, fontWeight: 600 }}>{barem.criteriaName}</span>
+                    <span style={{ minWidth: 60, color: '#1677ff', fontWeight: 600 }}>Điểm: {barem.maxScore}</span>
+                    <span style={{ flex: 1, color: '#444' }}>{barem.description}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </Card>
       ))}

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "../../styles/RegisterPage.css";
-import { Form, Input, Button, Alert, Select, DatePicker } from "antd";
-import { UserOutlined, MailOutlined, LockOutlined } from "@ant-design/icons";
+import { Form, Input, Button, Alert, Select, DatePicker, Modal } from "antd";
+import { UserOutlined, MailOutlined, LockOutlined, SafetyCertificateOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_URL, endpoints } from "../../config/api";
@@ -16,6 +16,7 @@ const RegisterPage = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [email, setEmail] = useState("");
+  const [otpModalVisible, setOtpModalVisible] = useState(false);
 
   // Step 1: Gửi OTP
   const handleSendOtp = async () => {
@@ -23,11 +24,38 @@ const RegisterPage = () => {
       setError("");
       setLoading(true);
       const values = await form.validateFields();
+
+      // Kiểm tra email đã tồn tại chưa
+      const checkRes = await axios.get(API_URL + "api/Account/search",{
+          params: {
+            SearchValue: values.email,
+            SearchByEmail: true
+          }
+        }
+      );
+      if (checkRes.data && checkRes.data.data && checkRes.data.data.length > 0) {
+        form.setFields([
+          {
+            name: 'email',
+            errors: ['Email này đã được sử dụng']
+          }
+        ]);
+        setLoading(false);
+        return;
+      }
+
       setEmail(values.email);
       await axios.post(API_URL + endpoints.account.sendOTP, { email: values.email });
       setStep(2);
+      setOtp("");
+      setOtpModalVisible(true);
     } catch (err) {
-      setError("Không thể gửi OTP: " + (err.response?.data || err.message));
+      // Nếu lỗi là do validate form thì không hiển thị lỗi chung
+      if (err && err.errorFields) {
+        // Không setError, Form đã hiển thị lỗi dưới từng trường
+      } else {
+        setError("Không thể gửi OTP: " + (err.response?.data || err.message));
+      }
     } finally {
       setLoading(false);
     }
@@ -59,9 +87,19 @@ const RegisterPage = () => {
       await axios.post(API_URL + endpoints.account.register, registerData);
       setSuccess("Đăng ký thành công! Bạn sẽ được chuyển đến trang đăng nhập...");
       setStep(3);
+      setOtpModalVisible(false);
       setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
-      setError("Lỗi xác thực hoặc đăng ký: " + (err.response?.data || err.message));
+      let errorMsg = "Lỗi xác thực hoặc đăng ký!";
+      if (err.response && err.response.data) {
+        const backendMsg = typeof err.response.data === 'string' ? err.response.data : err.response.data.errorMessage;
+        if (backendMsg) {
+          errorMsg = backendMsg;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -113,7 +151,22 @@ const RegisterPage = () => {
           <Form.Item
             label="Số điện thoại"
             name="phoneNumber"
-            rules={[{ required: true, message: "Vui lòng nhập Số điện thoại!" }]}
+            rules={[
+              { required: true, message: "Vui lòng nhập Số điện thoại!" },
+              {
+                validator: (_, value) => {
+                  if (!value) return Promise.resolve();
+                  // Chuẩn hóa: bỏ dấu cách, chỉ lấy số
+                  const phone = value.replace(/\s+/g, "");
+                  // Regex kiểm tra số điện thoại Việt Nam theo yêu cầu
+                  const regex = /^(0|\+84|84)(3[2-9]|5[689]|7[06789]|8[1-9]|9[0-9])\d{7}$/;
+                  if (regex.test(phone)) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject("Số điện thoại không hợp lệ");
+                }
+              }
+            ]}
           >
             <Input prefix={<UserOutlined style={{ color: '#fad934' }} />} placeholder="Nhập số điện thoại..." size="large" disabled={step !== 1} />
           </Form.Item>
@@ -191,26 +244,61 @@ const RegisterPage = () => {
           </Form.Item>
         </div>
         {step === 2 && (
-          <Form.Item label="Mã OTP">
+          <Modal
+            title={<span style={{ fontWeight: 700, color: '#b48a00', display: 'flex', alignItems: 'center' }}><SafetyCertificateOutlined style={{ color: '#fad934', marginRight: 8, fontSize: 22 }} />Nhập mã OTP xác nhận</span>}
+            open={otpModalVisible}
+            onCancel={() => setOtpModalVisible(false)}
+            footer={null}
+            centered
+            maskClosable={false}
+            bodyStyle={{ background: '#fff9f3', borderRadius: 12, boxShadow: '0 2px 16pxrgb(255, 247, 228)' }}
+          >
             <Input
               value={otp}
               onChange={e => setOtp(e.target.value)}
               placeholder="Nhập mã OTP"
               size="large"
               maxLength={6}
+              style={{
+                marginBottom: 16,
+                background: '#fff',
+                borderRadius: 8,
+                fontWeight: 600,
+                color: '#b48a00',
+              }}
+
             />
-          </Form.Item>
+            {error && (
+              <div style={{ color: '#d4380d', background: '#fff2e8', border: '1px solid #ffd36b', borderRadius: 6, padding: '6px 12px', marginBottom: 12, fontWeight: 500 }}>
+                {error}
+              </div>
+            )}
+            <Button
+              type="primary"
+              onClick={handleVerifyAndRegister}
+              loading={loading}
+              block
+              style={{
+                background: 'linear-gradient(90deg,rgb(255, 240, 167) 0%, #ffd36b 100%)',
+                border: 'none',
+                color: '#fff',
+                fontWeight: 700,
+                fontSize: 16,
+                borderRadius: 8,
+                boxShadow: '0 2px 8px #ffe9b0',
+                marginTop: 4
+              }}
+            >
+              Xác thực & Đăng ký
+            </Button>
+          </Modal>
         )}
-        {error && <Alert message={error} type="error" showIcon style={{ marginBottom: 12 }} />}
+        {/* Không hiển thị lỗi chung khi lỗi email đã được sử dụng, lỗi sẽ hiển thị ở ô email */}
+        {error && step !== 1 && <Alert message={error} type="error" showIcon style={{ marginBottom: 12 }} />}
         {success && <Alert message={success} type="success" showIcon style={{ marginBottom: 12 }} />}
         {step === 1 && (
           <Button type="primary" onClick={handleSendOtp} className="register-btn" size="large" block loading={loading}>
             Xác Nhận
-          </Button>
-        )}
-        {step === 2 && (
-          <Button type="primary" onClick={handleVerifyAndRegister} className="register-btn" size="large" block loading={loading}>
-            Xác thực & Đăng ký
           </Button>
         )}
         {step === 3 && (

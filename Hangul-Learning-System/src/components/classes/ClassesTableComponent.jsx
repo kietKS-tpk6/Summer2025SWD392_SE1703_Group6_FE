@@ -109,12 +109,11 @@ export function getClassesTableColumns(statusFilter, handlers) {
         actions.push(
           <Button
             type="primary"
-            size="small"
             icon={<EyeOutlined />}
             onClick={() => onView(record)}
             key="view"
           >
-            Xem
+            {/* Xem */}
           </Button>
         );
       }
@@ -122,23 +121,22 @@ export function getClassesTableColumns(statusFilter, handlers) {
         actions.push(
           <Button
             type="primary"
-            size="small"
             icon={<EditOutlined />}
             onClick={() => onEdit(record)}
             key="edit"
           >
-            Sửa
+            {/* Sửa */}
           </Button>
         );
         actions.push(
           <Button
+            type="primary"
             danger
-            size="small"
             icon={<DeleteOutlined />}
             onClick={() => onDelete(record)}
             key="delete"
           >
-            Xóa
+            {/* Xóa */}
           </Button>
         );
       }
@@ -146,7 +144,6 @@ export function getClassesTableColumns(statusFilter, handlers) {
         actions.push(
           <Button
             type="primary"
-            size="small"
             icon={<RocketOutlined />}
             onClick={() => onOpenRecruit(record)}
             key="openRecruit"
@@ -160,7 +157,6 @@ export function getClassesTableColumns(statusFilter, handlers) {
         actions.push(
           <Button
             type="primary"
-            size="small"
             key="finalize"
             style={{ background: '#faad14', borderColor: '#faad14', color: '#fff' }}
             onClick={() => onFinalize(record)}
@@ -187,7 +183,6 @@ export function getClassesTableColumns(statusFilter, handlers) {
         actions.push(
           <Button
             type="primary"
-            size="small"
             icon={<EyeOutlined />}
             onClick={() => onView(record)}
             key="view"

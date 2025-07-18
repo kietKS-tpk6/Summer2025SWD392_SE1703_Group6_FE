@@ -392,10 +392,22 @@ const ViewDetailAssessment = ({ testID: propTestID, inModal }) => {
                   try {
                     await axios.put(`${API_URL}api/Test/update-status-fix`, { testID, testStatus: 3 });
                     setTestStatus(3);
-                    notification.success({ message: 'Thành công', description: 'Đã duyệt bài kiểm tra!' });
-                    navigate('/dashboard/assessment');
+                    navigate('/dashboard/assessment', {
+                      state: {
+                        showNotification: true,
+                        notificationType: 'success',
+                        notificationMessage: 'Thành công',
+                        notificationDescription: 'Đã duyệt bài kiểm tra!'
+                      }
+                    });
+                    setTimeout(() => window.location.reload(), 100);
                   } catch {
-                    notification.error({ message: 'Lỗi', description: 'Lỗi khi duyệt bài kiểm tra!' });
+                    setNotification({
+                      visible: true,
+                      type: 'error',
+                      message: 'Lỗi',
+                      description: 'Lỗi khi duyệt bài kiểm tra!'
+                    });
                   } finally {
                     setApproving(false);
                   }
@@ -426,10 +438,22 @@ const ViewDetailAssessment = ({ testID: propTestID, inModal }) => {
                   try {
                     await axios.put(`${API_URL}api/Test/update-status-fix`, { testID, testStatus: 3 });
                     setTestStatus(3);
-                    notification.success({ message: 'Thành công', description: 'Đã duyệt bài kiểm tra!' });
-                    navigate('/dashboard/assessment');
+                    navigate('/dashboard/assessment', {
+                      state: {
+                        showNotification: true,
+                        notificationType: 'success',
+                        notificationMessage: 'Thành công',
+                        notificationDescription: 'Đã duyệt bài kiểm tra!'
+                      }
+                    });
+                    setTimeout(() => window.location.reload(), 100);
                   } catch {
-                    notification.error({ message: 'Lỗi', description: 'Lỗi khi duyệt bài kiểm tra!' });
+                    setNotification({
+                      visible: true,
+                      type: 'error',
+                      message: 'Lỗi',
+                      description: 'Lỗi khi duyệt bài kiểm tra!'
+                    });
                   } finally {
                     setApproving(false);
                   }
@@ -450,8 +474,15 @@ const ViewDetailAssessment = ({ testID: propTestID, inModal }) => {
                   setTestStatus(1);
                   const res = await axios.get(`${API_URL}api/Questions/by-test/${testID}`);
                   setSections(res.data || []);
-                  // Sau khi gửi duyệt thành công, chuyển hướng về trang chờ duyệt
-                  navigate('/lecturer/assessment');
+                  navigate('/lecturer/assessment', {
+                    state: {
+                      showNotification: true,
+                      notificationType: 'success',
+                      notificationMessage: 'Thành công',
+                      notificationDescription: 'Đã gửi bài kiểm tra cho quản lí duyệt!'
+                    }
+                  });
+                  setTimeout(() => window.location.reload(), 100);
                 } catch {}
                 setApproving(false);
               }}
@@ -570,7 +601,7 @@ const ViewDetailAssessment = ({ testID: propTestID, inModal }) => {
                   style={{ background: '#f6faff', border: '1px solid #e6eaf0', boxShadow: '0 1px 3px #f0f1f2' }}
                   bodyStyle={{ padding: 16 }}
                   title={<span style={{ color: '#1677ff', fontWeight: 600 }}>Câu {qIdx + 1}</span>}
-                  extra={isEditing && <Button danger size="small" icon={<DeleteOutlined />} onClick={() => handleDeleteQuestion(idx, qIdx)} />}
+                  extra={isEditing && <Button type="primary" danger icon={<DeleteOutlined />} onClick={() => handleDeleteQuestion(idx, qIdx)} />}
                 >
                   <div style={{ marginBottom: 8 }}>
                     <b>Nội dung:</b> {isEditing ? (
@@ -652,7 +683,7 @@ const ViewDetailAssessment = ({ testID: propTestID, inModal }) => {
                                 >
                                   Đúng
                                 </Button>
-                                <Button danger size="small" icon={<DeleteOutlined />} onClick={() => handleDeleteAnswer(idx, qIdx, aIdx)} />
+                                <Button type="primary" danger icon={<DeleteOutlined />} onClick={() => handleDeleteAnswer(idx, qIdx, aIdx)} />
                               </>
                             ) : (
                               <>

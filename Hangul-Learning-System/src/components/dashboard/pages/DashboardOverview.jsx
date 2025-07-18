@@ -601,11 +601,11 @@ const DashboardOverview = () => {
             </div>
             <Divider style={{ margin: '8px 0' }} />
             <div style={{ display: 'flex', marginBottom: 8 }}>
-              <div style={{ width: 120, color: '#888' }}>Thời gian bắt đầu:</div>
+              <div style={{ width: 120, color: '#888' }}>Bắt đầu:</div>
               <div>{dayjs(detailModal.task.dateStart).format('DD/MM/YYYY HH:mm')}</div>
             </div>
             <div style={{ display: 'flex', marginBottom: 8 }}>
-              <div style={{ width: 120, color: '#888' }}>Deadline:</div>
+              <div style={{ width: 120, color: '#888' }}>Hạn:</div>
               <div>{detailModal.task.deadline ? dayjs(detailModal.task.deadline).format('DD/MM/YYYY HH:mm') : <span style={{ color: '#aaa' }}>Không có</span>}</div>
             </div>
             <Divider style={{ margin: '8px 0' }} />
