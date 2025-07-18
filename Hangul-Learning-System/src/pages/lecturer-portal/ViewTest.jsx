@@ -240,7 +240,7 @@ const ViewTestLecturer = () => {
               }))}
               columns={[
                 { title: 'Học sinh', dataIndex: 'studentName', key: 'studentName' },
-                { title: 'Trạng thái', dataIndex: 'status', key: 'status' },
+                { title: 'Trạng thái', dataIndex: 'status', key: 'status',align: 'center'  },
                 { title: 'Điểm', dataIndex: 'score', key: 'score', align: 'center' },
                 { title: 'Nộp bài', dataIndex: 'submitTime', key: 'submitTime', align: 'center' },
                 {
@@ -258,7 +258,7 @@ const ViewTestLecturer = () => {
               bordered
               title={() => (
                 <span style={{ fontWeight: 700, fontSize: 16 }}>
-                  Bảng điểm học sinh
+                  Lịch sử làm bài
                 </span>
               )}
             />

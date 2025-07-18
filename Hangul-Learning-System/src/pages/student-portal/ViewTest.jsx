@@ -207,6 +207,9 @@ const ViewTest = () => {
     2: 'Viết luận',
   };
 
+  // Thêm biến kiểm tra giới hạn số lần làm bài
+  const hasReachedAttemptLimit = testData?.attemptLimit > 0 && history.length >= testData.attemptLimit;
+
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
@@ -388,7 +391,16 @@ const ViewTest = () => {
         <Col xs={24} lg={8}>
           <Card title="Thao tác">
             <Space direction="vertical" style={{ width: '100%' }}>
-              {statusMap[testData.status] === 'Sắp diễn ra' && (
+              {hasReachedAttemptLimit && (
+                <Alert
+                  message="Đã đạt giới hạn số lần làm bài"
+                  description={`Bạn đã làm bài đủ ${testData.attemptLimit} lần. Không thể làm lại.`}
+                  type="warning"
+                  showIcon
+                />
+              )}
+
+              {!hasReachedAttemptLimit && statusMap[testData.status] === 'Sắp diễn ra' && (
                 <Alert
                   message="Bài kiểm tra chưa bắt đầu"
                   description="Vui lòng đợi đến thời gian quy định để bắt đầu làm bài."
@@ -397,7 +409,7 @@ const ViewTest = () => {
                 />
               )}
 
-              {statusMap[testData.status] === 'Đang diễn ra' && (
+              {!hasReachedAttemptLimit && statusMap[testData.status] === 'Đang diễn ra' && (
                 <Button
                   type="primary"
                   size="large"
