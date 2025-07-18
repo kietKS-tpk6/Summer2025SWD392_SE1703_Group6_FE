@@ -53,6 +53,10 @@ const GradesPage = () => {
   // State for notifications
   const [notification, setNotification] = useState({ visible: false, type: 'success', message: '', description: '' });
 
+  // State cho chốt sổ điểm
+  const [isGradesFinalized, setIsGradesFinalized] = useState(false);
+  const [confirmFinalizeVisible, setConfirmFinalizeVisible] = useState(false);
+
   // Fetch API data when classId or subjectId changes
   useEffect(() => {
     // if (!classId || !subjectId) return;
@@ -324,6 +328,18 @@ const GradesPage = () => {
     }
   };
 
+  // Hàm xử lý chốt sổ điểm
+  const handleFinalizeGrades = () => {
+    setIsGradesFinalized(true);
+    setConfirmFinalizeVisible(false);
+    setNotification({
+      visible: true,
+      type: 'success',
+      message: 'Đã chốt sổ điểm',
+      description: 'Bảng điểm đã được chốt. Bạn không thể chỉnh sửa nữa!',
+    });
+  };
+
   // Render cell editable
   function renderEditableCell(row, col) {
     return (
@@ -435,9 +451,9 @@ const GradesPage = () => {
           <Button icon={<DownloadOutlined />} onClick={handleExportGrades} type="primary">
             Xuất bảng điểm
           </Button>
-          <Button icon={<FilterOutlined />} onClick={() => message.info('Tính năng nhập bảng điểm sẽ được cập nhật sau!')}>
+          {/* <Button icon={<FilterOutlined />} onClick={() => message.info('Tính năng nhập bảng điểm sẽ được cập nhật sau!')}>
             Nhập bảng điểm
-          </Button>
+          </Button> */}
         </Space>
       </div>
       {apiError && <Alert type="error" message={apiError} showIcon style={{ marginBottom: 16 }} />}
@@ -451,18 +467,44 @@ const GradesPage = () => {
           scroll={{ x: true }}
         />
       </Card>
+      {/* Hai nút cùng hàng */}
       <div style={{ marginTop: 24, textAlign: 'center' }}>
-        {!isEditing ? (
-          <Button type="primary" icon={<EditOutlined />} onClick={handleStartEdit}>
-            Chỉnh sửa
+        <Space style={{ textAlign: 'center' }}>
+          {!isEditing ? (
+            <Button type="primary" icon={<EditOutlined />} onClick={handleStartEdit}>
+              Chỉnh sửa
+            </Button>
+          ) : (
+            <>
+              <Button type="primary" onClick={handleSaveEdit}>Lưu</Button>
+              <Button onClick={handleCancelEdit}>Hủy</Button>
+            </>
+          )}
+          <Button
+            type="primary"
+            danger
+            disabled={isGradesFinalized}
+            onClick={() => setConfirmFinalizeVisible(true)}
+          >
+            Chốt sổ điểm
           </Button>
-        ) : (
-          <Space>
-            <Button type="primary" onClick={handleSaveEdit}>Lưu</Button>
-            <Button onClick={handleCancelEdit}>Hủy</Button>
-          </Space>
-        )}
+        </Space>
       </div>
+      {/* Modal xác nhận chốt sổ điểm */}
+      <Modal
+        title={<div style={{fontSize:'25px',fontWeight:'bolder', textAlign: 'center', width: '100%' }}>Xác nhận chốt sổ điểm</div>}
+        open={confirmFinalizeVisible}
+        onOk={handleFinalizeGrades}
+        onCancel={() => setConfirmFinalizeVisible(false)}
+        okText="Chốt sổ"
+        cancelText="Hủy"
+        destroyOnClose
+        centered
+      >
+        <div>
+          <p>Bạn có chắc chắn muốn <b style={{color:'red'}}>chốt sổ điểm</b>?<br/>Sau khi chốt, bạn sẽ không thể chỉnh sửa bảng điểm nữa.</p>
+        </div>
+      </Modal>
 
       {/* Edit Grade Modal (tùy chỉnh sau nếu cần) */}
       <Modal
