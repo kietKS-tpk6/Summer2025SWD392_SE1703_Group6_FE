@@ -24,6 +24,7 @@ import {
 import dayjs from 'dayjs';
 import axios from 'axios';
 import { API_URL, endpoints } from '../../config/api';
+import { getUser } from '../../utils/auth';
 
 const { Title } = Typography;
 
@@ -162,22 +163,54 @@ const ViewTestLecturer = () => {
   // Tính tổng điểm tối đa
   const maxScore = sections.reduce((sum, s) => sum + (s.score || 0), 0);
 
+  // Lấy role người dùng hiện tại
+  let userRole = null;
+  try {
+    const user = getUser();
+    userRole = user && user.role;
+  } catch (e) {
+    userRole = null;
+  }
+  const isLecturer = userRole === 'Lecture' || userRole === 'Lecturer' || userRole === 'Teacher';
+
   return (
     <div style={{ background: '#fff', borderRadius: 20, padding: 32, margin: 24 }}>
-      <div style={{ marginBottom: 24 }}>
+      {/* Nút Quay lại nằm phía trên */}
+      <div style={{ marginBottom: 16 }}>
         <Button
           icon={<ArrowLeftOutlined />}
           onClick={() => navigate(-1)}
-          style={{ marginBottom: 16 }}
+          style={{ marginBottom: 0 }}
         >
           Quay lại
         </Button>
-        <Title level={2} style={{ fontWeight: 700, margin: 0 }}>
-          {testData.lessonTitle || testData.description || 'Bài kiểm tra'}
-        </Title>
       </div>
-      <Row gutter={24}>
-        <Col xs={24} lg={16}>
+      {/* Tiêu đề và nút Xem chi tiết đề kiểm tra */}
+      <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Button
+          icon={<ArrowLeftOutlined />}
+          onClick={() => navigate(-1)}
+          style={{ marginBottom: 0 }}
+        >
+          Quay lại
+        </Button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <Title level={2} style={{ fontWeight: 700, margin: 0 }}>
+            {testData.lessonTitle || testData.description || 'Bài kiểm tra'}
+          </Title>
+          {isLecturer && testData.testID && (
+            <Button
+              type="primary"
+              onClick={() => navigate(`/lecturer/assessment/${testData.testID}`)}
+              style={{ marginLeft: 0 }}
+            >
+              Xem chi tiết đề kiểm tra
+            </Button>
+          )}
+        </div>
+      </div>
+      <Row gutter={36}>
+        <Col xs={12} lg={24}>
           <Card>
             <Descriptions title="Thông tin bài kiểm tra" bordered column={1}>
               <Descriptions.Item label="Tên bài kiểm tra">
@@ -201,6 +234,11 @@ const ViewTestLecturer = () => {
               <Descriptions.Item label="Giới hạn lượt làm">
                 {testData.attemptLimit}
               </Descriptions.Item>
+              {isLecturer && testData.password && (
+                <Descriptions.Item label="Mật khẩu bài kiểm tra">
+                  <span style={{ fontWeight: 600, letterSpacing: 1 }}>{testData.password}</span>
+                </Descriptions.Item>
+              )}
             </Descriptions>
             {sections.length > 0 && (
               <>
@@ -214,8 +252,8 @@ const ViewTestLecturer = () => {
                   }))}
                   columns={[
                     { title: 'Nội dung', dataIndex: 'context', key: 'context' },
-                    { title: 'Dạng', dataIndex: 'testSectionType', key: 'testSectionType' },
-                    { title: 'Điểm', dataIndex: 'score', key: 'score' },
+                    { title: 'Dạng', dataIndex: 'testSectionType', key: 'testSectionType', align: 'center'  },
+                    { title: 'Điểm', dataIndex: 'score', key: 'score', align: 'center'  },
                   ]}
                   pagination={false}
                   bordered
