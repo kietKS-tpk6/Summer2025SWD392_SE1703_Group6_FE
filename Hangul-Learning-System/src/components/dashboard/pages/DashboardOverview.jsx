@@ -375,7 +375,7 @@ const DashboardOverview = () => {
 
   return (
     <div style={{ padding: '24px' }}>
-      <Title level={2} style={{ marginBottom: '24px', color: '#1a1a1a' }}>
+      <Title level={2} style={{fontWeight:'bolder', marginBottom: '24px', color: '#1a1a1a' }}>
         Tổng Quan Dashboard
       </Title>
 

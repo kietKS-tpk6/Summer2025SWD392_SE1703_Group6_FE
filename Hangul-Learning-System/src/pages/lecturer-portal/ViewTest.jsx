@@ -198,7 +198,10 @@ const ViewTestLecturer = () => {
           <Title level={2} style={{ fontWeight: 700, margin: 0 }}>
             {testData.lessonTitle || testData.description || 'Bài kiểm tra'}
           </Title>
-          {isLecturer && testData.testID && (
+          
+        </div>
+        <div>
+        {isLecturer && testData.testID && (
             <Button
               type="primary"
               onClick={() => navigate(`/lecturer/assessment/${testData.testID}`)}
