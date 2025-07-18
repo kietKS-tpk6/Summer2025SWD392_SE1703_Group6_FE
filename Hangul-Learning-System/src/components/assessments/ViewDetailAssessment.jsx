@@ -543,7 +543,7 @@ const ViewDetailAssessment = ({ testID: propTestID, inModal }) => {
             })()}
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
               <InfoCircleOutlined style={{ marginRight: 8, color: '#1677ff' }} />
-              <b>Loại:</b>&nbsp;{TEST_TYPE_LABELS[testInfo.testType] ?? testInfo.testType}
+              <b>Loại:</b>&nbsp;{testInfo.testType === 6 ? 'Tổng hợp' : (TEST_TYPE_LABELS[testInfo.testType] ?? testInfo.testType)}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
               <InfoCircleOutlined style={{ marginRight: 8, color: '#1677ff' }} />
