@@ -194,7 +194,7 @@ const CreateClassStepper = ({
           });
           const descriptionString = [
             lessonResponse.data.message,
-            testEventResponse.data.message,
+            // testEventResponse.data.message,
             'Lớp đã được mở tuyển sinh!'
           ].join('\n');
           showNotify({
