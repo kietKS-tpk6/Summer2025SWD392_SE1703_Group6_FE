@@ -158,26 +158,19 @@ const LecturerTestDetail = () => {
     }
   };
 
-  if (loading) {
-    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}><Spin size="large" /></div>;
-  }
-  if (!data) {
-    return <Alert message="Không tìm thấy thông tin bài làm" type="error" showIcon style={{ margin: 24 }} />;
-  }
-
   // Tổng điểm tối đa
-  const maxScore = Array.isArray(data.sections)
+  const maxScore = Array.isArray(data?.sections)
     ? data.sections.reduce((sum, s) => sum + (s.sectionScore || 0), 0)
     : '';
 
   // Tách câu hỏi tự luận và trắc nghiệm
-  const essaySections = Array.isArray(data.sections)
+  const essaySections = Array.isArray(data?.sections)
     ? data.sections.map(section => ({
         ...section,
         questions: section.questions.filter(q => q.type === 2)
       })).filter(section => section.questions.length > 0)
     : [];
-  const mcqSections = Array.isArray(data.sections)
+  const mcqSections = Array.isArray(data?.sections)
     ? data.sections.map(section => ({
         ...section,
         questions: section.questions.filter(q => q.type !== 2)
@@ -207,6 +200,14 @@ const LecturerTestDetail = () => {
     }
   }, [showGuide, essayQuestionIDs.join(",")]);
 
+  // Early returns moved here, after all hooks
+  if (loading) {
+    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}><Spin size="large" /></div>;
+  }
+  if (!data) {
+    return <Alert message="Không tìm thấy thông tin bài làm" type="error" showIcon style={{ margin: 24 }} />;
+  }
+
   return (
     <div style={{ background: '#fff', borderRadius: 20, padding: 32, margin: 24, minHeight: 600 }}>
       <Notification {...notification} onClose={() => setNotification(n => ({ ...n, visible: false }))} />
@@ -220,10 +221,14 @@ const LecturerTestDetail = () => {
         <Descriptions.Item label="Thời gian bắt đầu">{data.startTime ? dayjs(data.startTime).format('DD/MM/YYYY HH:mm') : ''}</Descriptions.Item>
         <Descriptions.Item label="Thời gian nộp">{data.submitTime ? dayjs(data.submitTime).format('DD/MM/YYYY HH:mm') : ''}</Descriptions.Item>
         <Descriptions.Item label="Trạng thái" span={2}>
-          <Tag color="blue" style={{ fontSize: 16 }}>{statusMap[data.status] || data.status}</Tag>
+          <span style={{fontWeight:'bolder'}}>{statusMap[data.status] || data.status}</span>
         </Descriptions.Item>
         <Descriptions.Item label="Điểm" span={2}>
-          <Text strong style={{ fontSize: 16}}>{data.originalSubmissionScore}{maxScore ? ` / ${maxScore}` : ''}</Text>
+          {(data.status === 'Graded' || data.status === 'Published') ? (
+            <Text style={{fontWeight:'bolder'}}>{data.originalSubmissionScore}</Text>
+          ) : (
+            <span style={{fontWeight:'bolder'}}>-</span>
+          )}
         </Descriptions.Item>
         {data.comment && <Descriptions.Item label="Nhận xét" span={2}>{data.comment}</Descriptions.Item>}
       </Descriptions>

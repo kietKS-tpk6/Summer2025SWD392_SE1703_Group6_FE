@@ -179,20 +179,21 @@ export default function AssessmentsTable({
             render: (_, record) => {
               let userRole = null;
               let user = {};
+              let currentAccountId = null;
               try {
                 user = JSON.parse(localStorage.getItem('user')) || {};
                 userRole = user.role;
+                currentAccountId = user.accountId;
               } catch (e) {
                 userRole = null;
               }
-              // Chỉ cho phép xóa nếu là bài nháp
-              const isDraft = record.Status === 'Drafted';
+              const isLecturer = userRole === 'Lecture' || userRole === 'Lecturer';
+              const isOwnDraft = record.Status === 'Drafted' && record.createBy === currentAccountId;
               return (
                 <Space>
                   <Button type="primary" icon={<EyeOutlined />} onClick={() => onView(record)}>
                     Xem
                   </Button>
-                  {/* Chỉ cho phép sửa/gửi duyệt nếu là bài của mình và là Drafted */}
                   {isOwnDraft && (
                     <>
                       <Button type="primary" icon={<EditOutlined />} onClick={() => onEdit(record)}>
@@ -201,13 +202,10 @@ export default function AssessmentsTable({
                       <Button type="dashed" style={{ color: '#faad14', borderColor: '#faad14' }} onClick={() => onSendApprove(record)}>
                         Gửi duyệt
                       </Button>
+                      <Button type="primary" danger icon={<DeleteOutlined />} onClick={() => onDelete(record)}>
+                        Xóa
+                      </Button>
                     </>
-                  )}
-                  {/* Nếu không phải bài của mình hoặc không phải Drafted thì không cho sửa/gửi duyệt */}
-                  {(!isOwnDraft && isLecturer) ? null : (
-                    <Button type="primary" danger icon={<DeleteOutlined />} onClick={() => onDelete(record)}>
-                      {/* Xóa */}
-                    </Button>
                   )}
                 </Space>
               );

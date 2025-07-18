@@ -4,6 +4,8 @@ import { PlusOutlined, DeleteOutlined, UploadOutlined } from '@ant-design/icons'
 import * as XLSX from 'xlsx';
 import axios from 'axios';
 import { API_URL } from '../../../config/api';
+import ImagePreviewModal from './ImagePreviewModal';
+
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
@@ -15,7 +17,8 @@ const TRUE_FALSE_OPTIONS = [
 const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score, onImportExcel, errors = {}, sectionIdx }) => {
   const [minOptions, setMinOptions] = useState(2);
   const [maxOptions, setMaxOptions] = useState(10);
-
+const [previewImageUrl, setPreviewImageUrl] = useState(null);
+const [isPreviewVisible, setIsPreviewVisible] = useState(false);
   // Lấy min/max từ API khi type là MCQ
   useEffect(() => {
     if (type === 'MCQ') {
@@ -366,7 +369,7 @@ const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score, onImpor
             onChange={e => handleQuestionChange(idx, e.target.value)}
             style={{ marginBottom: 16 }}
             status={errors[`qcontent_${sectionIdx}_${idx}`] ? 'error' : undefined}
-            autoSize={{ minRows: 2, maxRows: 8 }}
+            autoSize={{ minRows: 2 }}
           />
           {errors[`qcontent_${sectionIdx}_${idx}`] && <div style={{ color: 'red', fontSize: 12, marginBottom: 8 }}>Chưa nhập nội dung câu hỏi!</div>}
           {type === 'MCQ' && (
@@ -481,7 +484,7 @@ const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score, onImpor
               {errors[`qcorrect_${sectionIdx}_${idx}`] && <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>Chưa chọn đáp án đúng!</div>}
             </>
           )}
-          {section.type === 'Writing' && Array.isArray(q.criteriaList) && q.criteriaList.length > 0 && (
+          {type === 'Writing' && Array.isArray(q.criteriaList) && q.criteriaList.length > 0 && (
             <div style={{ marginTop: 12, marginBottom: 8 }}>
               <b>Barem chấm điểm:</b>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 8 }}>

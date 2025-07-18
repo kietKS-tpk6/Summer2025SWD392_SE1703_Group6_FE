@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Descriptions, Card, Collapse, List, Spin, Alert, Button, Tag, Typography, Row, Col, Input, InputNumber, message, Modal, notification } from 'antd';
 import axios from 'axios';
 import { API_URL } from '../../config/api';
-import { UserOutlined, FileTextOutlined, InfoCircleOutlined, CheckCircleOutlined, PlusOutlined, DeleteOutlined, EditOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { UserOutlined, FileTextOutlined, InfoCircleOutlined, CheckCircleOutlined, PlusOutlined, DeleteOutlined, EditOutlined, CheckOutlined, CloseOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import ActionConfirm from '../common/ActionConfirm';
 import Notification from '../common/Notification';
 
@@ -518,7 +518,7 @@ const ViewDetailAssessment = ({ testID: propTestID, inModal }) => {
             </>
           )}
           {!inModal && (
-            <Button onClick={() => navigate(-1)} icon={<CloseOutlined />}>
+            <Button onClick={() => navigate(-1)} icon={<ArrowLeftOutlined />}>
               Quay lại
             </Button>
           )}
