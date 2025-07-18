@@ -76,19 +76,19 @@ const AttendancePage = (props) => {
       dataIndex: 'studentName',
       key: 'studentName',
       fixed: 'left',
-      width: 180,
+      width: 90,
     },
     ...lessons.map((lesson, idx) => ({
       title: `Slot ${lesson.slot}`,
       dataIndex: `slot_${idx}`,
       key: `slot_${idx}`,
       align: 'center',
-      width: 90,
+      width: 60,
     })),
   ];
 
   return (
-    <div style={{ maxWidth: 1100, margin: '0 auto', padding: 24, minHeight: '100vh', boxSizing: 'border-box', background: '#fff' }}>
+    <div style={{ margin: '0 auto', padding: 24, minHeight: '100vh', boxSizing: 'border-box', background: '#fff' }}>
       <Button onClick={() => navigate(-1)} style={{ marginBottom: 24 }}>
         ← Quay lại
       </Button>

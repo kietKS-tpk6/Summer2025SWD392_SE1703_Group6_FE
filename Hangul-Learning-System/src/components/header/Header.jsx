@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Layout, Menu, Button } from 'antd';
+import { Layout, Menu, Button, Modal } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import {HiMenuAlt4, HiX} from 'react-icons/hi';
 import {motion} from 'framer-motion';
 import '../../styles/Header.css';
 import Logo from '../../assets/Logo.svg';
 import { UserOutlined, LogoutOutlined } from '@ant-design/icons'; // Thêm icon
-import { getUser, logout } from '../../utils/auth';
+import { getUser, logout, getUserRole, getRedirectPath } from '../../utils/auth';
 
 const { Header } = Layout;
 
@@ -28,8 +28,16 @@ const HeaderBar = () => {
   const user = getUser();
 
   const handleLogout = () => {
-    logout();
-    navigate('/login');
+    Modal.confirm({
+      title: 'Xác nhận đăng xuất',
+      content: 'Bạn có chắc chắn muốn đăng xuất không?',
+      okText: 'Đăng xuất',
+      cancelText: 'Hủy',
+      onOk: () => {
+        logout();
+        navigate('/login');
+      },
+    });
   };
 
   return (
@@ -57,8 +65,14 @@ const HeaderBar = () => {
           ) : (
             <div className="app__navbar-user">
               <span className="app__navbar-hello">
-                <UserOutlined style={{ marginRight: 6, color: "#fbb040" }} onClick={() => navigate('/student/profile')} />
-                Chào, <b>{user.firstName}</b>
+                <UserOutlined style={{ marginRight: 6, color: "#fbb040" }} onClick={() => {
+                  const role = getUserRole();
+                  if (role === 'Manager') navigate('/dashboard');
+                  else if (role === 'Lecture') navigate('/lecturer');
+                  else if (role === 'Student') navigate('/student/enroll');
+                  else navigate('/');
+                }} />
+                Chào, <span style={{marginRight: 4}}></span><b>{user.firstName}</b>
               </span>
               <button className="app__navbar-logout" onClick={handleLogout} title="Đăng xuất">
                 <LogoutOutlined style={{ fontSize: 20, color: "#fbb040" }} />
