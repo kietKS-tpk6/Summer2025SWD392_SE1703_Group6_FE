@@ -131,6 +131,16 @@ const AddAssessmentToTestEventComponent = ({
   // Lấy ngày lesson (chỉ cho chọn đúng ngày này)
   const lessonDate = lessonStartTime ? dayjs(lessonStartTime).startOf('day') : null;
 
+  // Thêm prop xác định có phải final không
+  const isFinal = assessmentCategory === 3;
+
+  // Khi modal mở và là final, set attemptLimit = 1 cho form
+  useEffect(() => {
+    if (open && isFinal) {
+      form.setFieldsValue({ attemptLimit: 1 });
+    }
+  }, [open, isFinal, form]);
+
   // Khi chọn giờ bắt đầu
   const handleStartTimeChange = (time) => {
     setSelectedStartTime(time);
@@ -320,7 +330,15 @@ const AddAssessmentToTestEventComponent = ({
             />
           </Form.Item>
           <Form.Item label="Số lần học sinh làm bài" name="attemptLimit" rules={[{ required: true, message: 'Nhập số lần học sinh được phép làm bài' }]}> 
-            <Input type="number" min={1} onChange={onAttemptLimitChange} />
+            <Input
+              type="number"
+              min={1}
+              onChange={onAttemptLimitChange}
+              disabled={isFinal}
+              value={isFinal ? 1 : undefined}
+              style={isFinal ? { background: '#f5f5f5', color: '#222', fontWeight: 600, cursor: 'not-allowed' } : {}}
+              title={isFinal ? 'Đề thi cuối kì chỉ được phép làm 1 lần' : undefined}
+            />
           </Form.Item>
           <Form.Item label="Mật khẩu cho bài kiểm tra" name="password"> 
             <Input onChange={onPasswordChange} />

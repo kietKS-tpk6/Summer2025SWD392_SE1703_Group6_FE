@@ -187,13 +187,13 @@ const ViewTestLecturer = () => {
       </div>
       {/* Tiêu đề và nút Xem chi tiết đề kiểm tra */}
       <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Button
+        {/* <Button
           icon={<ArrowLeftOutlined />}
           onClick={() => navigate(-1)}
           style={{ marginBottom: 0 }}
         >
           Quay lại
-        </Button>
+        </Button> */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <Title level={2} style={{ fontWeight: 700, margin: 0 }}>
             {testData.lessonTitle || testData.description || 'Bài kiểm tra'}

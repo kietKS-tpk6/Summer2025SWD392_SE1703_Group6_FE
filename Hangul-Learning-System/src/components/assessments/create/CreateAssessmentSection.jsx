@@ -456,6 +456,7 @@ const [previewImageUrl, setPreviewImageUrl] = useState('');
               </div>
               {section.type === 'Writing' ? (
                 <>
+                 
                   {section.questions && section.questions.map((q, qIdx) => (
                     <Card
                       key={qIdx}
@@ -541,23 +542,65 @@ const [previewImageUrl, setPreviewImageUrl] = useState('');
                             }} />
                           </div>
                         ))}
-                        {/* Nút thêm barem */}
-                        <Button
-                          type="dashed"
-                          icon={<PlusOutlined />}
-                          onClick={() => {
-                            const totalScore = (q.criteriaList || []).reduce((sum, item) => sum + (Number(item.maxScore) || 0), 0);
-                            if (totalScore >= Number(section.score || 0)) return;
-                            const newCriteria = [...(q.criteriaList || []), { criteriaName: '', maxScore: 0, description: '' }];
-                            const newQuestions = section.questions.map((item, i) => i === qIdx ? { ...item, criteriaList: newCriteria } : item);
-                            const newSections = [...sectionList];
-                            newSections[Number(activeKey)] = { ...newSections[Number(activeKey)], questions: newQuestions };
-                            onChange && onChange(newSections);
-                          }}
-                          disabled={((q.criteriaList || []).reduce((sum, item) => sum + (Number(item.maxScore) || 0), 0) >= Number(section.score || 0))}
-                        >
-                          Thêm barem
-                        </Button>
+                        {/* Nút import barem điểm và thêm barem nằm cạnh nhau */}
+                        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                          <input
+                            type="file"
+                            accept=".xlsx,.xls"
+                            style={{ display: 'none' }}
+                            id={`import-barem-excel-input-${idx}-${qIdx}`}
+                            onChange={async e => {
+                              const file = e.target.files[0];
+                              if (file) {
+                                try {
+                                  const formData = new FormData();
+                                  formData.append('file', file);
+                                  const score = section.score || 0;
+                                  const res = await axios.post(
+                                    `${API_URL}api/ImportExcel/barem/import/excel?scoreQuestion=${score}`,
+                                    formData,
+                                    { headers: { 'Content-Type': 'multipart/form-data' } }
+                                  );
+                                  const barems = Array.isArray(res.data?.data) ? res.data.data : [];
+                                  const criteriaList = barems.map(item => ({
+                                    criteriaName: item.criteriaName || item['Tiêu chí'] || '',
+                                    maxScore: item.maxScore || item['Điểm tối đa'] || 0,
+                                    description: item.description || item['Mô tả'] || '',
+                                  }));
+                                  const newQuestions = section.questions.map((item, i) => i === qIdx ? { ...item, criteriaList } : item);
+                                  const newSections = [...sectionList];
+                                  newSections[Number(activeKey)] = { ...newSections[Number(activeKey)], questions: newQuestions };
+                                  onChange && onChange(newSections);
+                                } catch (err) {
+                                  message.error('Lỗi khi import barem điểm!');
+                                }
+                              }
+                            }}
+                          />
+                          <Button
+                            type="primary"
+                            icon={<UploadOutlined />}
+                            onClick={() => document.getElementById(`import-barem-excel-input-${idx}-${qIdx}`).click()}
+                          >
+                            Import Excel barem điểm
+                          </Button>
+                          <Button
+                            type="dashed"
+                            icon={<PlusOutlined />}
+                            onClick={() => {
+                              const totalScore = (q.criteriaList || []).reduce((sum, item) => sum + (Number(item.maxScore) || 0), 0);
+                              if (totalScore >= Number(section.score || 0)) return;
+                              const newCriteria = [...(q.criteriaList || []), { criteriaName: '', maxScore: 0, description: '' }];
+                              const newQuestions = section.questions.map((item, i) => i === qIdx ? { ...item, criteriaList: newCriteria } : item);
+                              const newSections = [...sectionList];
+                              newSections[Number(activeKey)] = { ...newSections[Number(activeKey)], questions: newQuestions };
+                              onChange && onChange(newSections);
+                            }}
+                            disabled={((q.criteriaList || []).reduce((sum, item) => sum + (Number(item.maxScore) || 0), 0) >= Number(section.score || 0))}
+                          >
+                            Thêm barem
+                          </Button>
+                        </div>
                         <div style={{ marginTop: 8 }}>
                           Tổng điểm barem: <b>{(q.criteriaList || []).reduce((sum, item) => sum + (Number(item.maxScore) || 0), 0)}</b> / {section.score || 0}
                           {((q.criteriaList || []).reduce((sum, item) => sum + (Number(item.maxScore) || 0), 0) > Number(section.score || 0)) && (
