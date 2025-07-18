@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Card,
   Typography,
@@ -65,6 +65,7 @@ const studentTestStatusMap = {
 const ViewTest = () => {
   const { testEventID } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [testData, setTestData] = useState(null);
   const [passwordModalVisible, setPasswordModalVisible] = useState(false);
@@ -122,7 +123,13 @@ const ViewTest = () => {
       }
     };
     fetchData();
-  }, [testEventID, fetchHistory]);
+    // Nếu vừa nộp bài xong, luôn fetch lại lịch sử
+    if (location.state?.reloadHistory) {
+      fetchHistory(testEventID);
+      // Xóa flag reloadHistory để tránh fetch lại không cần thiết
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [testEventID, fetchHistory, location.state, navigate, location.pathname]);
 
   useEffect(() => {
     const fetchSections = async () => {

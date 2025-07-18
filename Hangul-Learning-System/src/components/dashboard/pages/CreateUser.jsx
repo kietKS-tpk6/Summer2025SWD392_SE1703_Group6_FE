@@ -3,7 +3,6 @@ import { Form, Input, Button, Select, DatePicker, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import dayjs from 'dayjs';
-// import { API_URL, endpoints } from '../../../config/api'; // Uncomment and adjust as needed
 
 const { Option } = Select;
 
@@ -13,22 +12,28 @@ const CreateUser = () => {
 
   const onFinish = async (values) => {
     try {
-      // Format birthDate to YYYY-MM-DD
+      // Chuyển đổi giá trị
+      const genderMap = { '0': 'Male', '1': 'Female' };
+      const roleMap = { '0': 'Manager', '1': 'Lecture', '2': 'Student' };
+
       const payload = {
         ...values,
+        gender: genderMap[values.gender],
+        role: roleMap[values.role],
         birthDate: values.birthDate.format('YYYY-MM-DD'),
       };
-      // TODO: Replace with actual API endpoint
-      // const response = await axios.post(`${API_URL}/your-user-create-endpoint`, payload);
-      // if (response.data.success) {
-      //   message.success('Người dùng đã được tạo thành công!');
-      //   navigate('/dashboard/users');
-      // } else {
-      //   message.error('Tạo người dùng thất bại!');
-      // }
-      message.success('Giả lập: Người dùng đã được tạo thành công!');
-      navigate('/dashboard/users');
+
+      // Gửi API
+      const response = await axios.post('https://localhost:7201/api/Account/create-account', payload);
+
+      if (response.status === 200 || response.status === 201) {
+        message.success('Người dùng đã được tạo thành công!');
+        navigate('/dashboard/users');
+      } else {
+        message.error('Tạo người dùng thất bại!');
+      }
     } catch (error) {
+      console.error(error);
       message.error('Tạo người dùng thất bại!');
     }
   };
@@ -42,28 +47,28 @@ const CreateUser = () => {
         onFinish={onFinish}
         initialValues={{ gender: '0', role: '2' }}
       >
-        <Form.Item name="lastName" label="Họ" rules={[{ required: true, message: 'Vui lòng nhập họ!' }]}> 
+        <Form.Item name="lastName" label="Họ" rules={[{ required: true, message: 'Vui lòng nhập họ!' }]}>
           <Input />
         </Form.Item>
-        <Form.Item name="firstName" label="Tên" rules={[{ required: true, message: 'Vui lòng nhập tên!' }]}> 
+        <Form.Item name="firstName" label="Tên" rules={[{ required: true, message: 'Vui lòng nhập tên!' }]}>
           <Input />
         </Form.Item>
-        <Form.Item name="gender" label="Giới tính" rules={[{ required: true, message: 'Vui lòng chọn giới tính!' }]}> 
+        <Form.Item name="gender" label="Giới tính" rules={[{ required: true, message: 'Vui lòng chọn giới tính!' }]}>
           <Select>
             <Option value="0">Nam</Option>
             <Option value="1">Nữ</Option>
           </Select>
         </Form.Item>
-        <Form.Item name="phoneNumber" label="Số điện thoại" rules={[{ required: true, message: 'Vui lòng nhập số điện thoại!' }]}> 
+        <Form.Item name="phoneNumber" label="Số điện thoại" rules={[{ required: true, message: 'Vui lòng nhập số điện thoại!' }]}>
           <Input />
         </Form.Item>
-        <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email', message: 'Vui lòng nhập email hợp lệ!' }]}> 
+        <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email', message: 'Vui lòng nhập email hợp lệ!' }]}>
           <Input />
         </Form.Item>
-        <Form.Item name="birthDate" label="Ngày sinh" rules={[{ required: true, message: 'Vui lòng chọn ngày sinh!' }]}> 
+        <Form.Item name="birthDate" label="Ngày sinh" rules={[{ required: true, message: 'Vui lòng chọn ngày sinh!' }]}>
           <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" />
         </Form.Item>
-        <Form.Item name="role" label="Vai trò" rules={[{ required: true, message: 'Vui lòng chọn vai trò!' }]}> 
+        <Form.Item name="role" label="Vai trò" rules={[{ required: true, message: 'Vui lòng chọn vai trò!' }]}>
           <Select>
             <Option value="0">Manager</Option>
             <Option value="1">Lecture</Option>
@@ -79,4 +84,4 @@ const CreateUser = () => {
   );
 };
 
-export default CreateUser; 
+export default CreateUser;
