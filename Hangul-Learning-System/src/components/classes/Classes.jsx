@@ -252,7 +252,6 @@ const Classes = () => {
       await axios.post(`${API_URL}api/StudentMarks/setup-by-class-id/${record.classID}`)
       await axios.post(`${API_URL}api/Attendance/setup-attendace-by-class-id/${record.classID}`)
     
-
       showNotify({
         type: 'success',
         message: 'Cập nhật thành công',
@@ -265,7 +264,6 @@ const Classes = () => {
           message: 'Gửi email thành công',
           description: notiEmail.data.message || 'Đã gửi thông báo bắt đầu lớp học đến các học viên.'
         });
-        await axios.post(`${API_URL}api/Attendance/setup-attendace-by-class-id/${record.classID}`);
       } catch (emailError) {
         showNotify({
           type: 'error',
