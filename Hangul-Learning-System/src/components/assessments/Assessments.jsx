@@ -70,11 +70,13 @@ const Assessments = () => {
   const navigate = useNavigate();
   const [openModal, setOpenModal] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
+  
   // Thêm state cho phân trang
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(200);
   const [total, setTotal] = useState(0);
-
+const [savingType, setSavingType] = useState(null);
+const [isPopupOpen, setIsPopupOpen] = useState(false);
   // Thêm state cho popup gửi duyệt
   const [sendApproveModal, setSendApproveModal] = useState(false);
   const [sendApproveLoading, setSendApproveLoading] = useState(false);
@@ -528,24 +530,60 @@ const Assessments = () => {
           />
         </div>
       )}
-      <Modal
-        open={openModal}
-        title="Bạn muốn lưu bài kiểm tra ở trạng thái nào?"
-        onCancel={() => setOpenModal(false)}
-        footer={[
-          <Button key="back" onClick={() => setOpenModal(false)}>
-            Quay lại
-          </Button>,
-          <Button key="drafted" loading={modalLoading} onClick={async () => { await handleCreateTest('Drafted'); }}>
-            Lưu dưới dạng bản nháp
-          </Button>,
-          <Button key="actived" type="primary" loading={modalLoading} onClick={async () => { await handleCreateTest('Actived'); }}>
-            Lưu và kích hoạt
-          </Button>,
-        ]}
+    <Modal
+  open={openModal}
+  title="Bạn muốn lưu bài kiểm tra ở trạng thái nào?"
+  onCancel={() => {
+    setOpenModal(false);
+    setSavingType(null);
+  }}
+  footer={[
+    <Button
+      key="back"
+      onClick={() => {
+        setOpenModal(false);
+        setSavingType(null);
+      }}
+      disabled={modalLoading}
+    >
+      Quay lại
+    </Button>,
+
+    (!savingType || savingType === 'Drafted') && (
+      <Button
+        key="drafted"
+        loading={modalLoading && savingType === 'Drafted'}
+        onClick={async () => {
+          setSavingType('Drafted');
+          setModalLoading(true);
+          await handleCreateTest('Drafted');
+          setModalLoading(false);
+          setSavingType(null);
+        }}
       >
-        Chọn trạng thái cho bài kiểm tra sau khi tạo.
-      </Modal>
+        Lưu dưới dạng bản nháp
+      </Button>
+    ),
+
+    (!savingType || savingType === 'Actived') && (
+      <Button
+        key="actived"
+        type="primary"
+        loading={modalLoading && savingType === 'Actived'}
+        onClick={async () => {
+          setSavingType('Actived');
+          setModalLoading(true);
+          await handleCreateTest('Actived');
+          setModalLoading(false);
+          setSavingType(null);
+        }}
+      >
+        Lưu và kích hoạt
+      </Button>
+    )
+  ]}
+/>
+
       <Modal
         open={lecturerModal}
         title="Bạn có xác nhận tạo bài test này không?"
