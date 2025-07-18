@@ -45,6 +45,8 @@ const AccountDetail = ({ accountID: propAccountID, hideFields = [] }) => {
   // Thêm biến kiểm tra role của user đăng nhập
   let showBackButton = false;
   let isCurrentUserManager = false;
+  // Thêm state cho lỗi email
+  const [emailError, setEmailError] = useState('');
   try {
     const user = JSON.parse(localStorage.getItem('user'));
     if (user && user.role === 'Manager') {
@@ -152,6 +154,13 @@ const AccountDetail = ({ accountID: propAccountID, hideFields = [] }) => {
     return regex.test(phone);
   };
 
+  // Thêm hàm validate email
+  const validateEmail = (email) => {
+    // Đơn giản, có thể thay đổi regex nếu cần nghiêm ngặt hơn
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+  };
+
   // Khi thay đổi trường
   const handleChange = (field, value) => {
     setEditValues(prev => ({ ...prev, [field]: value }));
@@ -160,6 +169,13 @@ const AccountDetail = ({ accountID: propAccountID, hideFields = [] }) => {
         setPhoneError('Số điện thoại không hợp lệ hoặc không đúng đầu số nhà mạng!');
       } else {
         setPhoneError('');
+      }
+    }
+    if (field === 'email') {
+      if (!validateEmail(value)) {
+        setEmailError('Email không hợp lệ!');
+      } else {
+        setEmailError('');
       }
     }
     if (field === 'image') {
@@ -270,6 +286,12 @@ const AccountDetail = ({ accountID: propAccountID, hideFields = [] }) => {
     if (isEditing && editValues.phoneNumber && !validatePhoneNumber(editValues.phoneNumber)) {
       setPhoneError('Số điện thoại không hợp lệ hoặc không đúng đầu số nhà mạng!');
       message.warning('Số điện thoại không hợp lệ hoặc không đúng đầu số nhà mạng!');
+      return;
+    }
+    // Kiểm tra lỗi email
+    if (isEditing && editValues.email && !validateEmail(editValues.email)) {
+      setEmailError('Email không hợp lệ!');
+      message.warning('Email không hợp lệ!');
       return;
     }
     
@@ -500,7 +522,10 @@ const AccountDetail = ({ accountID: propAccountID, hideFields = [] }) => {
               <div>
                 <label style={{ fontWeight: 500 }}>Email</label>
                 {isEditing ? (
-                  <Input value={editValues.email} onChange={e => handleChange('email', e.target.value)} style={{ marginTop: 4 }} />
+                  <>
+                    <Input value={editValues.email} onChange={e => handleChange('email', e.target.value)} style={{ marginTop: 4 }} />
+                    {emailError && <div style={{ color: 'red', marginTop: 4 }}>{emailError}</div>}
+                  </>
                 ) : (
                   <Input value={studentData.email} disabled style={{ marginTop: 4 }} />
                 )}

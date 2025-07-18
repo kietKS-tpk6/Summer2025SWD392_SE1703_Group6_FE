@@ -4,6 +4,7 @@ import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, SearchOutlined
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_URL, endpoints } from '../../../config/api';
+import { style } from 'framer-motion/client';
 
 const { Option } = Select;
 const { confirm } = Modal;
@@ -109,6 +110,7 @@ const Subjects = () => {
       title: 'Tên môn học',
       dataIndex: 'name',
       key: 'name',
+      width: '20%',
       sorter: (a, b) => a.name.localeCompare(b.name),
       sortDirections: ['descend', 'ascend'],
     },
@@ -116,6 +118,7 @@ const Subjects = () => {
       title: 'Mô tả',
       dataIndex: 'description',
       key: 'description',
+      width: '40%',
       ellipsis: true,
     },
     {
@@ -129,7 +132,7 @@ const Subjects = () => {
       title: 'Ngày tạo',
       dataIndex: 'createAt',
       key: 'createAt',
-      width: '8%',
+      width: '10%',
       sorter: (a, b) => new Date(a.createAt) - new Date(b.createAt),
       sortDirections: ['descend', 'ascend'],
     },
