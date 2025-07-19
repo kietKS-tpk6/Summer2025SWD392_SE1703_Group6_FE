@@ -2,6 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Input, Button, Card, Upload, Radio, Space, message } from 'antd';
 import { PlusOutlined, DeleteOutlined, UploadOutlined } from '@ant-design/icons';
 import * as XLSX from 'xlsx';
+import axios from 'axios';
+import { API_URL } from '../../../config/api';
+import ImagePreviewModal from './ImagePreviewModal';
+
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
@@ -13,7 +17,8 @@ const TRUE_FALSE_OPTIONS = [
 const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score, onImportExcel, errors = {}, sectionIdx }) => {
   const [minOptions, setMinOptions] = useState(2);
   const [maxOptions, setMaxOptions] = useState(10);
-
+const [previewImageUrl, setPreviewImageUrl] = useState(null);
+const [isPreviewVisible, setIsPreviewVisible] = useState(false);
   // Lấy min/max từ API khi type là MCQ
   useEffect(() => {
     if (type === 'MCQ') {
@@ -170,44 +175,66 @@ const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score, onImpor
     onChange && onChange(newQuestions);
   };
 
-  // Upload ảnh/audio cho từng câu hỏi (MCQ)
-  const handleQuestionUpload = (qIdx, file, type) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const newQuestions = questions.map((q, i) => {
-        if (i !== qIdx) return q;
-        if (type === 'image') {
-          return { ...q, imageURL: e.target.result, audioURL: undefined };
-        } else if (type === 'audio') {
-          return { ...q, audioURL: e.target.result, imageURL: undefined };
-        }
-        return q;
-      });
-      onChange && onChange(newQuestions);
-    };
-    reader.readAsDataURL(file);
+  // Upload ảnh/audio cho từng câu hỏi (MCQ, Writing)
+  const handleQuestionUpload = async (qIdx, file, type) => {
+    if (type === 'image') {
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await axios.post(`${API_URL}api/Cloudinary/upload-image-question`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        const url = res.data.url || res.data;
+        const newQuestions = questions.map((q, i) => i === qIdx ? { ...q, imageURL: url, audioURL: undefined } : q);
+        onChange && onChange(newQuestions);
+      } catch (err) {}
+    } else if (type === 'audio') {
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await axios.post(`${API_URL}api/Cloudinary/upload-audio-question`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        const url = res.data.url || res.data;
+        const newQuestions = questions.map((q, i) => i === qIdx ? { ...q, audioURL: url, imageURL: undefined } : q);
+        onChange && onChange(newQuestions);
+      } catch (err) {}
+    }
   };
 
   // Upload ảnh/audio cho từng đáp án (MCQ)
-  const handleAnswerUpload = (qIdx, aIdx, file, type) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const newQuestions = questions.map((q, i) => {
-        if (i !== qIdx) return q;
-        const newAnswers = q.answers.map((a, j) => {
-          if (j !== aIdx) return a;
-          if (type === 'image') {
-            return { ...a, imageURL: e.target.result, audioURL: undefined };
-          } else if (type === 'audio') {
-            return { ...a, audioURL: e.target.result, imageURL: undefined };
-          }
-          return a;
+  const handleAnswerUpload = async (qIdx, aIdx, file, type) => {
+    if (type === 'image') {
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await axios.post(`${API_URL}api/Cloudinary/upload-image-mcq-option`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
         });
-        return { ...q, answers: newAnswers };
-      });
-      onChange && onChange(newQuestions);
-    };
-    reader.readAsDataURL(file);
+        const url = res.data.url || res.data;
+        const newQuestions = questions.map((q, i) => {
+          if (i !== qIdx) return q;
+          const newAnswers = q.answers.map((a, j) => j === aIdx ? { ...a, imageURL: url, audioURL: undefined } : a);
+          return { ...q, answers: newAnswers };
+        });
+        onChange && onChange(newQuestions);
+      } catch (err) {}
+    } else if (type === 'audio') {
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await axios.post(`${API_URL}api/Cloudinary/upload-audio-mcq-option`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        const url = res.data.url || res.data;
+        const newQuestions = questions.map((q, i) => {
+          if (i !== qIdx) return q;
+          const newAnswers = q.answers.map((a, j) => j === aIdx ? { ...a, audioURL: url, imageURL: undefined } : a);
+          return { ...q, answers: newAnswers };
+        });
+        onChange && onChange(newQuestions);
+      } catch (err) {}
+    }
   };
 
   // Xóa file ảnh/audio của đáp án
@@ -259,6 +286,32 @@ const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score, onImpor
       >
         Import Excel
       </Button>
+      {/* Nút import barem điểm cho Writing */}
+      {type === 'Writing' && (
+        <>
+          <input
+            type="file"
+            accept=".xlsx,.xls"
+            style={{ display: 'none' }}
+            id="import-barem-excel-input"
+            onChange={e => {
+              const file = e.target.files[0];
+              if (file) {
+                // Tạm thời chỉ log file, sau này sẽ xử lý API
+                console.log('Import barem điểm:', file);
+              }
+            }}
+          />
+          <Button
+            type="primary"
+            icon={<UploadOutlined />}
+            style={{ marginBottom: 16, marginLeft: 8 }}
+            onClick={() => document.getElementById('import-barem-excel-input').click()}
+          >
+            Import Excel barem điểm
+          </Button>
+        </>
+      )}
       <Button
         type="dashed"
         icon={<PlusOutlined />} 
@@ -342,6 +395,7 @@ const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score, onImpor
             onChange={e => handleQuestionChange(idx, e.target.value)}
             style={{ marginBottom: 16 }}
             status={errors[`qcontent_${sectionIdx}_${idx}`] ? 'error' : undefined}
+            autoSize={{ minRows: 2 }}
           />
           {errors[`qcontent_${sectionIdx}_${idx}`] && <div style={{ color: 'red', fontSize: 12, marginBottom: 8 }}>Chưa nhập nội dung câu hỏi!</div>}
           {type === 'MCQ' && (
@@ -374,6 +428,7 @@ const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score, onImpor
                           style={{ flex: 1 }}
                           disabled={answerType === 'image' || answerType === 'audio' || !!a.imageURL || !!a.audioURL}
                           status={errors[`qanswer_${sectionIdx}_${idx}`] || errors[`qanswer_${sectionIdx}_${idx}_${aIdx}`] ? 'error' : undefined}
+                          autoSize={{ minRows: 1, maxRows: 4 }}
                         />
                         {errors[`qanswer_${sectionIdx}_${idx}_${aIdx}`] && <span style={{ color: 'red', fontSize: 12 }}>Chưa nhập nội dung đáp án!</span>}
                         {/* Upload ảnh/audio cho đáp án */}
@@ -411,7 +466,7 @@ const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score, onImpor
                         )}
                         {/* Nút xóa đáp án */}
                         {q.answers.length > minOptions && (
-                          <Button danger size="small" icon={<DeleteOutlined />} onClick={() => handleRemoveOption(idx, aIdx)} />
+                          <Button type="primary" danger icon={<DeleteOutlined />} onClick={() => handleRemoveOption(idx, aIdx)} />
                         )}
                       </div>
                     ));
@@ -454,6 +509,34 @@ const CreateQuestion = ({ questions = [], onChange, type = 'MCQ', score, onImpor
               </Radio.Group>
               {errors[`qcorrect_${sectionIdx}_${idx}`] && <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>Chưa chọn đáp án đúng!</div>}
             </>
+          )}
+          {type === 'Writing' && Array.isArray(q.criteriaList) && q.criteriaList.length > 0 && (
+            <div style={{ marginTop: 12, marginBottom: 8 }}>
+              <b>Barem chấm điểm:</b>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 8 }}>
+                {q.criteriaList.map((barem, bIdx) => (
+                  <div
+                    key={bIdx}
+                    style={{
+                      background: '#f8fafd',
+                      border: '1px solid #e6eaf0',
+                      borderRadius: 10,
+                      padding: '14px 18px',
+                      fontSize: 16,
+                      marginBottom: 4,
+                      boxShadow: '0 1px 4px #f0f1f2',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 24,
+                    }}
+                  >
+                    <span style={{ minWidth: 120, fontWeight: 600 }}>{barem.criteriaName}</span>
+                    <span style={{ minWidth: 60, color: '#1677ff', fontWeight: 600 }}>Điểm: {barem.maxScore}</span>
+                    <span style={{ flex: 1, color: '#444' }}>{barem.description}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </Card>
       ))}

@@ -146,6 +146,23 @@ const LecturerTestDetail = () => {
         );
         console.log('Kết quả trả về:', response?.data);
       }
+      // Gọi API chuyển điểm sang bảng điểm
+      try {
+        await axios.put(
+          `https://localhost:7201/api/StudentMarks/update-marks-by-student-test/${data.studentTestID}`,
+          null,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+      } catch (err) {
+        setNotification({ visible: true, type: 'error', message: 'Lỗi cập nhật bảng điểm', description: err?.message || 'Có lỗi khi cập nhật bảng điểm.' });
+        setSaving(false);
+        return;
+      }
       setNotification({ visible: true, type: 'success', message: 'Chấm điểm thành công', description: 'Đã lưu/chấm điểm thành công!' });
       setTimeout(() => {
         navigate(-1);
@@ -158,26 +175,19 @@ const LecturerTestDetail = () => {
     }
   };
 
-  if (loading) {
-    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}><Spin size="large" /></div>;
-  }
-  if (!data) {
-    return <Alert message="Không tìm thấy thông tin bài làm" type="error" showIcon style={{ margin: 24 }} />;
-  }
-
   // Tổng điểm tối đa
-  const maxScore = Array.isArray(data.sections)
+  const maxScore = Array.isArray(data?.sections)
     ? data.sections.reduce((sum, s) => sum + (s.sectionScore || 0), 0)
     : '';
 
   // Tách câu hỏi tự luận và trắc nghiệm
-  const essaySections = Array.isArray(data.sections)
+  const essaySections = Array.isArray(data?.sections)
     ? data.sections.map(section => ({
         ...section,
         questions: section.questions.filter(q => q.type === 2)
       })).filter(section => section.questions.length > 0)
     : [];
-  const mcqSections = Array.isArray(data.sections)
+  const mcqSections = Array.isArray(data?.sections)
     ? data.sections.map(section => ({
         ...section,
         questions: section.questions.filter(q => q.type !== 2)
@@ -207,6 +217,14 @@ const LecturerTestDetail = () => {
     }
   }, [showGuide, essayQuestionIDs.join(",")]);
 
+  // Early returns moved here, after all hooks
+  if (loading) {
+    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}><Spin size="large" /></div>;
+  }
+  if (!data) {
+    return <Alert message="Không tìm thấy thông tin bài làm" type="error" showIcon style={{ margin: 24 }} />;
+  }
+
   return (
     <div style={{ background: '#fff', borderRadius: 20, padding: 32, margin: 24, minHeight: 600 }}>
       <Notification {...notification} onClose={() => setNotification(n => ({ ...n, visible: false }))} />
@@ -220,10 +238,14 @@ const LecturerTestDetail = () => {
         <Descriptions.Item label="Thời gian bắt đầu">{data.startTime ? dayjs(data.startTime).format('DD/MM/YYYY HH:mm') : ''}</Descriptions.Item>
         <Descriptions.Item label="Thời gian nộp">{data.submitTime ? dayjs(data.submitTime).format('DD/MM/YYYY HH:mm') : ''}</Descriptions.Item>
         <Descriptions.Item label="Trạng thái" span={2}>
-          <Tag color="blue" style={{ fontSize: 16 }}>{statusMap[data.status] || data.status}</Tag>
+          <span style={{fontWeight:'bolder'}}>{statusMap[data.status] || data.status}</span>
         </Descriptions.Item>
         <Descriptions.Item label="Điểm" span={2}>
-          <Text strong style={{ fontSize: 16}}>{data.originalSubmissionScore}{maxScore ? ` / ${maxScore}` : ''}</Text>
+          {(data.status === 'Graded' || data.status === 'Published') ? (
+            <Text style={{fontWeight:'bolder'}}>{data.originalSubmissionScore}</Text>
+          ) : (
+            <span style={{fontWeight:'bolder'}}>-</span>
+          )}
         </Descriptions.Item>
         {data.comment && <Descriptions.Item label="Nhận xét" span={2}>{data.comment}</Descriptions.Item>}
       </Descriptions>
@@ -242,7 +264,7 @@ const LecturerTestDetail = () => {
           {showMCQ ? 'Ẩn phần trắc nghiệm' : 'Hiện phần trắc nghiệm'}
         </Button>
         <Button onClick={() => setShowGuide(true)} type="dashed">
-          Hướng dẫn chấm điểm
+          Hướng dẫn chấm điểm bài tự luận
         </Button>
       </div>
       {/* Modal hướng dẫn chấm điểm */}
@@ -518,9 +540,9 @@ const LecturerTestDetail = () => {
                     </div>
                   </div>
                 )}
-                <div style={{ marginBottom: 8 }}>
+                {/* <div style={{ marginBottom: 8 }}>
                   <Text type="secondary">(Không phải câu tự luận)</Text>
-                </div>
+                </div> */}
               </div>
             ))}
           </Card>

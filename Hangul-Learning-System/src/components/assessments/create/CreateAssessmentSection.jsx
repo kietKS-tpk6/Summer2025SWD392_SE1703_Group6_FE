@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Form, Input, Select, InputNumber, Upload, Button, Row, Col, Radio, Space, Card, Tabs, Alert, message } from 'antd';
 import { UploadOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import CreateQuestion from './CreateQuestion';
+import axios from 'axios';
+import { API_URL } from '../../../config/api';
+import ImagePreviewModal from './ImagePreviewModal';
 
 const { Option } = Select;
 const { TabPane } = Tabs;
@@ -49,7 +52,8 @@ const CreateAssessmentSection = ({
   const sectionList = sections && sections.length > 0 ? sections : [];
   // State questions luôn đồng bộ với section đang active
   const [questions, setQuestions] = useState(sectionList[0]?.questions || []);
-
+const [isPreviewVisible, setIsPreviewVisible] = useState(false);
+const [previewImageUrl, setPreviewImageUrl] = useState('');
   // Đồng bộ questions khi sections hoặc activeKey thay đổi
   useEffect(() => {
     setQuestions(sectionList[Number(activeKey)]?.questions || []);
@@ -243,184 +247,208 @@ const CreateAssessmentSection = ({
       >
         {sectionList.map((section, idx) => (
           <TabPane tab={`Trang ${idx + 1}`} key={String(idx)} closable={sectionList.length > 1}>
-            <Row gutter={16} style={{ marginBottom: 24 }}>
-              <Col span={8}>
-                <div style={{ marginBottom: 4, fontWeight: 500 }}>
-                  Tên trang:
-                </div>
-                <Form.Item
-                  validateStatus={showSectionNameError?.[idx] && !section.name ? 'error' : ''}
-                  help={showSectionNameError?.[idx] && !section.name ? 'Chưa nhập tên trang!' : ''}
-                  style={{ marginBottom: 0 }}
-                >
-                  <Input
-                    placeholder="Nhập tên trang"
-                    value={section.name || ''}
-                    onChange={e => {
-                      handleHeaderChange('name', e.target.value);
-                      onSectionNameInput?.(idx);
-                    }}
-                    status={showSectionNameError?.[idx] && !section.name ? 'error' : undefined}
-                  />
-                </Form.Item>
-              </Col>
-              <Col span={8}>
-                <div style={{ marginBottom: 4, fontWeight: 500 }}>
-                  Điểm:
-                </div>
-                <Form.Item
-                  validateStatus={errors[`score_${idx}`] ? 'error' : ''}
-                  help={errors[`score_${idx}`] ? 'Chưa nhập điểm hợp lệ!' : ''}
-                  style={{ marginBottom: 0 }}
-                >
-                  <InputNumber
-                    style={{ width: '100%' }}
-                    value={section.score}
-                    onChange={val => handleHeaderChange('score', val)}
-                    placeholder="Nhập điểm"
-                    min={1}
-                    max={10}
-                  />
-                </Form.Item>
-              </Col>
-              <Col span={8}>
-                <div style={{ marginBottom: 4, fontWeight: 500 }}>
-                  Loại:
-                </div>
-                <Form.Item
-                  validateStatus={errors[`type_${idx}`] ? 'error' : ''}
-                  help={errors[`type_${idx}`] ? 'Chưa chọn loại trang!' : ''}
-                  style={{ marginBottom: 0 }}
-                >
-                  {(() => {
-                    const MULTIPLE_TYPES = ['Vocabulary', 'Grammar', 'Listening', 'Reading', 'MCQ'];
-                    if (MULTIPLE_TYPES.includes(testType)) {
-                      return (
-                        <Select
-                          value={section.type || undefined}
-                          onChange={val => handleHeaderChange('type', val)}
-                          style={{ width: '100%' }}
-                          placeholder="Chọn thể loại kiểm tra"
-                          status={errors[`type_${idx}`] ? 'error' : undefined}
-                        >
-                          {SECTION_TYPE_OPTIONS_MAP.default.map(opt => (
-                            <Option key={opt.value} value={opt.value}>{opt.label}</Option>
-                          ))}
-                        </Select>
-                      );
-                    }
-                    if (testType === 'Writing') {
-                      return (
-                        <Select
-                          value={section.type || undefined}
-                          onChange={val => handleHeaderChange('type', val)}
-                          style={{ width: '100%' }}
-                          placeholder="Chọn thể loại kiểm tra"
-                          disabled
-                        >
-                          {SECTION_TYPE_OPTIONS_MAP.writing.map(opt => (
-                            <Option key={opt.value} value={opt.value}>{opt.label}</Option>
-                          ))}
-                        </Select>
-                      );
-                    }
-                    if (testType === 'Mix' || testType === 'Other') {
-                      return (
-                        <Select
-                          value={section.type || undefined}
-                          onChange={val => handleHeaderChange('type', val)}
-                          style={{ width: '100%' }}
-                          placeholder="Chọn thể loại kiểm tra"
-                          status={errors[`type_${idx}`] ? 'error' : undefined}
-                        >
-                          {SECTION_TYPE_OPTIONS_MAP.all.map(opt => (
-                            <Option key={opt.value} value={opt.value}>{opt.label}</Option>
-                          ))}
-                        </Select>
-                      );
-                    }
-                    return <Input value={section.type || ''} disabled />;
-                  })()}
-                </Form.Item>
-              </Col>
-              {/* Upload ảnh/audio tổng cho section */}
-              <Col span={24}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 24,
-                  background: '#f6f8fa',
-                  borderRadius: 8,
-                  padding: '16px 20px',
-                  marginBottom: 20,
-                  marginTop: 8
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                    <Upload
-                      customRequest={e => {
-                        const file = e.file;
-                        const reader = new FileReader();
-                        reader.onload = ev => {
-                          const newSections = [...sectionList];
-                          newSections[idx] = { ...newSections[idx], imageURL: ev.target.result, audioURL: undefined };
-                          onChange && onChange(newSections);
-                        };
-                        reader.readAsDataURL(file);
-                      }}
-                      showUploadList={false}
-                      accept="image/*"
-                      disabled={!!section.audioURL}
-                    >
-                      <Button icon={<UploadOutlined />} disabled={!!section.audioURL} size="middle" type="primary">
-                        {section.imageURL ? 'Đổi ảnh' : 'Thêm ảnh'}
-                      </Button>
-                    </Upload>
-                    {section.imageURL && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <img src={section.imageURL} alt="img" style={{ maxWidth: 120, maxHeight: 80, borderRadius: 6, border: '1px solid #eee', boxShadow: '0 2px 8px #0001' }} />
-                        <Button type="text" size="small" danger onClick={() => {
-                          const newSections = [...sectionList];
-                          newSections[idx] = { ...newSections[idx], imageURL: undefined };
-                          onChange && onChange(newSections);
-                        }} style={{ marginLeft: 0 }}>X</Button>
-                      </div>
-                    )}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                    <Upload
-                      customRequest={e => {
-                        const file = e.file;
-                        const reader = new FileReader();
-                        reader.onload = ev => {
-                          const newSections = [...sectionList];
-                          newSections[idx] = { ...newSections[idx], audioURL: ev.target.result, imageURL: undefined };
-                          onChange && onChange(newSections);
-                        };
-                        reader.readAsDataURL(file);
-                      }}
-                      showUploadList={false}
-                      accept="audio/*"
-                      disabled={!!section.imageURL}
-                    >
-                      <Button icon={<UploadOutlined />} disabled={!!section.imageURL} size="middle" type="primary">
-                        {section.audioURL ? 'Đổi audio' : 'Thêm audio'}
-                      </Button>
-                    </Upload>
-                    {section.audioURL && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <audio controls src={section.audioURL} style={{ height: 36, verticalAlign: 'middle', borderRadius: 6, background: '#fff' }} />
-                        <Button type="text" size="small" danger onClick={() => {
-                          const newSections = [...sectionList];
-                          newSections[idx] = { ...newSections[idx], audioURL: undefined };
-                          onChange && onChange(newSections);
-                        }} style={{ marginLeft: 0 }}>X</Button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </Col>
-              {/* End upload ảnh/audio tổng */}
-            </Row>
+           <Row gutter={16} style={{ marginBottom: 24 }}>
+  {/* Tên trang: full width */}
+  <Col span={24}>
+    <div style={{ marginBottom: 4, fontWeight: 500 }}>Tên trang:</div>
+    <Form.Item
+      validateStatus={showSectionNameError?.[idx] && !section.name ? 'error' : ''}
+      help={showSectionNameError?.[idx] && !section.name ? 'Chưa nhập tên trang!' : ''}
+      style={{ marginBottom: 0 }}
+    >
+      <Input
+        placeholder="Nhập tên trang"
+        value={section.name || ''}
+        onChange={e => {
+          handleHeaderChange('name', e.target.value);
+          onSectionNameInput?.(idx);
+        }}
+        status={showSectionNameError?.[idx] && !section.name ? 'error' : undefined}
+      />
+    </Form.Item>
+  </Col>
+
+  {/* Điểm và Loại: 2 cột 50/50 */}
+  <Col span={12}>
+    <div style={{ marginBottom: 4, fontWeight: 500 }}>Điểm:</div>
+    <Form.Item
+      validateStatus={errors[`score_${idx}`] ? 'error' : ''}
+      help={errors[`score_${idx}`] ? 'Chưa nhập điểm hợp lệ!' : ''}
+      style={{ marginBottom: 0 }}
+    >
+      <InputNumber
+        style={{ width: '100%' }}
+        value={section.score}
+        onChange={val => handleHeaderChange('score', val)}
+        placeholder="Nhập điểm"
+        min={1}
+        max={10}
+      />
+    </Form.Item>
+  </Col>
+
+  <Col span={12}>
+    <div style={{ marginBottom: 4, fontWeight: 500 }}>Loại:</div>
+    <Form.Item
+      validateStatus={errors[`type_${idx}`] ? 'error' : ''}
+      help={errors[`type_${idx}`] ? 'Chưa chọn loại trang!' : ''}
+      style={{ marginBottom: 0 }}
+    >
+      {(() => {
+        const MULTIPLE_TYPES = ['Vocabulary', 'Grammar', 'Listening', 'Reading', 'MCQ'];
+        if (MULTIPLE_TYPES.includes(testType)) {
+          return (
+            <Select
+              value={section.type || undefined}
+              onChange={val => handleHeaderChange('type', val)}
+              style={{ width: '100%' }}
+              placeholder="Chọn thể loại kiểm tra"
+              status={errors[`type_${idx}`] ? 'error' : undefined}
+            >
+              {SECTION_TYPE_OPTIONS_MAP.default.map(opt => (
+                <Option key={opt.value} value={opt.value}>{opt.label}</Option>
+              ))}
+            </Select>
+          );
+        }
+        if (testType === 'Writing') {
+          return (
+            <Select
+              value={section.type || undefined}
+              onChange={val => handleHeaderChange('type', val)}
+              style={{ width: '100%' }}
+              placeholder="Chọn thể loại kiểm tra"
+              disabled
+            >
+              {SECTION_TYPE_OPTIONS_MAP.writing.map(opt => (
+                <Option key={opt.value} value={opt.value}>{opt.label}</Option>
+              ))}
+            </Select>
+          );
+        }
+        if (testType === 'Mix' || testType === 'Other') {
+          return (
+            <Select
+              value={section.type || undefined}
+              onChange={val => handleHeaderChange('type', val)}
+              style={{ width: '100%' }}
+              placeholder="Chọn thể loại kiểm tra"
+              status={errors[`type_${idx}`] ? 'error' : undefined}
+            >
+              {SECTION_TYPE_OPTIONS_MAP.all.map(opt => (
+                <Option key={opt.value} value={opt.value}>{opt.label}</Option>
+              ))}
+            </Select>
+          );
+        }
+        return <Input value={section.type || ''} disabled />;
+      })()}
+    </Form.Item>
+  </Col>
+
+  {/* Upload ảnh/audio tổng cho section */}
+  <Col span={24}>
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 24,
+      background: '#f6f8fa',
+      borderRadius: 8,
+      padding: '16px 20px',
+      marginBottom: 20,
+      marginTop: 8
+    }}>
+      {/* Upload ảnh */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <Upload
+          customRequest={async (e) => {
+            const file = e.file;
+            try {
+              const formData = new FormData();
+              formData.append('file', file);
+              const res = await axios.post(`${API_URL}api/Cloudinary/upload-image-test-section`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+              });
+              const url = res.data.url || res.data;
+              const newSections = [...sectionList];
+              newSections[idx] = { ...newSections[idx], imageURL: url, audioURL: undefined };
+              onChange && onChange(newSections);
+            } catch (err) {}
+          }}
+          showUploadList={false}
+          accept="image/*"
+          disabled={!!section.audioURL}
+        >
+          <Button icon={<UploadOutlined />} disabled={!!section.audioURL} size="middle" type="primary">
+            {section.imageURL ? 'Đổi ảnh' : 'Thêm ảnh'}
+          </Button>
+        </Upload>
+        {section.imageURL && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+<img
+  src={section.imageURL}
+  alt="img"
+  onClick={() => {
+    setPreviewImageUrl(section.imageURL);
+    setIsPreviewVisible(true);
+  }}
+  style={{
+    maxWidth: 120,
+    maxHeight: 80,
+    borderRadius: 6,
+    border: '1px solid #eee',
+    boxShadow: '0 2px 8px #0001',
+    cursor: 'pointer'
+  }}
+/>            <Button type="text" size="small" danger onClick={() => {
+              const newSections = [...sectionList];
+              newSections[idx] = { ...newSections[idx], imageURL: undefined };
+              onChange && onChange(newSections);
+            }} style={{ marginLeft: 0 }}>X</Button>
+          </div>
+        )}
+      </div>
+
+      {/* Upload audio */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <Upload
+          customRequest={async (e) => {
+            const file = e.file;
+            try {
+              const formData = new FormData();
+              formData.append('file', file);
+              const res = await axios.post(`${API_URL}api/Cloudinary/upload-audio-test-section`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+              });
+              const url = res.data.url || res.data;
+              const newSections = [...sectionList];
+              newSections[idx] = { ...newSections[idx], audioURL: url, imageURL: undefined };
+              onChange && onChange(newSections);
+            } catch (err) {}
+          }}
+          showUploadList={false}
+          accept="audio/*"
+          disabled={!!section.imageURL}
+        >
+          <Button icon={<UploadOutlined />} disabled={!!section.imageURL} size="middle" type="primary">
+            {section.audioURL ? 'Đổi audio' : 'Thêm audio'}
+          </Button>
+        </Upload>
+        {section.audioURL && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <audio controls src={section.audioURL} style={{ height: 36, verticalAlign: 'middle', borderRadius: 6, background: '#fff' }} />
+            <Button type="text" size="small" danger onClick={() => {
+              const newSections = [...sectionList];
+              newSections[idx] = { ...newSections[idx], audioURL: undefined };
+              onChange && onChange(newSections);
+            }} style={{ marginLeft: 0 }}>X</Button>
+          </div>
+        )}
+      </div>
+    </div>
+  </Col>
+</Row>
+
             <div style={{ border: '1px solid #eee', borderRadius: 8, padding: 24, minHeight: 200 }}>
               <div style={{ marginBottom: 16, fontWeight: 500, color: '#1677ff', fontSize: 16 }}>
                 Tổng số câu hỏi: {section.questions ? section.questions.length : 0}
@@ -428,6 +456,7 @@ const CreateAssessmentSection = ({
               </div>
               {section.type === 'Writing' ? (
                 <>
+                 
                   {section.questions && section.questions.map((q, qIdx) => (
                     <Card
                       key={qIdx}
@@ -513,23 +542,65 @@ const CreateAssessmentSection = ({
                             }} />
                           </div>
                         ))}
-                        {/* Nút thêm barem */}
-                        <Button
-                          type="dashed"
-                          icon={<PlusOutlined />}
-                          onClick={() => {
-                            const totalScore = (q.criteriaList || []).reduce((sum, item) => sum + (Number(item.maxScore) || 0), 0);
-                            if (totalScore >= Number(section.score || 0)) return;
-                            const newCriteria = [...(q.criteriaList || []), { criteriaName: '', maxScore: 0, description: '' }];
-                            const newQuestions = section.questions.map((item, i) => i === qIdx ? { ...item, criteriaList: newCriteria } : item);
-                            const newSections = [...sectionList];
-                            newSections[Number(activeKey)] = { ...newSections[Number(activeKey)], questions: newQuestions };
-                            onChange && onChange(newSections);
-                          }}
-                          disabled={((q.criteriaList || []).reduce((sum, item) => sum + (Number(item.maxScore) || 0), 0) >= Number(section.score || 0))}
-                        >
-                          Thêm barem
-                        </Button>
+                        {/* Nút import barem điểm và thêm barem nằm cạnh nhau */}
+                        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                          <input
+                            type="file"
+                            accept=".xlsx,.xls"
+                            style={{ display: 'none' }}
+                            id={`import-barem-excel-input-${idx}-${qIdx}`}
+                            onChange={async e => {
+                              const file = e.target.files[0];
+                              if (file) {
+                                try {
+                                  const formData = new FormData();
+                                  formData.append('file', file);
+                                  const score = section.score || 0;
+                                  const res = await axios.post(
+                                    `${API_URL}api/ImportExcel/barem/import/excel?scoreQuestion=${score}`,
+                                    formData,
+                                    { headers: { 'Content-Type': 'multipart/form-data' } }
+                                  );
+                                  const barems = Array.isArray(res.data?.data) ? res.data.data : [];
+                                  const criteriaList = barems.map(item => ({
+                                    criteriaName: item.criteriaName || item['Tiêu chí'] || '',
+                                    maxScore: item.maxScore || item['Điểm tối đa'] || 0,
+                                    description: item.description || item['Mô tả'] || '',
+                                  }));
+                                  const newQuestions = section.questions.map((item, i) => i === qIdx ? { ...item, criteriaList } : item);
+                                  const newSections = [...sectionList];
+                                  newSections[Number(activeKey)] = { ...newSections[Number(activeKey)], questions: newQuestions };
+                                  onChange && onChange(newSections);
+                                } catch (err) {
+                                  message.error('Lỗi khi import barem điểm!');
+                                }
+                              }
+                            }}
+                          />
+                          <Button
+                            type="primary"
+                            icon={<UploadOutlined />}
+                            onClick={() => document.getElementById(`import-barem-excel-input-${idx}-${qIdx}`).click()}
+                          >
+                            Import Excel barem điểm
+                          </Button>
+                          <Button
+                            type="dashed"
+                            icon={<PlusOutlined />}
+                            onClick={() => {
+                              const totalScore = (q.criteriaList || []).reduce((sum, item) => sum + (Number(item.maxScore) || 0), 0);
+                              if (totalScore >= Number(section.score || 0)) return;
+                              const newCriteria = [...(q.criteriaList || []), { criteriaName: '', maxScore: 0, description: '' }];
+                              const newQuestions = section.questions.map((item, i) => i === qIdx ? { ...item, criteriaList: newCriteria } : item);
+                              const newSections = [...sectionList];
+                              newSections[Number(activeKey)] = { ...newSections[Number(activeKey)], questions: newQuestions };
+                              onChange && onChange(newSections);
+                            }}
+                            disabled={((q.criteriaList || []).reduce((sum, item) => sum + (Number(item.maxScore) || 0), 0) >= Number(section.score || 0))}
+                          >
+                            Thêm barem
+                          </Button>
+                        </div>
                         <div style={{ marginTop: 8 }}>
                           Tổng điểm barem: <b>{(q.criteriaList || []).reduce((sum, item) => sum + (Number(item.maxScore) || 0), 0)}</b> / {section.score || 0}
                           {((q.criteriaList || []).reduce((sum, item) => sum + (Number(item.maxScore) || 0), 0) > Number(section.score || 0)) && (
@@ -590,6 +661,11 @@ const CreateAssessmentSection = ({
           Tổng điểm các trang phải bằng 10 điểm!
         </div>
       )}
+      <ImagePreviewModal
+  visible={isPreviewVisible}
+  imageUrl={previewImageUrl}
+  onClose={() => setIsPreviewVisible(false)}
+/>
     </div>
   );
 };

@@ -76,23 +76,46 @@ const AttendancePage = (props) => {
       dataIndex: 'studentName',
       key: 'studentName',
       fixed: 'left',
-      width: 180,
+      width: 90,
     },
     ...lessons.map((lesson, idx) => ({
       title: `Slot ${lesson.slot}`,
       dataIndex: `slot_${idx}`,
       key: `slot_${idx}`,
       align: 'center',
-      width: 90,
+      width: 60,
     })),
   ];
 
   return (
-    <div style={{ maxWidth: 1100, margin: '0 auto', padding: 24, minHeight: '100vh', boxSizing: 'border-box', background: '#fff' }}>
+    <div style={{ margin: '0 auto', padding: 24, minHeight: '100vh', boxSizing: 'border-box', background: '#fff' }}>
       <Button onClick={() => navigate(-1)} style={{ marginBottom: 24 }}>
         ← Quay lại
       </Button>
-      <Title level={3} style={{ marginBottom: 32 }}>Bảng điểm danh lớp</Title>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
+        <Title level={3} style={{ margin: 0 }}>Bảng điểm danh lớp</Title>
+        <Button
+          type="primary"
+          onClick={async () => {
+            try {
+              const res = await axios.get(`${API_URL}api/ExportExcel/export-attendance/${classId}`, {
+                responseType: 'blob',
+              });
+              const url = window.URL.createObjectURL(new Blob([res.data]));
+              const link = document.createElement('a');
+              link.href = url;
+              link.setAttribute('download', `attendance_${classId}.xlsx`);
+              document.body.appendChild(link);
+              link.click();
+              link.remove();
+            } catch (err) {
+              alert('Xuất file thất bại!');
+            }
+          }}
+        >
+          Xuất file điểm danh
+        </Button>
+      </div>
       <Table
         columns={columns}
         dataSource={tableData}

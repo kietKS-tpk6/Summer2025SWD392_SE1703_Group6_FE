@@ -12,7 +12,7 @@ import './ClassesTableComponent.css';
 import dayjs from 'dayjs';
 import ActionConfirm from '../common/ActionConfirm';
 import InfoModal from '../common/InfoModal';
-
+import UpdateClassModal from './UpdateClassModal';
 const { Search } = Input;
 const { Option } = Select;
 
@@ -48,6 +48,10 @@ const Classes = () => {
   const [infoModal, setInfoModal] = useState({ open: false, content: '' });
   const [classAssessments, setClassAssessments] = useState({});
   const [availableTestsMap, setAvailableTestsMap] = useState({});
+  const [editingClass, setEditingClass] = useState(null);
+  const [openUpdateModal, setOpenUpdateModal] = useState(false);
+  const [completeModal, setCompleteModal] = useState({ open: false, record: null });
+  const [completing, setCompleting] = useState(false);
 
   const navigate = useNavigate();
 
@@ -141,7 +145,23 @@ const Classes = () => {
     navigate('detail', { state: { classId: record.classID, assessments, availableTests: availableTestsMap, subjectId: record.subjectID || record.subjectId } });
   };
 
-  const handleEdit = (record) => { /* ... */ };
+  const handleEdit = async (record) => {
+    setOpenUpdateModal(true);
+    try {
+      const res = await axios.get(`${API_URL}api/Class/get-class-for-update/${record.classID}`);
+      if (res.data && res.data.success && res.data.data) {
+        setEditingClass(res.data.data);
+      } else {
+        setEditingClass(null);
+        showNotify({ type: 'error', message: 'Không lấy được dữ liệu lớp học!', description: res.data.message || '' });
+        setOpenUpdateModal(false);
+      }
+    } catch (err) {
+      setEditingClass(null);
+      showNotify({ type: 'error', message: 'Lỗi khi lấy dữ liệu lớp học!', description: err.message });
+      setOpenUpdateModal(false);
+    }
+  };
   const handleDelete = (record) => {
     setDeleteModal({ open: true, record });
   };
@@ -149,6 +169,7 @@ const Classes = () => {
     const record = deleteModal.record;
     try {
       var noti = await axios.delete(`${API_URL}api/Class/delete/${record.classID}`);
+      await axios.delete(`${API_URL}api/Lesson/delete-by-class-id/${record.classID}`);
       showNotify({
         type: 'success',
         message: noti.data.message,
@@ -227,8 +248,10 @@ const Classes = () => {
         classId: record.classID,
         classStatus: 2
       });
+      await axios.post(`${API_URL}api/TestEvent/setup-test-event/${record.classID}`);
       await axios.post(`${API_URL}api/StudentMarks/setup-by-class-id/${record.classID}`)
       await axios.post(`${API_URL}api/Attendance/setup-attendace-by-class-id/${record.classID}`)
+    
       showNotify({
         type: 'success',
         message: 'Cập nhật thành công',
@@ -241,7 +264,6 @@ const Classes = () => {
           message: 'Gửi email thành công',
           description: notiEmail.data.message || 'Đã gửi thông báo bắt đầu lớp học đến các học viên.'
         });
-        await axios.post(`${API_URL}api/Attendance/setup-attendace-by-class-id/${record.classID}`);
       } catch (emailError) {
         showNotify({
           type: 'error',
@@ -259,6 +281,43 @@ const Classes = () => {
       fetchData();
     }
   };
+
+  // Sửa handleComplete để chỉ mở modal xác nhận
+  const handleComplete = (record) => {
+    setCompleteModal({ open: true, record });
+  };
+
+  // Hàm xác nhận hoàn thành thực sự
+  const handleCompleteConfirm = async () => {
+    const record = completeModal.record;
+    if (!record) return;
+    setCompleting(true);
+    try {
+      await axios.get(`${API_URL}api/Class/is-completed/${record.classID}`);
+      await axios.put(`${API_URL}api/Class/update-status`, {
+        classId: record.classID,
+        classStatus: 3
+      });
+      await axios.post(`${API_URL}api/Email/send-certificate/class/${record.classID}`)
+      showNotify({
+        type: 'success',
+        message: 'Đã đánh dấu hoàn thành lớp học!',
+        description: `Lớp "${record.className}" đã chuyển sang trạng thái Hoàn thành.`
+      });
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Lớp vẫn đang diễn ra hoặc chưa đủ điều kiện để hoàn thành.';
+      showNotify({
+        type: 'error',
+        message: 'Không thể hoàn thành lớp học',
+        description: msg
+      });
+    } finally {
+      setCompleting(false);
+      setCompleteModal({ open: false, record: null }); // Đóng modal sau khi xử lý xong
+      fetchData();
+    }
+  };
+  
 
   return (
     <div>
@@ -294,6 +353,7 @@ const Classes = () => {
           onDelete: handleDelete,
           onOpenRecruit: handleOpenRecruit,
           onFinalize: handleFinalize,
+          onCompleted: handleComplete,
         })}
         dataSource={data}
         loading={loading}
@@ -356,6 +416,26 @@ const Classes = () => {
         onClose={() => setInfoModal({ open: false, content: '' })}
         title="Không thể chốt danh sách"
         content={infoModal.content}
+      />
+      <UpdateClassModal
+        open={openUpdateModal}
+        onClose={() => setOpenUpdateModal(false)}
+        classData={editingClass}
+        onSuccess={() => {
+          setOpenUpdateModal(false);
+          fetchData();
+        }}
+        showNotify={showNotify}
+      />
+      <ActionConfirm
+        open={completeModal.open}
+        onCancel={() => setCompleteModal({ open: false, record: null })}
+        onOk={handleCompleteConfirm}
+        okText="Xác nhận"
+        cancelText="Đóng"
+        title="Xác nhận hoàn thành lớp học"
+        content="Bạn có chắc chắn muốn đánh dấu lớp học này là hoàn thành? Sau khi hoàn thành, học viên sẽ nhận được chứng chỉ."
+        confirmLoading={completing}
       />
     </div>
   );

@@ -89,7 +89,7 @@ const Analytics = () => {
             </div>
           </AnalyticsSection>
         </Col>
-        <Col xs={24} md={24}>
+        {/* <Col xs={24} md={24}>
           <AnalyticsSection
             title="Đánh giá học viên"
             expanded={expanded.student}
@@ -99,7 +99,7 @@ const Analytics = () => {
               (Nội dung sẽ được bổ sung sau)
             </div>
           </AnalyticsSection>
-        </Col>
+        </Col> */}
         <Col xs={24} md={24}>
           <AnalyticsSection
             title="Thống kê giảng viên"

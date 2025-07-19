@@ -3,10 +3,10 @@ import { Tag, Space, Button, Table, Input, Select } from 'antd';
 import { EyeOutlined, EditOutlined, DeleteOutlined, SearchOutlined, PlusOutlined } from '@ant-design/icons';
 
 const testStatusMap = {
+  Actived: { text: 'Đã duyệt', color: 'green' },
   Drafted: { text: 'Nháp', color: 'default' },
   Pending: { text: 'Chờ duyệt', color: 'orange' },
   Rejected: { text: 'Từ chối', color: 'red' },
-  Actived: { text: 'Đã duyệt', color: 'green' },
   Deleted: { text: 'Đã xóa', color: 'gray' },
 };
 
@@ -71,13 +71,13 @@ export function getAssessmentsTableColumns(handlers) {
       key: 'actions',
       render: (_, record) => (
         <Space size="middle">
-          <Button type="primary" size="small" icon={<EyeOutlined />} onClick={() => onView(record)}>
+          <Button type="primary" icon={<EyeOutlined />} onClick={() => onView(record)}>
             Xem
           </Button>
-          <Button type="primary" size="small" icon={<EditOutlined />} onClick={() => onEdit(record)}>
+          <Button type="primary" icon={<EditOutlined />} onClick={() => onEdit(record)}>
             Sửa
           </Button>
-          <Button danger size="small" icon={<DeleteOutlined />} onClick={() => onDelete(record)}>
+          <Button type="primary" danger icon={<DeleteOutlined />} onClick={() => onDelete(record)}>
             Xóa
           </Button>
         </Space>
@@ -108,10 +108,16 @@ export default function AssessmentsTable({
     return matchStatus && matchSearch;
   });
 
+  // Sắp xếp: Đang hoạt động (Actived) lên đầu
+  const sortedData = [
+    ...filteredData.filter(item => item.Status === 'Actived'),
+    ...filteredData.filter(item => item.Status !== 'Actived'),
+  ];
+
   return (
     <>
       <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
-        <h1>Quản lí bài kiểm tra</h1>
+        <h1 style={{fontWeight:'bolder'}}>Quản lí bài kiểm tra</h1>
         <Space>
           <Select
             value={statusFilter}
@@ -121,6 +127,8 @@ export default function AssessmentsTable({
             <Option value="Drafted">Nháp</Option>
             <Option value="Pending">Chờ duyệt</Option>
             <Option value="Actived">Đang hoạt động</Option>
+            <Option value="Rejected">Từ chối</Option>
+            <Option value="Deleted">Đã xóa</Option>
             <Option value="all">Tất cả</Option>
           </Select>
           <Search
@@ -171,34 +179,48 @@ export default function AssessmentsTable({
             render: (_, record) => {
               let userRole = null;
               let user = {};
+              let currentAccountId = null;
               try {
                 user = JSON.parse(localStorage.getItem('user')) || {};
                 userRole = user.role;
+                currentAccountId = user.accountId;
               } catch (e) {
                 userRole = null;
               }
-              const isLecturer = userRole === 'Lecturer';
-              const isOwnDraft = isLecturer && record.Status === 'Drafted' && record.createdBy === user.accountId;
+              // Chỉ cho phép xóa nếu là bài nháp
+              const isDraft = record.Status === 'Drafted';
+              // Define isOwnDraft: bài nháp và là của mình
+              const isOwnDraft = record.Status === 'Drafted' && record.CreateBy === user.accountId;
               return (
                 <Space>
-                  <Button onClick={() => onView(record)}>Xem</Button>
-                  {/* Chỉ cho phép sửa/gửi duyệt nếu là bài của mình và là Drafted */}
+                  <Button type="primary" icon={<EyeOutlined />} onClick={() => onView(record)}>
+                    Xem
+                  </Button>
                   {isOwnDraft && (
                     <>
-                      <Button onClick={() => onEdit(record)} type="primary">Sửa</Button>
-                      <Button onClick={() => onSendApprove(record)} type="dashed" style={{ color: '#faad14', borderColor: '#faad14' }}>Gửi duyệt</Button>
+                      <Button type="primary" icon={<EditOutlined />} onClick={() => onEdit(record)}>
+                        Sửa
+                      </Button>
+                      <Button type="dashed" style={{ color: '#faad14', borderColor: '#faad14' }} onClick={() => onSendApprove(record)}>
+                        Gửi duyệt
+                      </Button>
+                      <Button type="primary" danger icon={<DeleteOutlined />} onClick={() => onDelete(record)}>
+                        Xóa
+                      </Button>
                     </>
                   )}
                   {/* Nếu không phải bài của mình hoặc không phải Drafted thì không cho sửa/gửi duyệt */}
-                  {(!isOwnDraft && isLecturer) ? null : (
-                    <Button onClick={() => onDelete(record)} danger icon={<DeleteOutlined />} />
+                  {(!isOwnDraft && userRole === 'Lecturer') ? null : (
+                    <Button type="primary" danger icon={<DeleteOutlined />} onClick={() => onDelete(record)}>
+                      {/* Xóa */}
+                    </Button>
                   )}
                 </Space>
               );
             },
           },
         ]}
-        dataSource={filteredData}
+        dataSource={sortedData}
         pagination={{ pageSize: 10 }}
         rowKey="testID"
         scroll={{ x: 1000 }}

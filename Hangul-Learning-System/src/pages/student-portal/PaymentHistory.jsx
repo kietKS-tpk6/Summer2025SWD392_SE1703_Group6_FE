@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Spin, Alert, Button } from 'antd';
+import { Table, Spin, Alert, Button, Modal, Descriptions, Tag } from 'antd';
 import axios from 'axios';
 import { API_URL } from '../../config/api';
 import { getUser } from '../../utils/auth';
 import { useNavigate } from 'react-router-dom';
+import { EyeOutlined } from '@ant-design/icons';
 
 const statusMap = {
   0: 'Đã thanh toán',
@@ -27,25 +28,36 @@ const columns = [
     title: 'Số tiền',
     dataIndex: 'amount',
     key: 'amount',
-    render: (amount) => amount.toLocaleString('vi-VN') + ' ₫',
+    render: (amount) => amount?.toLocaleString('vi-VN') + ' ₫',
   },
   {
     title: 'Ngày thanh toán',
     dataIndex: 'paymentDate',
     key: 'paymentDate',
-    render: (date) => new Date(date).toLocaleString('vi-VN'),
+    render: (date) => date ? new Date(date).toLocaleString('vi-VN') : '',
   },
-  {
-    title: 'Ngày đăng ký',
-    dataIndex: 'enrolledDate',
-    key: 'enrolledDate',
-    render: (date) => new Date(date).toLocaleString('vi-VN'),
-  },
+  // Bỏ cột ngày đăng ký vì không có trong response mới
+  // {
+  //   title: 'Ngày đăng ký',
+  //   dataIndex: 'enrolledDate',
+  //   key: 'enrolledDate',
+  //   render: (date) => new Date(date).toLocaleString('vi-VN'),
+  // },
   {
     title: 'Trạng thái',
     dataIndex: 'status',
     key: 'status',
-    render: (status) => statusMap[status] || 'Không xác định',
+    align: 'center',
+    render: (status) => (
+      <Tag color={
+        status === 0 ? 'green' :
+        status === 1 ? 'orange' :
+        status === 2 ? 'red' :
+        status === 3 ? 'blue' : 'default'
+      }>
+        {statusMap[status] || 'Không xác định'}
+      </Tag>
+    ),
   },
 ];
 
@@ -53,7 +65,9 @@ const PaymentHistory = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
+  // const navigate = useNavigate(); // Không cần nữa
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState(null);
 
   const columnsWithAction = [
     ...columns,
@@ -61,8 +75,15 @@ const PaymentHistory = () => {
       title: 'Hành động',
       key: 'action',
       render: (_, record) => (
-        <Button type="link" onClick={() => navigate(`/student/payment-history/${record.paymentID}`, { state: { payment: record } })}>
-          Xem chi tiết
+        <Button
+          type="primary"
+          icon={<EyeOutlined />}
+          onClick={() => {
+            setSelectedPayment(record);
+            setModalOpen(true);
+          }}
+        >
+          Chi tiết
         </Button>
       ),
     },
@@ -76,9 +97,18 @@ const PaymentHistory = () => {
       setLoading(false);
       return;
     }
-    axios.get(`${API_URL}api/Refund/history?studentId=${studentId}`)
+    axios.get(`${API_URL}api/Payment/history/${studentId}`)
       .then(res => {
-        setData(res.data || []);
+        // Map lại các trường dữ liệu cho đúng với frontend
+        const rawData = Array.isArray(res.data.data) ? res.data.data : [];
+        const mappedData = rawData.map(item => ({
+          paymentID: item.paymentId,
+          className: item.className,
+          amount: item.total,
+          paymentDate: item.paidAt,
+          status: item.paymentStatus,
+        }));
+        setData(mappedData);
         setLoading(false);
       })
       .catch(err => {
@@ -89,7 +119,7 @@ const PaymentHistory = () => {
 
   return (
     <div>
-      <h1>Lịch sử thanh toán</h1>
+      <h1 style={{fontWeight:'bolder'}}>Lịch sử thanh toán</h1>
       {error && <Alert type="error" message={error} showIcon style={{ marginBottom: 16 }} />}
       <Spin spinning={loading} tip="Đang tải...">
         <Table
@@ -99,6 +129,31 @@ const PaymentHistory = () => {
           pagination={{ pageSize: 10 }}
         />
       </Spin>
+      <Modal
+        open={modalOpen}
+        onCancel={() => setModalOpen(false)}
+        footer={null}
+        title="Chi tiết thanh toán"
+      >
+        {selectedPayment && (
+          <Descriptions column={1} bordered>
+            <Descriptions.Item label="Mã giao dịch">{selectedPayment.paymentID}</Descriptions.Item>
+            <Descriptions.Item label="Tên lớp">{selectedPayment.className}</Descriptions.Item>
+            <Descriptions.Item label="Số tiền">{selectedPayment.amount?.toLocaleString('vi-VN')} ₫</Descriptions.Item>
+            <Descriptions.Item label="Ngày thanh toán">{selectedPayment.paymentDate ? new Date(selectedPayment.paymentDate).toLocaleString('vi-VN') : ''}</Descriptions.Item>
+            <Descriptions.Item label="Trạng thái">
+              <Tag color={
+                selectedPayment.status === 0 ? 'green' :
+                selectedPayment.status === 1 ? 'orange' :
+                selectedPayment.status === 2 ? 'red' :
+                selectedPayment.status === 3 ? 'blue' : 'default'
+              }>
+                {statusMap[selectedPayment.status] || 'Không xác định'}
+              </Tag>
+            </Descriptions.Item>
+          </Descriptions>
+        )}
+      </Modal>
     </div>
   );
 };

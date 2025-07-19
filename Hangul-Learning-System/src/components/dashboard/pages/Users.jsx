@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Space, Input, message, Select } from 'antd';
-import { SearchOutlined, PlusOutlined } from '@ant-design/icons';
+import { Table, Button, Space, Input, message, Select, Modal } from 'antd';
+import { SearchOutlined, PlusOutlined, EyeOutlined, DeleteOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { API_URL, endpoints } from '../../../config/api';
 import { useNavigate } from 'react-router-dom';
@@ -22,12 +22,64 @@ const Users = () => {
     pageSize: 10,
     total: 0
   });
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   const navigate = useNavigate();
 
   const fetchUsers = async (page = 1, pageSize = 10, search = '', roleFilter, genderFilter, statusFilter) => {
     try {
       setLoading(true);
+
+      // Nếu search là accountID (ví dụ: A00000)
+      if (/^A\d+$/.test(search)) {
+        try {
+          const response = await axios.get(`${API_URL}api/Account/${search}`);
+          if (response.data && response.data.accountID) {
+            const user = response.data;
+            const formattedData = [{
+              key: 0,
+              id: 1,
+              accountID: user.accountID,
+              name: `${user.lastName} ${user.firstName}`,
+              email: user.email,
+              phoneNumber: user.phoneNumber,
+              role: user.role || getRoleName(user.role),
+              status: user.status || getStatusName(user.status),
+              gender: user.gender || getGenderName(user.gender),
+              birthDate: user.birthDate
+            }];
+            setUsers(formattedData);
+            setPagination({
+              current: 1,
+              pageSize: 10,
+              total: 1
+            });
+            setLoading(false);
+            return;
+          } else {
+            setUsers([]);
+            setPagination({
+              current: 1,
+              pageSize: 10,
+              total: 0
+            });
+            setLoading(false);
+            return;
+          }
+        } catch (error) {
+          setUsers([]);
+          setPagination({
+            current: 1,
+            pageSize: 10,
+            total: 0
+          });
+          setLoading(false);
+          return;
+        }
+      }
+
+      // ...phần còn lại giữ nguyên như cũ
       const response = await axios.get(`${API_URL}${endpoints.manageAccount.getAccount}`, {
         params: {
           page,
@@ -64,6 +116,12 @@ const Users = () => {
       }
     } catch (error) {
       message.error('Error fetching users');
+      setUsers([]);
+      setPagination({
+        current: 1,
+        pageSize: 10,
+        total: 0
+      });
       console.error('Error:', error);
     } finally {
       setLoading(false);
@@ -116,6 +174,24 @@ const Users = () => {
     setPagination({ ...pagination, current: 1 });
   };
 
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
+    try {
+      setLoading(true);
+      // Giả sử API xoá user là DELETE /api/users/:id
+      const deleteUrl = `${API_URL}${endpoints.manageAccount.deleteAccount}${selectedUser.accountID}`;
+      await axios.delete(deleteUrl);
+      message.success('Xóa người dùng thành công');
+      fetchUsers(pagination.current, pagination.pageSize, searchText, filters.role, filters.gender, filters.status);
+    } catch (error) {
+      message.error('Không thể xóa người dùng. Vui lòng thử lại.');
+    } finally {
+      setLoading(false);
+      setDeleteModalVisible(false);
+      setSelectedUser(null);
+    }
+  };
+
   const columns = [
     {
       title: 'ID',
@@ -159,10 +235,20 @@ const Users = () => {
       width: 160,
       render: (_, record) => (
         <Space>
-          <Button type="primary" size="small" onClick={() => {
+          <Button type="primary" icon={<EyeOutlined />} onClick={() => {
             navigate(`/dashboard/profile/${record.accountID}`);
-          }}>Xem chi tiết</Button>
-          <Button danger size="small">Xóa</Button>
+          }}>Xem</Button>
+          {/* <Button
+            type="primary"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={() => {
+              setSelectedUser(record);
+              setDeleteModalVisible(true);
+            }}
+          >
+            Xóa
+          </Button> */}
         </Space>
       ),
     },
@@ -171,7 +257,7 @@ const Users = () => {
   return (
     <div>
       <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
-        <h1>Quản lý người dùng</h1>
+        <h1 style={{fontWeight:"bolder"}}>Quản lý người dùng</h1>
         <Space>
           <Search
             placeholder="Tìm kiếm người dùng"
@@ -208,7 +294,7 @@ const Users = () => {
             <Option value={0}>Đang hoạt động</Option>
             <Option value={1}>Không hoạt động</Option>
           </Select>
-          <Button type="primary" icon={<PlusOutlined />}>
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/dashboard/users/create')}>
             Thêm người dùng
           </Button>
         </Space>
@@ -221,6 +307,20 @@ const Users = () => {
         pagination={pagination}
         onChange={handleTableChange}
       />
+      {/* <Modal
+        title="Xác nhận xóa"
+        open={deleteModalVisible}
+        onOk={handleDeleteUser}
+        onCancel={() => {
+          setDeleteModalVisible(false);
+          setSelectedUser(null);
+        }}
+        okText="Xóa"
+        cancelText="Hủy"
+        okButtonProps={{ danger: true }}
+      >
+        <p>Bạn có chắc chắn muốn xóa người dùng này?</p>
+      </Modal> */}
     </div>
   );
 };

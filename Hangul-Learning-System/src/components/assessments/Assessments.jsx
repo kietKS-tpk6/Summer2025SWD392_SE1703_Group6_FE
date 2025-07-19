@@ -6,10 +6,11 @@ import AssessmentBasicForm from './create/AssessmentBasicForm';
 import CreateAssessmentStepper from './create/CreateAssessmentStepper';
 import axios from 'axios';
 import { API_URL } from '../../config/api';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import ViewDetailAssessment from './ViewDetailAssessment';
 import * as XLSX from 'xlsx';
 import AssessmentsTable from './AssessmentsTableComponent';
+import Notification from '../common/Notification';
 
 
 const statusOptions = [
@@ -57,7 +58,7 @@ const CATEGORY_ENUM_REVERSE_MAP = {
 
 const Assessments = () => {
   const [data, setData] = useState([]);
-  const [statusFilter, setStatusFilter] = useState('Drafted');
+  const [statusFilter, setStatusFilter] = useState('Actived');
   const [searchText, setSearchText] = useState('');
   const [subjects, setSubjects] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
@@ -67,13 +68,16 @@ const Assessments = () => {
   });
   const [categoryOptions, setCategoryOptions] = useState([]);
   const navigate = useNavigate();
+  const location = useLocation();
   const [openModal, setOpenModal] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
+  
   // Thêm state cho phân trang
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(200);
   const [total, setTotal] = useState(0);
-
+const [savingType, setSavingType] = useState(null);
+const [isPopupOpen, setIsPopupOpen] = useState(false);
   // Thêm state cho popup gửi duyệt
   const [sendApproveModal, setSendApproveModal] = useState(false);
   const [sendApproveLoading, setSendApproveLoading] = useState(false);
@@ -82,6 +86,21 @@ const Assessments = () => {
   // Modal cho Lecturer
   const [lecturerModal, setLecturerModal] = useState(false);
   const [lecturerLoading, setLecturerLoading] = useState(false);
+
+  const [notification, setNotification] = useState({ visible: false, type: 'success', message: '', description: '' });
+
+  useEffect(() => {
+    if (location.state?.showNotification) {
+      setNotification({
+        visible: true,
+        type: location.state.notificationType || 'success',
+        message: location.state.notificationMessage || 'Thành công',
+        description: location.state.notificationDescription || '',
+      });
+      // Xóa state để reload lại không hiện lại notification
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location]);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -134,12 +153,27 @@ const Assessments = () => {
   }, [statusFilter, page, pageSize]);
 
   // Filter + search
+  let currentUser = {};
+  let currentRole = null;
+  let currentAccountId = null;
+  try {
+    currentUser = JSON.parse(localStorage.getItem('user')) || {};
+    currentRole = currentUser.role;
+    currentAccountId = currentUser.accountId;
+  } catch {}
+  const isManager = currentRole === 'Manager';
+  const isLecturer = currentRole === 'Lecture' || currentRole === 'Lecturer';
   const filteredData = data.filter(item => {
     const matchStatus = statusFilter === 'all' || item.Status === statusFilter;
     const matchSearch =
       (item.testName || '').toLowerCase().includes(searchText.toLowerCase()) ||
       (item.subjectName || '').toLowerCase().includes(searchText.toLowerCase()) ||
       (item.createdByName || '').toLowerCase().includes(searchText.toLowerCase());
+    // Nếu là Lecturer chỉ xem bài của mình (so sánh createBy với accountId)
+    if (isLecturer) {
+      return matchStatus && matchSearch && item.createBy === currentAccountId;
+    }
+    // Manager xem tất cả
     return matchStatus && matchSearch;
   });
 
@@ -166,7 +200,12 @@ const Assessments = () => {
       content: `Bạn có chắc chắn muốn xóa bài kiểm tra "${record.testName}"?`,
       onOk: () => {
         setData(prev => prev.filter(item => item.testID !== record.testID));
-        message.success('Đã xóa bài kiểm tra!');
+        setNotification({
+          visible: true,
+          type: 'success',
+          message: 'Xóa bài kiểm tra thành công!',
+          description: `Bài kiểm tra "${record.testName}" đã được xóa khỏi hệ thống.`
+        });
       },
     });
   };
@@ -186,7 +225,12 @@ const Assessments = () => {
     ]);
     setShowCreate(false);
     setFormData({ basicInfo: {}, sections: [] });
-    message.success('Đã tạo bài kiểm tra!');
+    setNotification({
+      visible: true,
+      type: 'success',
+      message: 'Tạo bài kiểm tra thành công!',
+      description: `Bài kiểm tra "${values.TestName || 'Không tên'}" đã được lưu vào hệ thống.`
+    });
   };
 
   // Handler khi hoàn thành stepper
@@ -293,12 +337,27 @@ const Assessments = () => {
       // 4. Cập nhật trạng thái test
       if (statusType === 'Actived') {
         await axios.put(`${API_URL}api/Test/update-status-fix`, { testID: newTestID, testStatus: 3 });
-        message.success('Đã tạo và chuyển sang Actived!');
+        setNotification({
+          visible: true,
+          type: 'success',
+          message: 'Tạo bài kiểm tra thành công!',
+          description: `Bài kiểm tra "${basicInfo.TestName || 'Không tên'}" đã được tạo và chuyển sang trạng thái Đang hoạt động.`
+        });
       } else if (statusType === 'Pending') {
         await axios.put(`${API_URL}api/Test/update-status-fix`, { testID: newTestID, testStatus: 1 });
-        message.success('Đã tạo và chuyển sang Pending!');
+        setNotification({
+          visible: true,
+          type: 'success',
+          message: 'Gửi duyệt thành công!',
+          description: `Bài kiểm tra "${basicInfo.TestName || 'Không tên'}" đã được gửi cho quản lý duyệt.`
+        });
       } else {
-        message.success('Đã tạo bài kiểm tra (Drafted)!');
+        setNotification({
+          visible: true,
+          type: 'success',
+          message: 'Tạo bài kiểm tra thành công!',
+          description: `Bài kiểm tra "${basicInfo.TestName || 'Không tên'}" đã được lưu dưới dạng bản nháp.`
+        });
       }
       setShowCreate(false);
       setFormData({ basicInfo: {}, sections: [] });
@@ -306,6 +365,7 @@ const Assessments = () => {
       setLecturerModal(false);
       setModalLoading(false);
       setLecturerLoading(false);
+      setPage(1); // Đảm bảo useEffect sẽ fetch lại danh sách mới nhất
       // Điều hướng về đúng sidebar
       if (userRole === 'Lecturer' || userRole === 'Lecture') {
         navigate('/lecturer/assessment');
@@ -316,7 +376,12 @@ const Assessments = () => {
       }
     } catch (error) {
       console.error(error);
-      message.error('Lỗi khi tạo bài kiểm tra!');
+      setNotification({
+        visible: true,
+        type: 'error',
+        message: 'Tạo bài kiểm tra thất bại!',
+        description: 'Đã xảy ra lỗi khi tạo bài kiểm tra. Vui lòng kiểm tra lại thông tin hoặc thử lại sau.'
+      });
       setModalLoading(false);
       setLecturerLoading(false);
     }
@@ -433,6 +498,13 @@ const Assessments = () => {
 
   return (
     <div>
+      <Notification
+        visible={notification.visible}
+        type={notification.type}
+        message={notification.message}
+        description={notification.description}
+        onClose={() => setNotification(n => ({ ...n, visible: false }))}
+      />
       {!showCreate ? (
         <>
           <AssessmentsTable
@@ -472,24 +544,60 @@ const Assessments = () => {
           />
         </div>
       )}
-      <Modal
-        open={openModal}
-        title="Bạn muốn lưu bài kiểm tra ở trạng thái nào?"
-        onCancel={() => setOpenModal(false)}
-        footer={[
-          <Button key="back" onClick={() => setOpenModal(false)}>
-            Quay lại
-          </Button>,
-          <Button key="drafted" loading={modalLoading} onClick={async () => { await handleCreateTest('Drafted'); }}>
-            Lưu dưới dạng bản nháp
-          </Button>,
-          <Button key="actived" type="primary" loading={modalLoading} onClick={async () => { await handleCreateTest('Actived'); }}>
-            Lưu và kích hoạt
-          </Button>,
-        ]}
+    <Modal
+  open={openModal}
+  title="Bạn muốn lưu bài kiểm tra ở trạng thái nào?"
+  onCancel={() => {
+    setOpenModal(false);
+    setSavingType(null);
+  }}
+  footer={[
+    <Button
+      key="back"
+      onClick={() => {
+        setOpenModal(false);
+        setSavingType(null);
+      }}
+      disabled={modalLoading}
+    >
+      Quay lại
+    </Button>,
+
+    (!savingType || savingType === 'Drafted') && (
+      <Button
+        key="drafted"
+        loading={modalLoading && savingType === 'Drafted'}
+        onClick={async () => {
+          setSavingType('Drafted');
+          setModalLoading(true);
+          await handleCreateTest('Drafted');
+          setModalLoading(false);
+          setSavingType(null);
+        }}
       >
-        Chọn trạng thái cho bài kiểm tra sau khi tạo.
-      </Modal>
+        Lưu dưới dạng bản nháp
+      </Button>
+    ),
+
+    (!savingType || savingType === 'Actived') && (
+      <Button
+        key="actived"
+        type="primary"
+        loading={modalLoading && savingType === 'Actived'}
+        onClick={async () => {
+          setSavingType('Actived');
+          setModalLoading(true);
+          await handleCreateTest('Actived');
+          setModalLoading(false);
+          setSavingType(null);
+        }}
+      >
+        Lưu và kích hoạt
+      </Button>
+    )
+  ]}
+/>
+
       <Modal
         open={lecturerModal}
         title="Bạn có xác nhận tạo bài test này không?"

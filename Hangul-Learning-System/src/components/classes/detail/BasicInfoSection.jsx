@@ -67,7 +67,7 @@ const BasicInfoSection = ({ classId }) => {
                 <Descriptions.Item label="Học phí">
                   {data.priceOfClass?.toLocaleString('vi-VN')} VNĐ
                 </Descriptions.Item>
-                <Descriptions.Item label="Ngày bắt đầu">
+                <Descriptions.Item label="Ngày bắt đầu dự kiến">
                   {new Date(data.teachingStartTime).toLocaleString('vi-VN')}
                 </Descriptions.Item>
                 <Descriptions.Item label="Trạng thái">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Card,
   Typography,
@@ -65,6 +65,7 @@ const studentTestStatusMap = {
 const ViewTest = () => {
   const { testEventID } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [testData, setTestData] = useState(null);
   const [passwordModalVisible, setPasswordModalVisible] = useState(false);
@@ -122,7 +123,13 @@ const ViewTest = () => {
       }
     };
     fetchData();
-  }, [testEventID, fetchHistory]);
+    // Nếu vừa nộp bài xong, luôn fetch lại lịch sử
+    if (location.state?.reloadHistory) {
+      fetchHistory(testEventID);
+      // Xóa flag reloadHistory để tránh fetch lại không cần thiết
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [testEventID, fetchHistory, location.state, navigate, location.pathname]);
 
   useEffect(() => {
     const fetchSections = async () => {
@@ -206,6 +213,9 @@ const ViewTest = () => {
     1: 'Đúng/Sai',
     2: 'Viết luận',
   };
+
+  // Thêm biến kiểm tra giới hạn số lần làm bài
+  const hasReachedAttemptLimit = testData?.attemptLimit > 0 && history.length >= testData.attemptLimit;
 
   if (loading) {
     return (
@@ -388,7 +398,16 @@ const ViewTest = () => {
         <Col xs={24} lg={8}>
           <Card title="Thao tác">
             <Space direction="vertical" style={{ width: '100%' }}>
-              {statusMap[testData.status] === 'Sắp diễn ra' && (
+              {hasReachedAttemptLimit && (
+                <Alert
+                  message="Đã đạt giới hạn số lần làm bài"
+                  description={`Bạn đã làm bài đủ ${testData.attemptLimit} lần. Không thể làm lại.`}
+                  type="warning"
+                  showIcon
+                />
+              )}
+
+              {!hasReachedAttemptLimit && statusMap[testData.status] === 'Sắp diễn ra' && (
                 <Alert
                   message="Bài kiểm tra chưa bắt đầu"
                   description="Vui lòng đợi đến thời gian quy định để bắt đầu làm bài."
@@ -397,7 +416,7 @@ const ViewTest = () => {
                 />
               )}
 
-              {statusMap[testData.status] === 'Đang diễn ra' && (
+              {!hasReachedAttemptLimit && statusMap[testData.status] === 'Đang diễn ra' && (
                 <Button
                   type="primary"
                   size="large"

@@ -118,7 +118,7 @@ const TestDetail = () => {
                 })()}
                 {q.type === 2 && (
                   <span style={{ fontWeight: 600, fontSize: fontSize - 2 }}>
-                    Điểm: {typeof q.studentAnswer?.writingScore === 'number' ? q.studentAnswer.writingScore : 0} / {q.score}
+                    {/* Điểm: {typeof q.studentAnswer?.writingScore === 'number' ? q.studentAnswer.writingScore : 0} / {q.score} */}
                   </span>
                 )}
               </div>

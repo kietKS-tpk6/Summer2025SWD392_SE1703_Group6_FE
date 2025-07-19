@@ -4,6 +4,8 @@ import dayjs from 'dayjs';
 import axios from 'axios';
 import { API_URL } from '../../../config/api';
 import AddAssessmentToTestEventComponent from './AddAssessmentToTestEventComponent';
+import UpdateAssessmentOfTestEventComponent from './UpdateAssessmentOfTestEventComponent';
+import Notification from '../../common/Notification';
 
 // Enum mapping from AssessmentBasicForm
 const TEST_CONTENT_OPTIONS = [
@@ -40,14 +42,19 @@ const CATEGORY_ENUM_MAP = {
 
 const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, subjectId }) => {
   const [assessments, setAssessments] = useState(initialAssessments || []);
+  const [notificationState, setNotificationState] = useState({ visible: false, type: 'success', message: '', description: '' });
 
   const total = assessments ? assessments.length : 0;
   const attached = assessments ? assessments.filter(a => a.testID).length : 0;
   const notAttached = total - attached;
 
   // Modal state
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalTestEvent, setModalTestEvent] = useState(null); // testEvent object của card đang thao tác
+  const [modalAddOpen, setModalAddOpen] = useState(false);
+  const [modalAddTestEvent, setModalAddTestEvent] = useState(null);
+  const [modalUpdateOpen, setModalUpdateOpen] = useState(false);
+  const [modalUpdateTestEvent, setModalUpdateTestEvent] = useState(null);
+  const [addForm] = Form.useForm();
+  const [updateForm] = Form.useForm();
   const [selectedTestID, setSelectedTestID] = useState(null);
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState(null);
@@ -98,6 +105,13 @@ const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, s
   // Sửa lại phần Modal:
   return (
     <div>
+      <Notification
+        visible={notificationState.visible}
+        type={notificationState.type}
+        message={notificationState.message}
+        description={notificationState.description}
+        onClose={() => setNotificationState(prev => ({ ...prev, visible: false }))}
+      />
       {/* <div style={{ textAlign: 'center', fontSize: 18, marginBottom: 12, fontWeight: 700, color: '#222' }}>
         Tổng số buổi kiểm tra: {total}
       </div> */}
@@ -184,9 +198,58 @@ const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, s
                       type="primary"
                       size="small"
                       style={{ marginBottom: 8 }}
-                      onClick={() => handleOpenModal(assessment)}
+                      onClick={() => {
+                        setModalAddTestEvent(assessment);
+                        setModalAddOpen(true);
+                        // Nếu là đề thi cuối kì (final), set attemptLimit = 1
+                        if (
+                          assessment.assessmentCategory === 3 ||
+                          assessment.category === 3
+                        ) {
+                          addForm.setFieldsValue({ attemptLimit: 1 });
+                        }
+                      }}
                     >
                       Thêm đề kiểm tra
+                    </Button>
+                  </>
+                )}
+                {hasQuestions && (
+                  <>
+                    <Button
+                      type="default"
+                      size="small"
+                      style={{ marginBottom: 8, background: '#faad14', border: '1px solid #faad14', color: '#fff', transition: 'all 0.2s', marginRight: 8 }}
+                      onMouseOver={e => e.currentTarget.style.background = '#ffd666'}
+                      onMouseOut={e => e.currentTarget.style.background = '#faad14'}
+                      onClick={() => {
+                        const initialValues = {
+                          testID: assessment.testID || undefined,
+                          description: assessment.description || '',
+                          startTime: assessment.startAt ? dayjs(assessment.startAt) : undefined,
+                          endTime: assessment.endAt ? dayjs(assessment.endAt) : undefined,
+                          attemptLimit: assessment.attemptLimit || 1,
+                          password: assessment.password || '',
+                        };
+                        setModalUpdateTestEvent({ ...assessment, initialValues });
+                        setModalUpdateOpen(true);
+                      }}
+                    >
+                      Chỉnh sửa
+                    </Button>
+                    <Button
+                      type="primary"
+                      size="small"
+                      style={{ marginBottom: 8 }}
+                      onClick={() => {
+                        // Nếu có testEventID, chuyển hướng sang trang chi tiết bài test
+                        if (assessment.testEventID) {
+                          window.open(`/lecturer/view-test/${assessment.testEventID}`, '_blank');
+                        }
+                      }}
+                      disabled={!assessment.testEventID}
+                    >
+                      Xem chi tiết
                     </Button>
                   </>
                 )}
@@ -212,24 +275,25 @@ const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, s
           })}
         </div>
       )}
+      {/* Modal thêm đề kiểm tra */}
       <AddAssessmentToTestEventComponent
-        open={modalOpen}
-        onCancel={() => setModalOpen(false)}
+        open={modalAddOpen}
+        onCancel={() => setModalAddOpen(false)}
         onOk={async () => {
           try {
-            const values = await form.validateFields();
+            const values = await addForm.validateFields();
             // Lấy lessonStartTime từ assessment
-            const lessonStart = modalTestEvent?.lessonStartTime ? dayjs(modalTestEvent.lessonStartTime) : null;
+            const lessonStart = modalAddTestEvent?.lessonStartTime ? dayjs(modalAddTestEvent.lessonStartTime) : null;
             // Lấy lessonEndTime từ assessment
-            const lessonEnd = modalTestEvent?.lessonEndTime ? dayjs(modalTestEvent.lessonEndTime) : null;
+            const lessonEnd = modalAddTestEvent?.lessonEndTime ? dayjs(modalAddTestEvent.lessonEndTime) : null;
             // Ngày kiểm tra là lessonStart (chỉ 1 ngày)
             const date = lessonStart ? lessonStart.startOf('day') : null;
-            // startAt = ngày lesson + giờ startTime
-            const startAt = date && values.startTime ? date.hour(values.startTime.hour()).minute(values.startTime.minute()) : null;
-            // endAt = ngày lesson + giờ endTime
-            const endAt = date && values.endTime ? date.hour(values.endTime.hour()).minute(values.endTime.minute()) : null;
+            // startAt = ngày lesson + giờ startTime (cộng thêm 7 giờ để lưu đúng giờ Việt Nam)
+            const startAt = date && values.startTime ? date.hour(values.startTime.hour()).minute(values.startTime.minute()).add(7, 'hour') : null;
+            // endAt = ngày lesson + giờ endTime (cộng thêm 7 giờ để lưu đúng giờ Việt Nam)
+            const endAt = date && values.endTime ? date.hour(values.endTime.hour()).minute(values.endTime.minute()).add(7, 'hour') : null;
             const body = {
-              testEventIdToUpdate: modalTestEvent?.testEventID,
+              testEventIdToUpdate: modalAddTestEvent?.testEventID,
               testID: values.testID,
               description: values.description,
               startAt: startAt ? startAt.toISOString() : null,
@@ -239,20 +303,96 @@ const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, s
             };
             await axios.put(`${API_URL}api/TestEvent/configure`, body);
             // Gọi API update status testEvent thành Actived (1)
-            if (modalTestEvent?.testEventID) {
+            if (modalAddTestEvent?.testEventID) {
               await axios.put(`${API_URL}api/TestEvent/update-status`, {
-                testEventIDToUpdate: modalTestEvent.testEventID,
+                testEventIDToUpdate: modalAddTestEvent.testEventID,
                 status: 1
               });
             }
-            setModalOpen(false);
+            setModalAddOpen(false);
             await reloadAssessments();
           } catch (err) {
-            // handle error nếu cần
+            let msg = 'Thêm bài kiểm tra không thành công!';
+            if (err?.response?.data?.message) msg = err.response.data.message;
+            else if (err?.message) msg = err.message;
+            setNotificationState({ visible: true, type: 'error', message: msg });
           }
         }}
         availableTests={modalAvailableTests}
-        form={form}
+        form={addForm}
+        endAt={endTime}
+        loading={false}
+        onTestChange={tid => setSelectedTestID(tid)}
+        onDescriptionChange={e => setDescription(e.target.value)}
+        onStartDateChange={date => setStartDate(date)}
+        onStartTimeChange={time => setStartTime(time)}
+        onEndTimeChange={time => setEndTime(time)}
+        onAttemptLimitChange={e => {
+          // Nếu là final thì không cho đổi
+          if (
+            modalAddTestEvent?.assessmentCategory === 3 ||
+            modalAddTestEvent?.category === 3
+          ) {
+            addForm.setFieldsValue({ attemptLimit: 1 });
+            setAttemptLimit(1);
+            return;
+          }
+          setAttemptLimit(e.target.value);
+        }}
+        onPasswordChange={e => setPassword(e.target.value)}
+        lessonStartTime={modalAddTestEvent?.lessonStartTime}
+        lessonEndTime={modalAddTestEvent?.lessonEndTime}
+        assessment={modalAddTestEvent}
+        subjectId={subjectId}
+        API_URL={API_URL}
+        assessmentCategory={modalAddTestEvent?.assessmentCategory ?? modalAddTestEvent?.category}
+        testType={modalAddTestEvent?.testType}
+        onSuccess={reloadAssessments}
+        initialValues={undefined}
+      />
+      {/* Modal cập nhật đề kiểm tra */}
+      <UpdateAssessmentOfTestEventComponent
+        open={modalUpdateOpen}
+        onCancel={() => setModalUpdateOpen(false)}
+        onOk={async () => {
+          try {
+            const values = await updateForm.validateFields();
+            // Lấy lessonStartTime từ assessment
+            const lessonStart = modalUpdateTestEvent?.lessonStartTime ? dayjs(modalUpdateTestEvent.lessonStartTime) : null;
+            // Lấy lessonEndTime từ assessment
+            const lessonEnd = modalUpdateTestEvent?.lessonEndTime ? dayjs(modalUpdateTestEvent.lessonEndTime) : null;
+            // Ngày kiểm tra là lessonStart (chỉ 1 ngày)
+            const date = lessonStart ? lessonStart.startOf('day') : null;
+            // startAt = ngày lesson + giờ startTime (cộng thêm 7 giờ để lưu đúng giờ Việt Nam)
+            const startAt = date && values.startTime ? date.hour(values.startTime.hour()).minute(values.startTime.minute()).add(7, 'hour') : null;
+            // endAt = ngày lesson + giờ endTime (cộng thêm 7 giờ để lưu đúng giờ Việt Nam)
+            const endAt = date && values.endTime ? date.hour(values.endTime.hour()).minute(values.endTime.minute()).add(7, 'hour') : null;
+            const body = {
+              testEventIdToUpdate: modalUpdateTestEvent?.testEventID,
+              testID: values.testID,
+              description: values.description,
+              startAt: startAt ? startAt.toISOString() : null,
+              endAt: endAt ? endAt.toISOString() : null,
+              attemptLimit: values.attemptLimit,
+              password: values.password,
+            };
+            await axios.put(`${API_URL}api/TestEvent/configure`, body);
+            // Gọi API update status testEvent thành Actived (1)
+            if (modalUpdateTestEvent?.testEventID) {
+              await axios.put(`${API_URL}api/TestEvent/update-status`, {
+                testEventIDToUpdate: modalUpdateTestEvent.testEventID,
+                status: 1
+              });
+            }
+            setModalUpdateOpen(false);
+            await reloadAssessments();
+            setNotificationState({ visible: true, type: 'success', message: 'Cập nhật đề kiểm tra thành công!' });
+          } catch {
+            setNotificationState({ visible: true, type: 'error', message: 'Cập nhật đề kiểm tra thất bại!' });
+          }
+        }}
+        availableTests={modalAvailableTests}
+        form={updateForm}
         endAt={endTime}
         loading={false}
         onTestChange={tid => setSelectedTestID(tid)}
@@ -262,17 +402,18 @@ const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, s
         onEndTimeChange={time => setEndTime(time)}
         onAttemptLimitChange={e => setAttemptLimit(e.target.value)}
         onPasswordChange={e => setPassword(e.target.value)}
-        lessonStartTime={modalTestEvent?.lessonStartTime}
-        lessonEndTime={modalTestEvent?.lessonEndTime}
-        assessment={modalTestEvent}
+        lessonStartTime={modalUpdateTestEvent?.lessonStartTime}
+        lessonEndTime={modalUpdateTestEvent?.lessonEndTime}
+        assessment={modalUpdateTestEvent}
         subjectId={subjectId}
         API_URL={API_URL}
-        assessmentCategory={modalTestEvent?.assessmentCategory ?? modalTestEvent?.category}
-        testType={modalTestEvent?.testType}
+        assessmentCategory={modalUpdateTestEvent?.assessmentCategory ?? modalUpdateTestEvent?.category}
+        testType={modalUpdateTestEvent?.testType}
         onSuccess={reloadAssessments}
+        initialValues={modalUpdateTestEvent?.initialValues}
       />
     </div>
   );
 };
 
-export default PendingAssessmentCardList; 
+export default PendingAssessmentCardList;

@@ -2,11 +2,20 @@ import React, { useEffect, useState } from 'react';
 import { Table, Tag } from 'antd';
 import axios from 'axios';
 import { API_URL, endpoints } from '../../config/api';
+import { Link } from 'react-router-dom';
 
-const statusColor = {
-  Paid: 'green',
-  Pending: 'gold',
-  Refunded: 'red',
+// PaymentStatus enum mapping từ backend:
+// 0: Paid, 1: Pending, 2: RequestRefund, 3: Refunded
+// Có thể trả về dạng số hoặc chuỗi, đều được map linh hoạt ở đây.
+const statusMap = {
+  Paid: { label: 'Đã thanh toán', color: 'green' },
+  // Pending: { label: 'Đang chờ', color: 'gold' },
+  RequestRefund: { label: 'Yêu cầu hoàn tiền', color: 'orange' },
+  Refunded: { label: 'Đã hoàn tiền', color: 'red' },
+  0: { label: 'Đã thanh toán', color: 'green' },
+  // 1: { label: 'Đang chờ', color: 'gold' },
+  2: { label: 'Yêu cầu hoàn tiền', color: 'orange' },
+  3: { label: 'Đã hoàn tiền', color: 'red' },
 };
 
 const columns = [
@@ -14,7 +23,7 @@ const columns = [
     title: 'Mã giao dịch',
     dataIndex: 'paymentID',
     key: 'paymentID',
-    width: 120,
+    width: 80,
     fixed: 'left',
   },
   {
@@ -22,37 +31,57 @@ const columns = [
     dataIndex: 'studentName',
     key: 'studentName',
     width: 160,
+    render: (text, record) => (
+      <Link to={`/dashboard/profile/${record.studentID}`}>{text}</Link>
+    ),
   },
   {
     title: 'Lớp học',
     dataIndex: 'className',
     key: 'className',
-    width: 140,
+    width: 200,
   },
   {
     title: 'Số tiền',
     dataIndex: 'amount',
     key: 'amount',
-    align: 'right',
+    align: 'center',
     render: (amount, record) => {
       if (record.status === 'Refunded') {
         return `- ${amount.toLocaleString('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 })}`;
       }
       return amount.toLocaleString('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 });
     },
-    width: 120,
+    width: 60,
   },
   {
     title: 'Trạng thái',
-    dataIndex: 'status',
+    dataIndex: 'status',  
     key: 'status',
-    render: (status) => <Tag color={statusColor[status] || 'default'}>{status}</Tag>,
+    align: 'center',
+    sorter: (a, b) => {
+      // Đưa status về số để so sánh, ưu tiên số nếu có, nếu không thì so sánh chuỗi
+      const getStatusValue = (status) => {
+        if (typeof status === 'number') return status;
+        if (status === 'Paid') return 0;
+        if (status === 'Pending') return 1;
+        if (status === 'RequestRefund') return 2;
+        if (status === 'Refunded') return 3;
+        return 99; // unknown
+      };
+      return getStatusValue(a.status) - getStatusValue(b.status);
+    },
+    render: (status) => {
+      const s = statusMap[status] || { label: status, color: 'default' };
+      return <Tag color={s.color}>{s.label}</Tag>;
+    },
     width: 110,
   },
   {
     title: 'Ngày thanh toán',
     dataIndex: 'paidAt',
     key: 'paidAt',
+    align: 'center',
     render: (date) => new Date(date).toLocaleDateString('vi-VN'),
     width: 130,
   },
