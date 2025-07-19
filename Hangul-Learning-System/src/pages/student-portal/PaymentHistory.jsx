@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Spin, Alert, Button, Modal, Descriptions } from 'antd';
+import { Table, Spin, Alert, Button, Modal, Descriptions, Tag } from 'antd';
 import axios from 'axios';
 import { API_URL } from '../../config/api';
 import { getUser } from '../../utils/auth';
@@ -47,7 +47,17 @@ const columns = [
     title: 'Trạng thái',
     dataIndex: 'status',
     key: 'status',
-    render: (status) => statusMap[status] || 'Không xác định',
+    align: 'center',
+    render: (status) => (
+      <Tag color={
+        status === 0 ? 'green' :
+        status === 1 ? 'orange' :
+        status === 2 ? 'red' :
+        status === 3 ? 'blue' : 'default'
+      }>
+        {statusMap[status] || 'Không xác định'}
+      </Tag>
+    ),
   },
 ];
 
@@ -109,7 +119,7 @@ const PaymentHistory = () => {
 
   return (
     <div>
-      <h1>Lịch sử thanh toán</h1>
+      <h1 style={{fontWeight:'bolder'}}>Lịch sử thanh toán</h1>
       {error && <Alert type="error" message={error} showIcon style={{ marginBottom: 16 }} />}
       <Spin spinning={loading} tip="Đang tải...">
         <Table
@@ -131,7 +141,16 @@ const PaymentHistory = () => {
             <Descriptions.Item label="Tên lớp">{selectedPayment.className}</Descriptions.Item>
             <Descriptions.Item label="Số tiền">{selectedPayment.amount?.toLocaleString('vi-VN')} ₫</Descriptions.Item>
             <Descriptions.Item label="Ngày thanh toán">{selectedPayment.paymentDate ? new Date(selectedPayment.paymentDate).toLocaleString('vi-VN') : ''}</Descriptions.Item>
-            <Descriptions.Item label="Trạng thái">{statusMap[selectedPayment.status] || 'Không xác định'}</Descriptions.Item>
+            <Descriptions.Item label="Trạng thái">
+              <Tag color={
+                selectedPayment.status === 0 ? 'green' :
+                selectedPayment.status === 1 ? 'orange' :
+                selectedPayment.status === 2 ? 'red' :
+                selectedPayment.status === 3 ? 'blue' : 'default'
+              }>
+                {statusMap[selectedPayment.status] || 'Không xác định'}
+              </Tag>
+            </Descriptions.Item>
           </Descriptions>
         )}
       </Modal>

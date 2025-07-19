@@ -74,6 +74,7 @@ const updateAssessmentCriteriaList = async (payload) => {
 
 const bulkUpdateSyllabusSchedule = async (payload) => {
   try {
+    console.log('bulkUpdateSyllabusSchedule payload:', payload);
     const response = await axios.put(`${API_URL}api/SyllabusSchedule/bulk-update`, payload);
     return response.data;
   } catch (error) {

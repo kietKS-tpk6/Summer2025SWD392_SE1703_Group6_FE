@@ -1,47 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Table, Input, Tag, Button } from 'antd';
-import StudentListModal, { mockStudentListForClass } from './StudentListModal';
+import axios from 'axios';
+import { API_URL } from '../../config/api';
+import StudentListModal from './StudentListModal';
 
-export const classCompletionStats = [
-  {
-    classId: "CL0010",
-    className: "Lớp Sơ cấp 1A",
-    subjectName: "Tiếng Hàn sơ cấp",
-    totalStudents: 20,
-    completedStudents: 17,
-    averageAttendanceRate: 88, // %
-    averageScore: 7.4,
-    completionRate: 85, // %
-  },
-  {
-    classId: "CL0011",
-    className: "Lớp Trung cấp 2B",
-    subjectName: "Tiếng Hàn trung cấp",
-    totalStudents: 18,
-    completedStudents: 9,
-    averageAttendanceRate: 71,
-    averageScore: 5.5,
-    completionRate: 50,
-  },
-  {
-    classId: "CL0012",
-    className: "Lớp TOPIK 3C",
-    subjectName: "Luyện thi TOPIK",
-    totalStudents: 22,
-    completedStudents: 21,
-    averageAttendanceRate: 95,
-    averageScore: 8.8,
-    completionRate: 95,
-  },
-];
-
-const ClassCompletionStatsTable = ({ data = classCompletionStats }) => {
+const ClassCompletionStatsTable = () => {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState(null);
 
+  useEffect(() => {
+    setLoading(true);
+    axios.get(`${API_URL}api/DashboardAnalytics/class-completion-statistic`)
+      .then(res => {
+        setData(Array.isArray(res.data?.data) ? res.data.data : []);
+      })
+      .catch(() => setData([]))
+      .finally(() => setLoading(false));
+  }, []);
+
   const filteredData = data.filter(item =>
-    item.className.toLowerCase().includes(search.toLowerCase())
+    item.className?.toLowerCase().includes(search.toLowerCase())
   );
 
   const columns = [
@@ -134,11 +115,12 @@ const ClassCompletionStatsTable = ({ data = classCompletionStats }) => {
         scroll={{ x: 900 }}
         bordered
         size="middle"
+        loading={loading}
       />
       <StudentListModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        data={mockStudentListForClass}
+        classId={selectedClass?.classId}
       />
     </div>
   );

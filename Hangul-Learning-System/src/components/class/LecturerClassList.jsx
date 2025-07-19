@@ -141,7 +141,7 @@ const LecturerClassList = () => {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 24 }}>Danh sách lớp</h2>
+      <h1 style={{fontWeight:'bolder', marginBottom: 24 }}>Danh sách lớp</h1>
       <div style={{ marginBottom: 16 }}>
         <span style={{ marginRight: 8 }}>Lọc theo trạng thái:</span>
         <Select

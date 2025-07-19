@@ -1,16 +1,22 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { API_URL } from '../../config/api';
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList } from 'recharts';
 
-export const classCompletionRateByMonth = [
-  { month: "2025-02", completed: 10, cancelled: 2, total: 12, rate: 83 },
-  { month: "2025-03", completed: 15, cancelled: 0, total: 15, rate: 100 },
-  { month: "2025-04", completed: 12, cancelled: 3, total: 15, rate: 80 },
-  { month: "2025-05", completed: 9, cancelled: 1, total: 10, rate: 90 },
-  { month: "2025-06", completed: 7, cancelled: 3, total: 10, rate: 70 },
-  { month: "2025-07", completed: 4, cancelled: 6, total: 10, rate: 40 },
-];
+const ClassCompletionRateByMonthChart = () => {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-const ClassCompletionRateByMonthChart = ({ data = classCompletionRateByMonth }) => {
+  useEffect(() => {
+    setLoading(true);
+    axios.get(`${API_URL}api/Chart/completion-rate-by-month`)
+      .then(res => {
+        setData(Array.isArray(res.data?.data) ? res.data.data : []);
+      })
+      .catch(() => setData([]))
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <div style={{ width: '100%', height: 340 }}>
       <ResponsiveContainer width="100%" height={320}>
@@ -38,6 +44,7 @@ const ClassCompletionRateByMonthChart = ({ data = classCompletionRateByMonth }) 
       <div style={{ textAlign: 'center', marginTop: 8, color: '#666', fontSize: 15, fontStyle: 'italic' }}>
         Biểu đồ thể hiện tỷ lệ hoàn thành lớp của 6 tháng gần nhất.
       </div>
+      {loading && <div style={{ textAlign: 'center', color: '#1890ff', marginTop: 12 }}>Đang tải dữ liệu...</div>}
     </div>
   );
 };

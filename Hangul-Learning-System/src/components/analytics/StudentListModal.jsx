@@ -1,48 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Modal, Table, Tag } from 'antd';
-
-export const mockStudentListForClass = [
-  {
-    studentId: "ST001",
-    studentName: "Nguyễn Văn A",
-    attendanceRate: 95,
-    averageScore: 8.2,
-    status: "Hoàn thành",
-    absentSessions: 1,
-  },
-  {
-    studentId: "ST002",
-    studentName: "Trần Thị B",
-    attendanceRate: 78,
-    averageScore: 6.5,
-    status: "Hoàn thành",
-    absentSessions: 3,
-  },
-  {
-    studentId: "ST003",
-    studentName: "Lê Văn C",
-    attendanceRate: 60,
-    averageScore: 4.8,
-    status: "Chưa hoàn thành",
-    absentSessions: 7,
-  },
-  {
-    studentId: "ST004",
-    studentName: "Phạm Minh D",
-    attendanceRate: 100,
-    averageScore: 9.0,
-    status: "Hoàn thành",
-    absentSessions: 0,
-  },
-  {
-    studentId: "ST005",
-    studentName: "Đỗ Thị E",
-    attendanceRate: 70,
-    averageScore: 5.5,
-    status: "Chưa hoàn thành",
-    absentSessions: 5,
-  },
-];
+import axios from 'axios';
+import { API_URL } from '../../config/api';
 
 const statusColor = {
   'Hoàn thành': 'green',
@@ -89,7 +48,22 @@ const columns = [
   },
 ];
 
-const StudentListModal = ({ open, onClose, data = mockStudentListForClass }) => {
+const StudentListModal = ({ open, onClose, classId }) => {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (open && classId) {
+      setLoading(true);
+      axios.get(`${API_URL}api/DashboardAnalytics/student-statistic/${classId}`)
+        .then(res => {
+          setData(Array.isArray(res.data?.data) ? res.data.data : []);
+        })
+        .catch(() => setData([]))
+        .finally(() => setLoading(false));
+    }
+  }, [open, classId]);
+
   return (
     <Modal
       open={open}
@@ -105,6 +79,7 @@ const StudentListModal = ({ open, onClose, data = mockStudentListForClass }) => 
         pagination={{ pageSize: 6 }}
         bordered
         size="middle"
+        loading={loading}
       />
     </Modal>
   );

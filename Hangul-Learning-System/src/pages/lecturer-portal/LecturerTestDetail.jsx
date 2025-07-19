@@ -264,7 +264,7 @@ const LecturerTestDetail = () => {
           {showMCQ ? 'Ẩn phần trắc nghiệm' : 'Hiện phần trắc nghiệm'}
         </Button>
         <Button onClick={() => setShowGuide(true)} type="dashed">
-          Hướng dẫn chấm điểm
+          Hướng dẫn chấm điểm bài tự luận
         </Button>
       </div>
       {/* Modal hướng dẫn chấm điểm */}
@@ -540,9 +540,9 @@ const LecturerTestDetail = () => {
                     </div>
                   </div>
                 )}
-                <div style={{ marginBottom: 8 }}>
+                {/* <div style={{ marginBottom: 8 }}>
                   <Text type="secondary">(Không phải câu tự luận)</Text>
-                </div>
+                </div> */}
               </div>
             ))}
           </Card>

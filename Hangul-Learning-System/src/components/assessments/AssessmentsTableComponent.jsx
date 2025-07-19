@@ -117,7 +117,7 @@ export default function AssessmentsTable({
   return (
     <>
       <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
-        <h1>Quản lí bài kiểm tra</h1>
+        <h1 style={{fontWeight:'bolder'}}>Quản lí bài kiểm tra</h1>
         <Space>
           <Select
             value={statusFilter}

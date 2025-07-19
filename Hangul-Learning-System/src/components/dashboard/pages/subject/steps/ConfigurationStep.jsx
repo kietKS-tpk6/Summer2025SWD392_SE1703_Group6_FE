@@ -4,7 +4,7 @@ import { UploadOutlined, DownloadOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { API_URL, endpoints } from '../../../../../config/api';
 
-const ConfigurationStep = ({ onGenerateClassSlots, onImportError, hasImportedClassSlots }) => {
+const ConfigurationStep = ({ onGenerateClassSlots, onImportError, hasImportedClassSlots, disableConfigEdit }) => {
   const [maxWeeks, setMaxWeeks] = useState(null);
   const [maxSlotsPerWeek, setMaxSlotsPerWeek] = useState(null);
   const [maxTotalMinutes, setMaxTotalMinutes] = useState(null);
@@ -125,7 +125,7 @@ const ConfigurationStep = ({ onGenerateClassSlots, onImportError, hasImportedCla
             }),
           ].filter(Boolean)}
         >
-          <InputNumber min={1} placeholder="VD: 10" style={{ width: '100%' }} disabled={hasImportedClassSlots} />
+          <InputNumber min={1} placeholder="VD: 10" style={{ width: '100%' }} disabled={disableConfigEdit} />
         </Form.Item>
 
         <Form.Item
@@ -147,7 +147,7 @@ const ConfigurationStep = ({ onGenerateClassSlots, onImportError, hasImportedCla
             }),
           ].filter(Boolean)}
         >
-          <InputNumber min={1} placeholder="VD: 3" style={{ width: '100%' }} disabled={hasImportedClassSlots} />
+          <InputNumber min={1} placeholder="VD: 3" style={{ width: '100%' }} disabled={disableConfigEdit} />
         </Form.Item>
 
         <Form.Item
@@ -176,7 +176,7 @@ const ConfigurationStep = ({ onGenerateClassSlots, onImportError, hasImportedCla
             }),
           ].filter(Boolean)}
         >
-          <InputNumber min={1} placeholder="VD: 45" style={{ width: '100%' }} disabled={hasImportedClassSlots} />
+          <InputNumber min={1} placeholder="VD: 45" style={{ width: '100%' }} disabled={disableConfigEdit} />
         </Form.Item>
       </Card>
     </>
