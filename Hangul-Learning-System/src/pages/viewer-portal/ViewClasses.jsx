@@ -293,7 +293,7 @@ const ViewClasses = () => {
             </div>
           ) : (
             <>
-              <Row gutter={[24, 24]} justify="start">
+              <Row gutter={[40, 40]} justify="start">
                 {getCurrentPageItems().map(cls => (
                   <Col key={cls.classID} xs={24} sm={12} md={8} lg={8} xl={6}>
                     <ClassCard

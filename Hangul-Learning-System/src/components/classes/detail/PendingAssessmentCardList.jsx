@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Button, Form } from 'antd';
 import dayjs from 'dayjs';
 import axios from 'axios';
@@ -40,8 +40,7 @@ const CATEGORY_ENUM_MAP = {
   3: 'Final',
 };
 
-const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, subjectId }) => {
-  const [assessments, setAssessments] = useState(initialAssessments || []);
+const PendingAssessmentCardList = ({ classId, assessments, subjectId, onReloadAssessments, lessons, reload }) => {
   const [notificationState, setNotificationState] = useState({ visible: false, type: 'success', message: '', description: '' });
 
   const total = assessments ? assessments.length : 0;
@@ -64,6 +63,13 @@ const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, s
   const [password, setPassword] = useState('');
   const [form] = Form.useForm();
   const [modalAvailableTests, setModalAvailableTests] = useState([]);
+
+  // Reload assessments when reload prop changes
+  useEffect(() => {
+    if (reload > 0 && onReloadAssessments) {
+      onReloadAssessments();
+    }
+  }, [reload, onReloadAssessments]);
 
   const handleOpenModal = async (assessment) => {
     setModalTestEvent(assessment);
@@ -93,12 +99,10 @@ const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, s
   };
 
   // Hàm reload lại assessments sau khi thêm đề kiểm tra
-  const reloadAssessments = async () => {
-    try {
-      const res = await axios.get(`${API_URL}api/TestEvent/get-by-class-id/${classId}`);
-      setAssessments(Array.isArray(res.data?.data) ? res.data.data : []);
-    } catch {
-      setAssessments([]);
+  const reloadAssessments = () => {
+    if (onReloadAssessments) {
+      onReloadAssessments();
+      setNotificationState({ visible: true, type: 'success', message: 'Thêm đề kiểm tra thành công!' });
     }
   };
 
@@ -199,7 +203,14 @@ const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, s
                       size="small"
                       style={{ marginBottom: 8 }}
                       onClick={() => {
-                        setModalAddTestEvent(assessment);
+                        // Tìm lesson tương ứng với assessment này
+                        const lesson = lessons?.find(l => l.lessonID === assessment.lessonID);
+                        const assessmentWithLessonTimes = {
+                          ...assessment,
+                          lessonStartTime: lesson?.startTime || assessment.lessonStartTime,
+                          lessonEndTime: lesson?.endTime || assessment.lessonEndTime,
+                        };
+                        setModalAddTestEvent(assessmentWithLessonTimes);
                         setModalAddOpen(true);
                         // Nếu là đề thi cuối kì (final), set attemptLimit = 1
                         if (
@@ -223,6 +234,13 @@ const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, s
                       onMouseOver={e => e.currentTarget.style.background = '#ffd666'}
                       onMouseOut={e => e.currentTarget.style.background = '#faad14'}
                       onClick={() => {
+                        // Tìm lesson tương ứng với assessment này
+                        const lesson = lessons?.find(l => l.lessonID === assessment.lessonID);
+                        const assessmentWithLessonTimes = {
+                          ...assessment,
+                          lessonStartTime: lesson?.startTime || assessment.lessonStartTime,
+                          lessonEndTime: lesson?.endTime || assessment.lessonEndTime,
+                        };
                         const initialValues = {
                           testID: assessment.testID || undefined,
                           description: assessment.description || '',
@@ -231,7 +249,7 @@ const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, s
                           attemptLimit: assessment.attemptLimit || 1,
                           password: assessment.password || '',
                         };
-                        setModalUpdateTestEvent({ ...assessment, initialValues });
+                        setModalUpdateTestEvent({ ...assessmentWithLessonTimes, initialValues });
                         setModalUpdateOpen(true);
                       }}
                     >
@@ -310,7 +328,6 @@ const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, s
               });
             }
             setModalAddOpen(false);
-            await reloadAssessments();
           } catch (err) {
             let msg = 'Thêm bài kiểm tra không thành công!';
             if (err?.response?.data?.message) msg = err.response.data.message;
@@ -385,8 +402,6 @@ const PendingAssessmentCardList = ({ classId, assessments: initialAssessments, s
               });
             }
             setModalUpdateOpen(false);
-            await reloadAssessments();
-            setNotificationState({ visible: true, type: 'success', message: 'Cập nhật đề kiểm tra thành công!' });
           } catch {
             setNotificationState({ visible: true, type: 'error', message: 'Cập nhật đề kiểm tra thất bại!' });
           }

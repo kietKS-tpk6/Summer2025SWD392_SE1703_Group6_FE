@@ -121,34 +121,36 @@ const [isPopupOpen, setIsPopupOpen] = useState(false);
     fetchSubjects();
   }, []);
 
+  // Function để fetch tests từ API
+  const fetchTests = async (customStatus = statusFilter, customPage = page, customPageSize = pageSize) => {
+    try {
+      const res = await axios.get(`${API_URL}api/Test/get-by-status`, {
+        params: {
+          status: customStatus,
+          page: customPage,
+          pageSize: customPageSize,
+        }
+      });
+      const items = res.data?.items || [];
+      setTotal(res.data?.total || 0);
+      // Map đúng các trường cần thiết cho bảng
+      const mapped = items.map(item => ({
+        testID: item.testID,
+        createdByName: item.createdByName,
+        subjectName: item.subjectName,
+        createAt: item.createAt,
+        Status: customStatus, // hoặc item.status nếu muốn dùng số
+        testSections: item.testSections || [],
+      }));
+      setData(mapped);
+    } catch (e) {
+      setData([]);
+      setTotal(0);
+    }
+  };
+
   // Fetch tests từ API (dùng get-by-status, có phân trang)
   useEffect(() => {
-    const fetchTests = async () => {
-      try {
-        const res = await axios.get(`${API_URL}api/Test/get-by-status`, {
-          params: {
-            status: statusFilter,
-            page,
-            pageSize,
-          }
-        });
-        const items = res.data?.items || [];
-        setTotal(res.data?.total || 0);
-        // Map đúng các trường cần thiết cho bảng
-        const mapped = items.map(item => ({
-          testID: item.testID,
-          createdByName: item.createdByName,
-          subjectName: item.subjectName,
-          createAt: item.createAt,
-          Status: statusFilter, // hoặc item.status nếu muốn dùng số
-          testSections: item.testSections || [],
-        }));
-        setData(mapped);
-      } catch (e) {
-        setData([]);
-        setTotal(0);
-      }
-    };
     fetchTests();
   }, [statusFilter, page, pageSize]);
 
@@ -365,7 +367,11 @@ const [isPopupOpen, setIsPopupOpen] = useState(false);
       setLecturerModal(false);
       setModalLoading(false);
       setLecturerLoading(false);
-      setPage(1); // Đảm bảo useEffect sẽ fetch lại danh sách mới nhất
+      // Fetch lại danh sách ngay lập tức
+      setPage(1);
+      // Trigger fetch lại data với page 1
+      await fetchTests(statusFilter, 1, pageSize);
+      
       // Điều hướng về đúng sidebar
       if (userRole === 'Lecturer' || userRole === 'Lecture') {
         navigate('/lecturer/assessment');

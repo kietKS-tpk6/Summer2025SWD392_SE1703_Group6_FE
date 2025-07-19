@@ -46,13 +46,13 @@ const Content = () => {
           className="app__home-intro"
         >
           <h1 className="korean-heading italic">
-            한국어 학습 시스템에 오신 <br />
-            것을 환영합니다
+            한국어 학습 시스템에 오 <br />
+            신 것을 환영합니다
           </h1>
           <p>
             Chào mừng bạn đến với trung tâm học <br />  tiếng hàn online của chúng tôi
           </p>
-          <button className="app__home-btn" onClick={handleApplyNow}>Đăng nhập để học ngay</button>
+
         </motion.div>
       </div>
       {/* Service Section */}
