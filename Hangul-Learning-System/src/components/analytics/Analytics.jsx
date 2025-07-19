@@ -74,18 +74,19 @@ const Analytics = () => {
             onToggle={() => handleExpand('class')}
           >
             <ClassCompletionStatsTable/>
-            <div style={{ margin: '32px 0 0 0' }}>
+            {/* <div style={{ margin: '32px 0 0 0' }}>
               <Row gutter={[32, 32]}>
                 <Col xs={24} md={12}>
-                  <ClassCompletionRateByMonthChart />
+                
                 </Col>
                 <Col xs={24} md={12}>
                   <AttendanceRateByClassBarChart />
                 </Col>
               </Row>
-            </div>
+            </div> */}
             <div style={{ margin: '32px 0 0 0' }}>
-              <TopAverageScoreClassesChart/>
+              {/* <TopAverageScoreClassesChart/> */}
+              <ClassCompletionRateByMonthChart />
             </div>
           </AnalyticsSection>
         </Col>
